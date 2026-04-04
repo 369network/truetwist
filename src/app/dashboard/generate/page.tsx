@@ -1,21 +1,70 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { createClient } from "@/lib/supabase";
 
 const tones = ["Professional", "Casual", "Witty", "Inspirational", "Educational", "Controversial"];
 const platformList = ["instagram", "twitter", "facebook", "linkedin", "tiktok"];
+const contentTypes = [
+  { id: "post", label: "Post", icon: "📝" },
+  { id: "story", label: "Story / Reel", icon: "🎬" },
+  { id: "carousel", label: "Carousel / Slides", icon: "🖼️" },
+  { id: "video", label: "Video Script", icon: "🎥" },
+];
+
+const platformIcons: Record<string, string> = {
+  instagram: "📸", twitter: "𝕏", facebook: "👥", linkedin: "💼", tiktok: "🎵",
+};
+
+const platformColors: Record<string, string> = {
+  instagram: "#E4405F", twitter: "#1DA1F2", facebook: "#1877F2", linkedin: "#0A66C2", tiktok: "#000000",
+};
 
 export default function GeneratePage() {
   const [topic, setTopic] = useState("");
   const [tone, setTone] = useState("Casual");
+  const [contentType, setContentType] = useState("post");
   const [platforms, setPlatforms] = useState<string[]>(["instagram", "twitter"]);
   const [generating, setGenerating] = useState(false);
   const [generated, setGenerated] = useState<any[]>([]);
   const [saving, setSaving] = useState<string | null>(null);
+  const [mediaUrls, setMediaUrls] = useState<string[]>([]);
+  const [mediaInput, setMediaInput] = useState("");
+  const [mediaPreview, setMediaPreview] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState<string>("preview");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const supabase = createClient();
 
   const togglePlatform = (p: string) => {
     setPlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
+  };
+
+  const addMediaUrl = () => {
+    const url = mediaInput.trim();
+    if (url && (url.startsWith("http://") || url.startsWith("https://"))) {
+      setMediaUrls(prev => [...prev, url]);
+      setMediaPreview(prev => [...prev, url]);
+      setMediaInput("");
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = ev.target?.result as string;
+        setMediaPreview(prev => [...prev, dataUrl]);
+        setMediaUrls(prev => [...prev, dataUrl]);
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = "";
+  };
+
+  const removeMedia = (index: number) => {
+    setMediaUrls(prev => prev.filter((_, i) => i !== index));
+    setMediaPreview(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleGenerate = async () => {
@@ -25,8 +74,10 @@ export default function GeneratePage() {
     const posts = platforms.map(platform => ({
       id: Math.random().toString(36).slice(2),
       platform,
-      content: generateContent(topic.trim(), tone, platform),
+      content: generateContent(topic.trim(), tone, platform, contentType),
       hashtags: generateSmartHashtags(topic.trim(), platform),
+      mediaUrls: [...mediaUrls],
+      contentType,
     }));
     setGenerated(posts);
     setGenerating(false);
@@ -43,6 +94,7 @@ export default function GeneratePage() {
       platforms: [post.platform],
       status: "draft",
       ai_prompt: topic,
+      media_urls: post.mediaUrls.length > 0 ? post.mediaUrls : null,
     });
     setSaving(null);
     alert("Post saved as draft!");
@@ -58,14 +110,30 @@ export default function GeneratePage() {
   };
 
   return (
-    <div className="max-w-4xl">
+    <div className="max-w-5xl">
       <h1 className="text-2xl font-bold mb-2">AI Content Generator</h1>
-      <p className="text-sm mb-8" style={{ color: "var(--tt-text-muted)" }}>Describe your topic and let AI create scroll-stopping content for you.</p>
+      <p className="text-sm mb-8" style={{ color: "var(--tt-text-muted)" }}>Create scroll-stopping posts, stories, reels, and video scripts with AI.</p>
 
-      {/* Input */}
+      {/* Input Section */}
       <div className="p-6 rounded-2xl mb-6" style={{ background: "var(--tt-surface)", border: "1px solid var(--tt-border)" }}>
         <label className="block text-sm font-medium mb-2">What do you want to post about?</label>
-        <textarea value={topic} onChange={e => setTopic(e.target.value)} placeholder="e.g., car bike comparison, fitness tips for beginners, new product launch, travel photography..." rows={3} className="input-field resize-none mb-4" />
+        <textarea value={topic} onChange={e => setTopic(e.target.value)} placeholder="e.g., car vs bike comparison, fitness tips for beginners, product launch, travel photography..." rows={3} className="input-field resize-none mb-4" />
+
+        {/* Content Type */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">Content Type</label>
+          <div className="flex flex-wrap gap-2">
+            {contentTypes.map(ct => (
+              <button key={ct.id} onClick={() => setContentType(ct.id)} className="px-3 py-2 rounded-lg text-xs font-medium transition flex items-center gap-1.5" style={{
+                background: contentType === ct.id ? "rgba(99,102,241,0.2)" : "var(--tt-surface-2)",
+                color: contentType === ct.id ? "#a5b4fc" : "var(--tt-text-muted)",
+                border: contentType === ct.id ? "1px solid rgba(99,102,241,0.4)" : "1px solid var(--tt-border)",
+              }}>
+                <span>{ct.icon}</span> {ct.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
@@ -94,6 +162,27 @@ export default function GeneratePage() {
           </div>
         </div>
 
+        {/* Media Upload Section */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">Attach Media (optional)</label>
+          <div className="flex gap-2 mb-2">
+            <input value={mediaInput} onChange={e => setMediaInput(e.target.value)} onKeyDown={e => e.key === "Enter" && addMediaUrl()} placeholder="Paste image or video URL..." className="input-field flex-1 text-sm" />
+            <button onClick={addMediaUrl} className="px-4 py-2 rounded-lg text-xs font-medium shrink-0" style={{ background: "rgba(99,102,241,0.2)", color: "#a5b4fc", border: "1px solid rgba(99,102,241,0.4)" }}>+ Add URL</button>
+            <input ref={fileInputRef} type="file" accept="image/*,video/*" multiple onChange={handleFileUpload} className="hidden" />
+            <button onClick={() => fileInputRef.current?.click()} className="px-4 py-2 rounded-lg text-xs font-medium shrink-0" style={{ background: "rgba(16,185,129,0.15)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)" }}>📁 Upload</button>
+          </div>
+          {mediaPreview.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {mediaPreview.map((url, i) => (
+                <div key={i} className="relative group">
+                  <img src={url} alt={`Media ${i + 1}`} className="w-20 h-20 object-cover rounded-lg" style={{ border: "1px solid var(--tt-border)" }} onError={(e) => { (e.target as HTMLImageElement).src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' fill='%23666'%3E%3Crect width='80' height='80' fill='%23222'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' font-size='10'%3E🎬 Video%3C/text%3E%3C/svg%3E"; }} />
+                  <button onClick={() => removeMedia(i)} className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition" style={{ background: "#ef4444", color: "white" }}>×</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div className="flex gap-3">
           <button onClick={handleGenerate} disabled={generating || !topic.trim()} className="px-6 py-3 rounded-xl text-white font-semibold transition hover:-translate-y-0.5 disabled:opacity-50" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
             {generating ? (
@@ -111,35 +200,141 @@ export default function GeneratePage() {
         </div>
       </div>
 
-      {/* Results */}
+      {/* Results with Social Preview */}
       {generated.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Generated Content for &ldquo;{topic}&rdquo;</h2>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Generated Content for &ldquo;{topic}&rdquo;</h2>
+            <div className="flex gap-1 p-0.5 rounded-lg" style={{ background: "var(--tt-surface-2)" }}>
+              <button onClick={() => setActiveTab("preview")} className="px-3 py-1 rounded text-xs font-medium transition" style={{ background: activeTab === "preview" ? "rgba(99,102,241,0.3)" : "transparent", color: activeTab === "preview" ? "#a5b4fc" : "var(--tt-text-muted)" }}>Preview</button>
+              <button onClick={() => setActiveTab("raw")} className="px-3 py-1 rounded text-xs font-medium transition" style={{ background: activeTab === "raw" ? "rgba(99,102,241,0.3)" : "transparent", color: activeTab === "raw" ? "#a5b4fc" : "var(--tt-text-muted)" }}>Raw Text</button>
+            </div>
+          </div>
+
           {generated.map(post => (
-            <div key={post.id} className="p-5 rounded-2xl" style={{ background: "var(--tt-surface)", border: "1px solid var(--tt-border)" }}>
-              <div className="flex items-center justify-between mb-3">
-                <span className="px-3 py-1 rounded-full text-xs font-medium capitalize" style={{ background: "rgba(99,102,241,0.15)", color: "#a5b4fc" }}>
-                  {post.platform === "twitter" ? "X (Twitter)" : post.platform}
-                </span>
-                <div className="flex gap-2">
-                  <button onClick={() => copyToClipboard(post.content + "\n\n" + post.hashtags.map((h: string) => "#" + h).join(" "))} className="px-3 py-1.5 rounded-lg text-xs font-medium transition" style={{ background: "rgba(99,102,241,0.15)", color: "#a5b4fc", border: "1px solid rgba(99,102,241,0.3)" }}>
-                    📋 Copy
-                  </button>
-                  <button onClick={() => savePost(post)} disabled={saving === post.id} className="px-4 py-1.5 rounded-lg text-xs font-medium transition" style={{ background: "rgba(16,185,129,0.15)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)" }}>
-                    {saving === post.id ? "Saving..." : "💾 Save as Draft"}
-                  </button>
+            <div key={post.id}>
+              {activeTab === "preview" ? (
+                <SocialPreviewCard post={post} onSave={savePost} onCopy={copyToClipboard} saving={saving} />
+              ) : (
+                <div className="p-5 rounded-2xl" style={{ background: "var(--tt-surface)", border: "1px solid var(--tt-border)" }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="px-3 py-1 rounded-full text-xs font-medium capitalize" style={{ background: "rgba(99,102,241,0.15)", color: "#a5b4fc" }}>
+                      {post.platform === "twitter" ? "X (Twitter)" : post.platform}
+                    </span>
+                    <div className="flex gap-2">
+                      <button onClick={() => copyToClipboard(post.content + "\n\n" + post.hashtags.map((h: string) => "#" + h).join(" "))} className="px-3 py-1.5 rounded-lg text-xs font-medium transition" style={{ background: "rgba(99,102,241,0.15)", color: "#a5b4fc", border: "1px solid rgba(99,102,241,0.3)" }}>📋 Copy</button>
+                      <button onClick={() => savePost(post)} disabled={saving === post.id} className="px-4 py-1.5 rounded-lg text-xs font-medium transition" style={{ background: "rgba(16,185,129,0.15)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)" }}>{saving === post.id ? "Saving..." : "💾 Save"}</button>
+                    </div>
+                  </div>
+                  <p className="text-sm whitespace-pre-wrap leading-relaxed">{post.content}</p>
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {post.hashtags.map((h: string, i: number) => (
+                      <span key={i} className="text-xs" style={{ color: "#818cf8" }}>#{h}</span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <p className="text-sm whitespace-pre-wrap leading-relaxed">{post.content}</p>
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {post.hashtags.map((h: string, i: number) => (
-                  <span key={i} className="text-xs" style={{ color: "#818cf8" }}>#{h}</span>
-                ))}
-              </div>
+              )}
             </div>
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// ============================================================
+// Social Media Preview Card — renders posts like real social platforms
+// ============================================================
+
+function SocialPreviewCard({ post, onSave, onCopy, saving }: { post: any; onSave: (p: any) => void; onCopy: (t: string) => void; saving: string | null }) {
+  const pColor = platformColors[post.platform] || "#6366f1";
+  const pIcon = platformIcons[post.platform] || "📱";
+  const pName = post.platform === "twitter" ? "X (Twitter)" : post.platform;
+  const hasMedia = post.mediaUrls && post.mediaUrls.length > 0;
+  const isVideo = post.contentType === "video" || post.contentType === "story";
+  const isCarousel = post.contentType === "carousel";
+
+  return (
+    <div className="rounded-2xl overflow-hidden" style={{ background: "var(--tt-surface)", border: "1px solid var(--tt-border)" }}>
+      {/* Platform Header */}
+      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--tt-border)" }}>
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-full flex items-center justify-center text-lg" style={{ background: `${pColor}22`, border: `2px solid ${pColor}` }}>
+            {pIcon}
+          </div>
+          <div>
+            <div className="text-sm font-semibold capitalize">{pName}</div>
+            <div className="text-xs" style={{ color: "var(--tt-text-muted)" }}>
+              {post.contentType === "story" ? "Story / Reel" : post.contentType === "carousel" ? "Carousel Post" : post.contentType === "video" ? "Video" : "Post"}
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => onCopy(post.content + "\n\n" + post.hashtags.map((h: string) => "#" + h).join(" "))} className="px-3 py-1.5 rounded-lg text-xs font-medium transition hover:scale-105" style={{ background: "rgba(99,102,241,0.15)", color: "#a5b4fc", border: "1px solid rgba(99,102,241,0.3)" }}>📋 Copy</button>
+          <button onClick={() => onSave(post)} disabled={saving === post.id} className="px-3 py-1.5 rounded-lg text-xs font-medium transition hover:scale-105" style={{ background: "rgba(16,185,129,0.15)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)" }}>{saving === post.id ? "Saving..." : "💾 Save"}</button>
+        </div>
+      </div>
+
+      {/* Media Section */}
+      {hasMedia && (
+        <div className="relative">
+          {isCarousel && post.mediaUrls.length > 1 ? (
+            <div className="flex overflow-x-auto snap-x" style={{ scrollSnapType: "x mandatory" }}>
+              {post.mediaUrls.map((url: string, i: number) => (
+                <div key={i} className="snap-center shrink-0 w-full">
+                  <img src={url} alt={`Slide ${i + 1}`} className="w-full h-72 object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="relative">
+              <img src={post.mediaUrls[0]} alt="Post media" className="w-full h-72 object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              {isVideo && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                  <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center">
+                    <span className="text-2xl ml-1">▶</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          {isCarousel && post.mediaUrls.length > 1 && (
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+              {post.mediaUrls.map((_: string, i: number) => (
+                <div key={i} className="w-1.5 h-1.5 rounded-full" style={{ background: i === 0 ? "white" : "rgba(255,255,255,0.4)" }} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* No media placeholder */}
+      {!hasMedia && (
+        <div className="h-48 flex flex-col items-center justify-center" style={{ background: `linear-gradient(135deg, ${pColor}15, ${pColor}05)` }}>
+          <span className="text-5xl mb-2">{isVideo ? "🎥" : isCarousel ? "🖼️" : "📱"}</span>
+          <span className="text-xs" style={{ color: "var(--tt-text-muted)" }}>
+            {isVideo ? "Video content — add media above" : isCarousel ? "Add images for carousel slides" : "Add an image or video to enhance this post"}
+          </span>
+        </div>
+      )}
+
+      {/* Engagement Bar */}
+      <div className="flex items-center gap-5 px-4 py-2.5" style={{ borderBottom: "1px solid var(--tt-border)" }}>
+        <span className="text-lg cursor-pointer hover:scale-110 transition">❤️</span>
+        <span className="text-lg cursor-pointer hover:scale-110 transition">💬</span>
+        <span className="text-lg cursor-pointer hover:scale-110 transition">🔄</span>
+        <span className="text-lg cursor-pointer hover:scale-110 transition ml-auto">🔖</span>
+      </div>
+
+      {/* Post Content */}
+      <div className="px-4 py-3">
+        <p className="text-sm whitespace-pre-wrap leading-relaxed">{post.content}</p>
+        <div className="flex flex-wrap gap-1.5 mt-2">
+          {post.hashtags.map((h: string, i: number) => (
+            <span key={i} className="text-xs cursor-pointer hover:underline" style={{ color: pColor }}>#{h}</span>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -162,18 +357,28 @@ function shuffleAndPick<T>(arr: T[], count: number): T[] {
   return shuffled.slice(0, count);
 }
 
-function generateContent(topic: string, tone: string, platform: string): string {
+function generateContent(topic: string, tone: string, platform: string, contentType: string = "post"): string {
   const topicTitle = topic.split(/\s+/).map(w => capitalize(w.toLowerCase())).join(" ");
   const topicLower = topic.toLowerCase();
 
   // Extract key concepts from topic
   const words = topic.split(/\s+/).filter(w => w.length > 2);
-  const keyPhrase = topic.length > 40 ? topic.slice(0, 40) + "..." : topic;
 
   // Generate tone-specific openers, bodies, and closers
   const toneStyles = getToneStyle(tone, topicTitle, topicLower, words);
 
-  // Platform-specific formatting
+  // Content-type specific generation
+  if (contentType === "video") {
+    return generateVideoScript(topicTitle, topicLower, toneStyles, platform, words);
+  }
+  if (contentType === "story") {
+    return generateStoryReel(topicTitle, topicLower, toneStyles, platform, words);
+  }
+  if (contentType === "carousel") {
+    return generateCarousel(topicTitle, topicLower, toneStyles, platform, words);
+  }
+
+  // Regular post — platform-specific formatting
   switch (platform) {
     case "instagram":
       return generateInstagram(topicTitle, topicLower, toneStyles, words);
@@ -466,6 +671,68 @@ function generateTikTok(topicTitle: string, topicLower: string, style: ToneStyle
   return `POV: You finally understand ${topicLower} 🎯\n\n${hook}\n\n` +
     `Here's the quick breakdown:\n\n` +
     `🔥 ${tips[0]}\n💡 ${tips[1]}\n⚡ ${tips[2]}\n\n${cta}`;
+}
+
+// ============================================================
+// Content Type Generators — Video Script, Story/Reel, Carousel
+// ============================================================
+
+function generateVideoScript(topicTitle: string, topicLower: string, style: ToneStyle, platform: string, words: string[]): string {
+  const hook = pickRandom(style.hooks);
+  const tips = shuffleAndPick(style.tips, 3);
+  const insight = pickRandom(style.insights);
+  const cta = pickRandom(style.ctas);
+
+  const platformNote = platform === "tiktok" ? "Keep under 60 seconds for max reach" :
+    platform === "instagram" ? "Optimal length: 30-90 seconds for Reels" :
+    platform === "twitter" ? "Keep under 2:20 for best engagement" :
+    platform === "linkedin" ? "2-5 minutes for thought leadership" :
+    "1-3 minutes for best engagement";
+
+  return `🎬 VIDEO SCRIPT: ${topicTitle}\n📏 ${platformNote}\n\n` +
+    `[HOOK — 0:00-0:03]\n"${hook}"\n\n` +
+    `[MAIN CONTENT — 0:03-0:45]\n` +
+    `Point 1: ${tips[0]}\n` +
+    `Point 2: ${tips[1]}\n` +
+    `Point 3: ${tips[2]}\n\n` +
+    `[KEY TAKEAWAY — 0:45-0:55]\n"${insight}"\n\n` +
+    `[CTA — 0:55-1:00]\n"${cta}"\n\n` +
+    `📌 On-screen text suggestions:\n• "${topicTitle}"\n• Key stats or numbers\n• "${cta.slice(0, 50)}"`;
+}
+
+function generateStoryReel(topicTitle: string, topicLower: string, style: ToneStyle, platform: string, words: string[]): string {
+  const hook = pickRandom(style.hooks);
+  const tips = shuffleAndPick(style.tips, 3);
+  const cta = pickRandom(style.ctas);
+  const insight = pickRandom(style.insights);
+
+  return `📱 STORY / REEL: ${topicTitle}\n\n` +
+    `[SLIDE 1 — Hook]\n🔥 "${hook.slice(0, 80)}"\nText overlay on eye-catching background\n\n` +
+    `[SLIDE 2 — The Problem]\nMost people struggle with ${topicLower}.\nBut it doesn't have to be that way.\n\n` +
+    `[SLIDE 3 — Tip #1]\n💡 ${tips[0]}\n\n` +
+    `[SLIDE 4 — Tip #2]\n⚡ ${tips[1]}\n\n` +
+    `[SLIDE 5 — Tip #3]\n🎯 ${tips[2]}\n\n` +
+    `[SLIDE 6 — Key Insight]\n"${insight}"\n\n` +
+    `[SLIDE 7 — CTA]\n${cta}\n\n` +
+    `🎵 Suggested audio: Trending audio / motivational beat\n📊 Add poll sticker: "Do you agree? Yes / No"`;
+}
+
+function generateCarousel(topicTitle: string, topicLower: string, style: ToneStyle, platform: string, words: string[]): string {
+  const opener = pickRandom(style.openers);
+  const tips = shuffleAndPick(style.tips, 5);
+  const insight = pickRandom(style.insights);
+  const cta = pickRandom(style.ctas);
+
+  return `🖼️ CAROUSEL POST: ${topicTitle}\n\n` +
+    `📌 Slide 1 (Cover):\n"${opener}"\nBold title with topic image\n\n` +
+    `📌 Slide 2:\n"${tips[0]}"\nUse a relevant icon or illustration\n\n` +
+    `📌 Slide 3:\n"${tips[1]}"\nInclude a supporting visual or stat\n\n` +
+    `📌 Slide 4:\n"${tips[2]}"\nAdd a before/after or comparison\n\n` +
+    `📌 Slide 5:\n"${tips[3]}"\nShowcase an example or case study\n\n` +
+    `📌 Slide 6:\n"${tips[4]}"\nHighlight a key quote or data point\n\n` +
+    `📌 Slide 7 (Summary):\n"${insight}"\n\n` +
+    `📌 Slide 8 (CTA):\n"${cta}"\nInclude profile tag and save reminder\n\n` +
+    `🎨 Design tips: Use consistent brand colors, 1080×1080px, readable fonts`;
 }
 
 function generateSmartHashtags(topic: string, platform: string): string[] {
