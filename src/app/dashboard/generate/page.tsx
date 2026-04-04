@@ -67,20 +67,53 @@ export default function GeneratePage() {
     setMediaPreview(prev => prev.filter((_, i) => i !== index));
   };
 
+  const [aiError, setAiError] = useState<string | null>(null);
+
   const handleGenerate = async () => {
     if (!topic.trim()) return;
     setGenerating(true);
-    await new Promise(r => setTimeout(r, 1500));
-    const posts = platforms.map(platform => ({
-      id: Math.random().toString(36).slice(2),
-      platform,
-      content: generateContent(topic.trim(), tone, platform, contentType),
-      hashtags: generateSmartHashtags(topic.trim(), platform),
-      mediaUrls: [...mediaUrls],
-      contentType,
-    }));
-    setGenerated(posts);
-    setGenerating(false);
+    setAiError(null);
+
+    try {
+      // Call real AI API
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          topic: topic.trim(),
+          tone,
+          platforms,
+          contentType,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to generate content");
+      }
+
+      const posts = data.posts.map((post: any) => ({
+        ...post,
+        mediaUrls: [...mediaUrls],
+      }));
+      setGenerated(posts);
+    } catch (err: any) {
+      console.error("AI generation error:", err);
+      setAiError(err.message || "AI generation failed");
+      // Fallback to client-side generation
+      const posts = platforms.map(platform => ({
+        id: Math.random().toString(36).slice(2),
+        platform,
+        content: generateContent(topic.trim(), tone, platform, contentType),
+        hashtags: generateSmartHashtags(topic.trim(), platform),
+        mediaUrls: [...mediaUrls],
+        contentType,
+      }));
+      setGenerated(posts);
+    } finally {
+      setGenerating(false);
+    }
   };
 
   const savePost = async (post: any) => {
@@ -199,6 +232,17 @@ export default function GeneratePage() {
           )}
         </div>
       </div>
+
+      {/* AI Error Banner */}
+      {aiError && (
+        <div className="p-4 rounded-xl mb-4 flex items-start gap-3" style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.3)" }}>
+          <span className="text-lg">⚠️</span>
+          <div>
+            <p className="text-sm font-medium" style={{ color: "#f59e0b" }}>AI API unavailable — using smart fallback</p>
+            <p className="text-xs mt-1" style={{ color: "var(--tt-text-muted)" }}>{aiError}. Content was generated using built-in templates. Add your OpenAI API key in Vercel settings for real AI-powered generation.</p>
+          </div>
+        </div>
+      )}
 
       {/* Results with Social Preview */}
       {generated.length > 0 && (
