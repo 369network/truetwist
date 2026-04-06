@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from 'next/server';
 import { listTemplates, getTemplate } from '@/lib/ai/video-templates';
 import { errorResponse } from '@/lib/errors';

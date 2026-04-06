@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
 import Apple from 'next-auth/providers/apple';
