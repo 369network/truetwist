@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { getAuthUser } from "@/middleware/auth";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "",
@@ -93,6 +94,8 @@ const toneInstructions: Record<string, string> = {
 
 export async function POST(request: NextRequest) {
   try {
+    getAuthUser(request);
+
     const body = await request.json();
     const { topic, tone, platforms, contentType } = body;
 
@@ -180,16 +183,16 @@ Be specific to the topic "${topic}" — include real details, insights, or persp
 
         let content = "";
         let hashtags: string[] = [];
-        let viralScore = Math.floor(Math.random() * 30) + 60;
+        let viralScore = 50; // neutral default when AI analysis fails
         let viralFactors: string[] = [];
         let improvements: string[] = [];
         let alternativeHook = "";
         let qualityScore = {
-          readability: 7,
-          hookStrength: 7,
-          ctaClarity: 7,
-          platformFit: 7,
-          authenticity: 7,
+          readability: 5,
+          hookStrength: 5,
+          ctaClarity: 5,
+          platformFit: 5,
+          authenticity: 5,
         };
 
         try {
@@ -211,7 +214,8 @@ Be specific to the topic "${topic}" — include real details, insights, or persp
               authenticity: parsed.qualityScore.authenticity || 7,
             };
           }
-        } catch {
+        } catch (parseError) {
+          console.warn(`[TrueTwist AI] Failed to parse structured response for ${platform}, using raw content with neutral defaults`, parseError);
           content = rawContent;
           hashtags = topic
             .split(/\s+/)

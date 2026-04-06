@@ -113,38 +113,30 @@ export async function getUserFeedbackStats(
 
 /**
  * Computes a preference profile from feedback data.
- * Returns the tones, templates, and platforms that
- * produce the highest-quality results for a user.
+ * Returns the platforms that produce the highest-quality results
+ * and the average edit distance (how much users modify generated content).
  */
 export async function getUserPreferences(
   userId: string,
   daysBack: number = 90
 ): Promise<{
-  preferredTones: string[];
-  preferredTemplates: string[];
   bestPlatforms: string[];
   avgEditDistance: number;
 }> {
   const since = new Date();
   since.setDate(since.getDate() - daysBack);
 
-  // Get positive-signal feedbacks with their generation data
   const feedbacks = await prisma.contentFeedback.findMany({
     where: {
       userId,
       createdAt: { gte: since },
       action: { in: ['used', 'favorited', 'shared'] },
     },
-    include: {
-      generation: {
-        select: { prompt: true, modelUsed: true, generationType: true },
-      },
-    },
+    select: { platform: true, editDistance: true },
     orderBy: { createdAt: 'desc' },
     take: 200,
   });
 
-  // Aggregate platform preferences
   const platformCounts: Record<string, number> = {};
   let totalEditDistance = 0;
   let editCount = 0;
@@ -165,8 +157,6 @@ export async function getUserPreferences(
     .map(([p]) => p);
 
   return {
-    preferredTones: [],      // populated when tone is tracked in generation metadata
-    preferredTemplates: [],  // populated when template is tracked
     bestPlatforms,
     avgEditDistance: editCount > 0 ? totalEditDistance / editCount : 0,
   };
@@ -175,14 +165,30 @@ export async function getUserPreferences(
 /**
  * Computes a weighted feedback score for a specific generation.
  * Higher scores indicate content the user found more useful.
+ * Applies exponential recency bias — newer feedback weighs more.
  */
 export async function getGenerationScore(generationId: string): Promise<number> {
   const feedbacks = await prisma.contentFeedback.findMany({
     where: { generationId },
-    select: { signalWeight: true },
+    select: { signalWeight: true, createdAt: true },
+    orderBy: { createdAt: 'desc' },
   });
 
   if (feedbacks.length === 0) return 0;
 
-  return feedbacks.reduce((sum: number, f: { signalWeight: number }) => sum + f.signalWeight, 0) / feedbacks.length;
+  const now = Date.now();
+  const HALF_LIFE_DAYS = 14; // feedback signal halves every 14 days
+  const lambda = Math.LN2 / (HALF_LIFE_DAYS * 24 * 60 * 60 * 1000);
+
+  let weightedSum = 0;
+  let totalWeight = 0;
+
+  for (const f of feedbacks) {
+    const ageMs = now - new Date(f.createdAt).getTime();
+    const recencyWeight = Math.exp(-lambda * ageMs);
+    weightedSum += f.signalWeight * recencyWeight;
+    totalWeight += recencyWeight;
+  }
+
+  return totalWeight > 0 ? weightedSum / totalWeight : 0;
 }

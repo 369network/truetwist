@@ -1,4 +1,5 @@
 import { openai } from './openai-client';
+import { getTextModelConfig, estimateTokenCost } from './model-config';
 import { PLATFORM_CONSTRAINTS, type Platform } from '@/lib/social/types';
 import type {
   BrandContext,
@@ -96,27 +97,20 @@ Generate one variant per platform per variation. Total variants: ${variantCount 
   return prompt;
 }
 
-// Cost estimates in cents (per 1M tokens) — gpt-4o-mini pricing
-const GPT4O_INPUT_COST_PER_M = 15; // $0.15 per 1M input tokens
-const GPT4O_OUTPUT_COST_PER_M = 60; // $0.60 per 1M output tokens
-
-function estimateCost(inputTokens: number, outputTokens: number): number {
-  const inputCost = (inputTokens / 1_000_000) * GPT4O_INPUT_COST_PER_M;
-  const outputCost = (outputTokens / 1_000_000) * GPT4O_OUTPUT_COST_PER_M;
-  return Math.ceil(inputCost + outputCost);
-}
+// Cost estimation delegated to model-config.ts
 
 export async function generateText(
   request: TextGenerationRequest,
   brand: BrandContext
 ): Promise<TextGenerationResult> {
   const startTime = Date.now();
+  const modelConfig = getTextModelConfig();
 
   const systemPrompt = buildSystemPrompt(brand);
   const userPrompt = buildUserPrompt(request, brand);
 
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: modelConfig.model,
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt },
@@ -152,10 +146,10 @@ export async function generateText(
 
   return {
     variants,
-    model: 'gpt-4o-mini',
+    model: modelConfig.model,
     tokensInput,
     tokensOutput,
-    costCents: estimateCost(tokensInput, tokensOutput),
+    costCents: estimateTokenCost(tokensInput, tokensOutput, modelConfig),
     durationMs,
   };
 }
@@ -167,8 +161,10 @@ export async function generateHashtags(
 ): Promise<string[]> {
   const constraints = PLATFORM_CONSTRAINTS[platform];
 
+  const modelConfig = getTextModelConfig();
+
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: modelConfig.model,
     messages: [
       {
         role: 'system',
