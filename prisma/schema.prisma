@@ -47,6 +47,7 @@ model User {
   webhookEndpoints     WebhookEndpoint[]
   creditBalance        CreditBalance?
   creditTransactions   CreditTransaction[]
+  contentFeedbacks     ContentFeedback[]
 
   @@map("users")
 }
@@ -557,6 +558,29 @@ model AiGeneration {
   @@index([userId])
   @@index([generationType])
   @@map("ai_generations")
+
+  feedbacks ContentFeedback[]
+}
+
+// ============================================
+// CONTENT FEEDBACK (AI generation quality signals)
+// ============================================
+
+model ContentFeedback {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  generationId String   @map("generation_id")
+  action       String   // used, edited, discarded, favorited, regenerated, shared
+  metadata     Json     @default("{}")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  generation AiGeneration @relation(fields: [generationId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([generationId])
+  @@index([action])
+  @@map("content_feedback")
 }
 
 // ============================================

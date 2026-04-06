@@ -82,7 +82,7 @@ describe('Text Generation Service', () => {
       const result = await generateText(mockRequest, mockBrand);
 
       expect(result.variants).toHaveLength(4);
-      expect(result.model).toBe('gpt-4o');
+      expect(result.model).toBe('gpt-4o-mini');
       expect(result.tokensInput).toBe(500);
       expect(result.tokensOutput).toBe(200);
       expect(result.costCents).toBeGreaterThan(0);
@@ -198,7 +198,7 @@ describe('Text Generation Service', () => {
 
       expect(openai.chat.completions.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          model: 'gpt-4o',
+          model: 'gpt-4o-mini',
           response_format: { type: 'json_object' },
         })
       );

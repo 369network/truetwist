@@ -187,6 +187,96 @@ describe('AbTestService', () => {
     });
   });
 
+  describe('checkBayesianSignificance', () => {
+    it('should return ~0.5 probability when variants are identical', async () => {
+      vi.mocked(prisma.abTest.findUniqueOrThrow).mockResolvedValue({
+        id: 'test-1',
+        targetMetric: 'engagement_rate',
+        minSampleSize: 100,
+        variants: [
+          { id: 'a', label: 'A', impressions: 1000, reach: 800, engagements: 100, clicks: 50, engagementRate: 10 },
+          { id: 'b', label: 'B', impressions: 1000, reach: 800, engagements: 100, clicks: 50, engagementRate: 10 },
+        ],
+      } as any);
+
+      const result = await service.checkBayesianSignificance('test-1');
+
+      // With equal variants, P(B wins) should be ~0.5 (±0.05 tolerance for MC variance)
+      expect(result.probabilityBWins).toBeGreaterThan(0.4);
+      expect(result.probabilityBWins).toBeLessThan(0.6);
+      expect(result.sufficient).toBe(false);
+    });
+
+    it('should detect clear winner with large effect size', async () => {
+      vi.mocked(prisma.abTest.findUniqueOrThrow).mockResolvedValue({
+        id: 'test-1',
+        targetMetric: 'engagement_rate',
+        minSampleSize: 100,
+        variants: [
+          { id: 'a', label: 'A', impressions: 5000, reach: 4000, engagements: 200, clicks: 50, engagementRate: 4 },
+          { id: 'b', label: 'B', impressions: 5000, reach: 4000, engagements: 500, clicks: 100, engagementRate: 10 },
+        ],
+      } as any);
+
+      const result = await service.checkBayesianSignificance('test-1');
+
+      expect(result.probabilityBWins).toBeGreaterThan(0.95);
+      expect(result.sufficient).toBe(true);
+      expect(result.expectedLiftPercent).toBeGreaterThan(0);
+      expect(result.reason).toContain('wins');
+    });
+
+    it('should return insufficient for few observations', async () => {
+      vi.mocked(prisma.abTest.findUniqueOrThrow).mockResolvedValue({
+        id: 'test-1',
+        targetMetric: 'engagement_rate',
+        minSampleSize: 100,
+        variants: [
+          { id: 'a', label: 'A', impressions: 10, reach: 8, engagements: 3, clicks: 1, engagementRate: 30 },
+          { id: 'b', label: 'B', impressions: 10, reach: 8, engagements: 4, clicks: 2, engagementRate: 40 },
+        ],
+      } as any);
+
+      const result = await service.checkBayesianSignificance('test-1');
+
+      // Small sample — should not be sufficient
+      expect(result.sufficient).toBe(false);
+    });
+
+    it('should return credible interval as tuple', async () => {
+      vi.mocked(prisma.abTest.findUniqueOrThrow).mockResolvedValue({
+        id: 'test-1',
+        targetMetric: 'engagement_rate',
+        minSampleSize: 100,
+        variants: [
+          { id: 'a', label: 'A', impressions: 1000, reach: 800, engagements: 100, clicks: 50, engagementRate: 10 },
+          { id: 'b', label: 'B', impressions: 1000, reach: 800, engagements: 150, clicks: 70, engagementRate: 15 },
+        ],
+      } as any);
+
+      const result = await service.checkBayesianSignificance('test-1');
+
+      expect(result.credibleInterval).toHaveLength(2);
+      expect(result.credibleInterval[0]).toBeLessThan(result.credibleInterval[1]);
+    });
+
+    it('should handle single variant gracefully', async () => {
+      vi.mocked(prisma.abTest.findUniqueOrThrow).mockResolvedValue({
+        id: 'test-1',
+        targetMetric: 'engagement_rate',
+        minSampleSize: 100,
+        variants: [
+          { id: 'a', label: 'A', impressions: 500, reach: 400, engagements: 50, clicks: 10, engagementRate: 10 },
+        ],
+      } as any);
+
+      const result = await service.checkBayesianSignificance('test-1');
+
+      expect(result.probabilityBWins).toBe(0.5);
+      expect(result.sufficient).toBe(false);
+    });
+  });
+
   describe('getTestHistory', () => {
     it('should return tests ordered by createdAt desc', async () => {
       vi.mocked(prisma.abTest.findMany).mockResolvedValue([

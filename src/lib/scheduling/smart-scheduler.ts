@@ -109,6 +109,10 @@ export interface OptimalSlot {
   isDefault: boolean; // true if based on defaults, false if data-driven
 }
 
+export interface AudienceSchedulingRequest extends SchedulingRequest {
+  contentCategory?: string;
+}
+
 export interface SchedulingRequest {
   userId: string;
   socialAccountId: string;
@@ -412,6 +416,98 @@ export class SmartScheduler {
     }
 
     return { valid: true };
+  }
+
+  /**
+   * Per-audience optimal slot analysis.
+   * Groups historical performance by content template/type and finds
+   * time slots where specific content categories perform best.
+   * This enables "educational posts do best at 8am, promotional at 6pm" insights.
+   */
+  async getAudienceOptimalSlots(
+    request: AudienceSchedulingRequest
+  ): Promise<OptimalSlot[]> {
+    const { socialAccountId, platform, contentCategory, count = 3 } = request;
+
+    if (!contentCategory) {
+      return this.getOptimalSlots(request);
+    }
+
+    // Fetch posted schedules filtered by content category (stored in post metadata)
+    const schedules = await prisma.postSchedule.findMany({
+      where: {
+        socialAccountId,
+        platform,
+        status: 'posted',
+        postedAt: { not: null },
+        post: { contentType: contentCategory },
+      },
+      include: {
+        analytics: {
+          orderBy: { fetchedAt: 'desc' },
+          take: 1,
+        },
+      },
+      orderBy: { postedAt: 'desc' },
+      take: 100,
+    });
+
+    // If insufficient category-specific data, fall back to general scheduler
+    if (schedules.length < 3) {
+      return this.getOptimalSlots(request);
+    }
+
+    // Build category-specific scoring map
+    const categorySlots: Record<string, { totalScore: number; count: number }> = {};
+
+    for (const schedule of schedules) {
+      if (!schedule.postedAt || !schedule.analytics[0]) continue;
+
+      const postedDate = new Date(schedule.postedAt);
+      const dayOfWeek = postedDate.getUTCDay();
+      const hourUtc = postedDate.getUTCHours();
+      const key = `${dayOfWeek}:${hourUtc}`;
+
+      const a = schedule.analytics[0];
+      const engagementScore =
+        a.likes * 1 + a.comments * 3 + a.shares * 5 + a.saves * 4 + a.clicks * 2;
+      const normalized = a.reach > 0 ? engagementScore / a.reach : engagementScore;
+
+      if (!categorySlots[key]) categorySlots[key] = { totalScore: 0, count: 0 };
+      categorySlots[key].totalScore += normalized;
+      categorySlots[key].count += 1;
+    }
+
+    // Generate candidates using category-specific scores
+    const targetDate = request.preferredDate || new Date();
+    const candidates: OptimalSlot[] = [];
+
+    for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+      const date = new Date(targetDate);
+      date.setDate(date.getDate() + dayOffset);
+
+      for (let hour = 0; hour < 24; hour++) {
+        const slotDate = new Date(date);
+        slotDate.setUTCHours(hour, 0, 0, 0);
+        if (slotDate.getTime() <= Date.now()) continue;
+
+        const dayOfWeek = slotDate.getUTCDay();
+        const key = `${dayOfWeek}:${hour}`;
+        const catData = categorySlots[key];
+
+        if (catData && catData.count >= 1) {
+          candidates.push({
+            scheduledAt: slotDate,
+            score: catData.totalScore / catData.count,
+            isDefault: false,
+          });
+        }
+      }
+    }
+
+    const conflictFree = await this.filterConflicts(candidates, socialAccountId, platform);
+    conflictFree.sort((a, b) => b.score - a.score);
+    return conflictFree.slice(0, count);
   }
 }
 

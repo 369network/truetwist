@@ -1,5 +1,6 @@
 import { openai } from './openai-client';
 import { PLATFORM_CONSTRAINTS, type Platform } from '@/lib/social/types';
+import { AI_TEXT_MODEL, estimateModelCost } from './model-config';
 import type {
   BrandContext,
   TextGenerationRequest,
@@ -96,15 +97,6 @@ Generate one variant per platform per variation. Total variants: ${variantCount 
   return prompt;
 }
 
-// Cost estimates in cents (per 1M tokens)
-const GPT4O_INPUT_COST_PER_M = 250; // $2.50 per 1M input tokens
-const GPT4O_OUTPUT_COST_PER_M = 1000; // $10.00 per 1M output tokens
-
-function estimateCost(inputTokens: number, outputTokens: number): number {
-  const inputCost = (inputTokens / 1_000_000) * GPT4O_INPUT_COST_PER_M;
-  const outputCost = (outputTokens / 1_000_000) * GPT4O_OUTPUT_COST_PER_M;
-  return Math.ceil(inputCost + outputCost);
-}
 
 export async function generateText(
   request: TextGenerationRequest,
@@ -116,7 +108,7 @@ export async function generateText(
   const userPrompt = buildUserPrompt(request, brand);
 
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    model: AI_TEXT_MODEL,
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt },
@@ -152,10 +144,10 @@ export async function generateText(
 
   return {
     variants,
-    model: 'gpt-4o',
+    model: AI_TEXT_MODEL,
     tokensInput,
     tokensOutput,
-    costCents: estimateCost(tokensInput, tokensOutput),
+    costCents: estimateModelCost(AI_TEXT_MODEL, tokensInput, tokensOutput),
     durationMs,
   };
 }
@@ -168,7 +160,7 @@ export async function generateHashtags(
   const constraints = PLATFORM_CONSTRAINTS[platform];
 
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    model: AI_TEXT_MODEL,
     messages: [
       {
         role: 'system',
