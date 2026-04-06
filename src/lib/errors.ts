@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
+import * as Sentry from '@sentry/nextjs';
 import type { ApiError } from '@/types';
+import { createLogger } from '@/lib/logger';
 
 export class AppError extends Error {
   constructor(
@@ -21,7 +23,9 @@ export function errorResponse(error: unknown): NextResponse<{ error: ApiError }>
     );
   }
 
-  console.error('Unhandled error:', error);
+  const logger = createLogger('api.error');
+  logger.error('Unhandled error', { error: error instanceof Error ? error.message : String(error) });
+  Sentry.captureException(error);
   return NextResponse.json(
     { error: { error: 'Internal server error', code: 'INTERNAL_ERROR' } },
     { status: 500 }
