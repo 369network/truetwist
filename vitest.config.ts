@@ -9,6 +9,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/lib/**', 'src/middleware/**'],
+      reporter: ['text', 'text-summary'],
     },
     css: false,
   },
