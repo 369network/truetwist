@@ -55,14 +55,20 @@ export async function POST(request: NextRequest) {
       }),
       prisma.business.findMany({
         where: { userId: user.sub },
-        include: { competitors: true },
+        select: {
+          id: true, name: true, industry: true, description: true, website: true,
+          brandVoice: true, createdAt: true, updatedAt: true,
+          competitors: { select: { id: true, name: true, websiteUrl: true, createdAt: true } },
+        },
       }),
       prisma.post.findMany({
         where: { userId: user.sub },
-        include: {
-          media: true,
-          schedules: true,
-          comments: true,
+        select: {
+          id: true, contentText: true, contentType: true, status: true,
+          aiGenerated: true, viralScore: true, createdAt: true, updatedAt: true,
+          media: { select: { id: true, mediaType: true, mediaUrl: true, altText: true } },
+          schedules: { select: { id: true, platform: true, scheduledAt: true, postedAt: true, status: true } },
+          comments: { select: { id: true, content: true, createdAt: true } },
         },
       }),
       prisma.socialAccount.findMany({

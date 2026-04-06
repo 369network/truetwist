@@ -18,64 +18,105 @@ export async function evaluateAndCreateAlerts(): Promise<number> {
     where: { isActive: true },
   });
 
+  if (prefs.length === 0) return 0;
+
+  // Fetch all recent trends once (shared across all prefs) using the lowest minViralScore
+  const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const minScore = Math.min(...prefs.map(p => p.minViralScore));
+
+  const allRecentTrends = await prisma.viralTrend.findMany({
+    where: {
+      viralScore: { gte: minScore },
+      lastUpdatedAt: { gte: fourHoursAgo },
+    },
+    orderBy: { viralScore: 'desc' },
+  });
+
+  // Fetch all existing alerts for the relevant users in one query
+  const userIds = Array.from(new Set(prefs.map((p: any) => p.userId as string)));
+  const trendIds = allRecentTrends.map(t => t.id);
+
+  const existingAlerts = trendIds.length > 0 && userIds.length > 0
+    ? await prisma.trendAlert.findMany({
+        where: {
+          userId: { in: userIds },
+          trendId: { in: trendIds },
+          createdAt: { gte: oneDayAgo },
+        },
+        select: { userId: true, trendId: true },
+      })
+    : [];
+
+  const existingAlertSet = new Set(
+    existingAlerts.map(a => `${a.userId}:${a.trendId}`)
+  );
+
   let alertsCreated = 0;
+  const alertsToCreate: Array<{
+    userId: string; trendId: string; alertType: string;
+    title: string; description: string; severity: string; metadata: any;
+  }> = [];
+  const webhooksToSend: Array<{ url: string; payload: unknown }> = [];
 
   for (const pref of prefs) {
     const nicheKeywords = (pref.nicheKeywords as string[]) || [];
     const platforms = (pref.platforms as string[]) || [];
     const alertTypes = (pref.alertTypes as string[]) || [];
 
-    // Find recent trends matching user preferences
-    const recentTrends = await prisma.viralTrend.findMany({
-      where: {
-        viralScore: { gte: pref.minViralScore },
-        lastUpdatedAt: { gte: new Date(Date.now() - 4 * 60 * 60 * 1000) }, // last 4 hours
-        ...(platforms.length > 0 ? { platform: { in: platforms } } : {}),
-      },
-      orderBy: { viralScore: 'desc' },
-      take: 50,
-    });
+    // Filter trends for this pref from the pre-fetched set
+    const matchingTrends = allRecentTrends
+      .filter(t => t.viralScore >= pref.minViralScore)
+      .filter(t => platforms.length === 0 || platforms.includes(t.platform))
+      .slice(0, 50);
 
-    for (const trend of recentTrends) {
-      // Check if alert already exists for this user+trend combo
-      const existing = await prisma.trendAlert.findFirst({
-        where: {
-          userId: pref.userId,
-          trendId: trend.id,
-          createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
-        },
-      });
-      if (existing) continue;
+    for (const trend of matchingTrends) {
+      if (existingAlertSet.has(`${pref.userId}:${trend.id}`)) continue;
 
       const alertType = determineAlertType(trend, nicheKeywords, alertTypes);
       if (!alertType) continue;
 
-      await prisma.trendAlert.create({
-        data: {
-          userId: pref.userId,
-          trendId: trend.id,
-          alertType,
-          title: buildAlertTitle(alertType, trend.title),
-          description: buildAlertDescription(alertType, trend),
-          severity: trend.viralScore > 80 ? 'critical' : trend.viralScore > 50 ? 'warning' : 'info',
-          metadata: {
-            viralScore: trend.viralScore,
-            platform: trend.platform,
-            lifecycle: trend.lifecycle,
-            velocity: trend.velocity,
-          },
+      alertsToCreate.push({
+        userId: pref.userId,
+        trendId: trend.id,
+        alertType,
+        title: buildAlertTitle(alertType, trend.title),
+        description: buildAlertDescription(alertType, trend),
+        severity: trend.viralScore > 80 ? 'critical' : trend.viralScore > 50 ? 'warning' : 'info',
+        metadata: {
+          viralScore: trend.viralScore,
+          platform: trend.platform,
+          lifecycle: trend.lifecycle,
+          velocity: trend.velocity,
         },
       });
-      alertsCreated++;
 
-      // Send webhook if configured
+      // Mark as existing to prevent duplicates within this batch
+      existingAlertSet.add(`${pref.userId}:${trend.id}`);
+
       if (pref.webhookUrl && pref.digestFrequency === 'realtime') {
-        await sendWebhook(pref.webhookUrl, {
-          type: alertType,
-          trend: { title: trend.title, platform: trend.platform, viralScore: trend.viralScore },
-        }).catch(() => {}); // Don't fail on webhook errors
+        webhooksToSend.push({
+          url: pref.webhookUrl,
+          payload: {
+            type: alertType,
+            trend: { title: trend.title, platform: trend.platform, viralScore: trend.viralScore },
+          },
+        });
       }
     }
+  }
+
+  // Batch insert all alerts
+  if (alertsToCreate.length > 0) {
+    const result = await prisma.trendAlert.createMany({ data: alertsToCreate });
+    alertsCreated = result.count;
+  }
+
+  // Fire webhooks concurrently (non-blocking)
+  if (webhooksToSend.length > 0) {
+    await Promise.allSettled(
+      webhooksToSend.map(w => sendWebhook(w.url, w.payload))
+    );
   }
 
   return alertsCreated;
@@ -263,21 +304,27 @@ async function findNicheMatches(
   platforms: string[],
   since: Date
 ): Promise<Array<{ title: string; keyword: string; viralScore: number }>> {
+  if (keywords.length === 0) return [];
+
+  // Fetch all matching trends in one query using OR conditions instead of per-keyword loop
+  const trends = await prisma.viralTrend.findMany({
+    where: {
+      OR: keywords.map(kw => ({ title: { contains: kw, mode: 'insensitive' as const } })),
+      lastUpdatedAt: { gte: since },
+      ...(platforms.length > 0 ? { platform: { in: platforms } } : {}),
+    },
+    orderBy: { viralScore: 'desc' },
+    select: { title: true, viralScore: true },
+    take: 30, // fetch enough to cover all keywords
+  });
+
+  // Match each trend back to keywords
   const results: Array<{ title: string; keyword: string; viralScore: number }> = [];
-
-  for (const keyword of keywords) {
-    const trends = await prisma.viralTrend.findMany({
-      where: {
-        title: { contains: keyword, mode: 'insensitive' },
-        lastUpdatedAt: { gte: since },
-        ...(platforms.length > 0 ? { platform: { in: platforms } } : {}),
-      },
-      orderBy: { viralScore: 'desc' },
-      take: 3,
-    });
-
-    for (const t of trends) {
-      results.push({ title: t.title, keyword, viralScore: t.viralScore });
+  for (const t of trends) {
+    const titleLower = t.title.toLowerCase();
+    const matchedKeyword = keywords.find(kw => titleLower.includes(kw.toLowerCase()));
+    if (matchedKeyword) {
+      results.push({ title: t.title, keyword: matchedKeyword, viralScore: t.viralScore });
     }
   }
 

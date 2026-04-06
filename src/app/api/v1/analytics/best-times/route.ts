@@ -28,8 +28,13 @@ export async function GET(request: NextRequest) {
 
     const schedules = await prisma.postSchedule.findMany({
       where: scheduleWhere,
-      include: {
-        analytics: { orderBy: { fetchedAt: 'desc' }, take: 1 },
+      select: {
+        scheduledAt: true,
+        analytics: {
+          select: { likes: true, comments: true, shares: true, saves: true, impressions: true },
+          orderBy: { fetchedAt: 'desc' },
+          take: 1,
+        },
       },
     });
 
@@ -72,20 +77,22 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Also pull optimal posting times from the pre-calculated table
-    const optimalTimes = await prisma.optimalPostingTime.findMany({
-      where: {
-        socialAccountId: {
-          in: (await prisma.socialAccount.findMany({
-            where: { userId: user.sub, isActive: true },
-            select: { id: true },
-          })).map(a => a.id),
-        },
-        ...(platform ? { platform } : {}),
-      },
-      orderBy: { score: 'desc' },
-      take: 10,
-    });
+    // Pull optimal posting times — fetch account IDs separately to avoid inline subquery
+    const activeAccountIds = (await prisma.socialAccount.findMany({
+      where: { userId: user.sub, isActive: true },
+      select: { id: true },
+    })).map(a => a.id);
+
+    const optimalTimes = activeAccountIds.length > 0
+      ? await prisma.optimalPostingTime.findMany({
+          where: {
+            socialAccountId: { in: activeAccountIds },
+            ...(platform ? { platform } : {}),
+          },
+          orderBy: { score: 'desc' },
+          take: 10,
+        })
+      : [];
 
     return NextResponse.json({
       data: {

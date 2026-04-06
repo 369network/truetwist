@@ -131,76 +131,96 @@ async function processCollectionJob(job: Job<CollectionJobData>): Promise<Compet
     },
   });
 
-  // Upsert posts (insert new, update existing)
+  // Upsert posts using prisma.upsert to eliminate N+1 find+create/update loop.
+  // Batch viral alerts to reduce individual inserts.
   let newPosts = 0;
   let updatedPosts = 0;
+  const viralAlerts: Array<{
+    businessId: string;
+    competitorId: string;
+    competitorAccountId: string;
+    alertType: string;
+    title: string;
+    description: string;
+    severity: string;
+    metadata: any;
+  }> = [];
+
+  // Fetch existing posts in one query to detect newly-viral posts
+  const platformPostIds = recentPosts.map(p => p.platformPostId);
+  const existingPosts = platformPostIds.length > 0
+    ? await prisma.competitorPost.findMany({
+        where: { platformPostId: { in: platformPostIds } },
+        select: { platformPostId: true, isViral: true },
+      })
+    : [];
+  const existingMap = new Map(existingPosts.map(p => [p.platformPostId, p]));
 
   for (const post of recentPosts) {
     const engagementRate = profileData.followerCount > 0
       ? (post.likes + post.comments + post.shares + post.saves) / profileData.followerCount
       : 0;
     const isViral = engagementRate > avgEngagementRate * 3;
+    const existing = existingMap.get(post.platformPostId);
 
-    const existing = await prisma.competitorPost.findUnique({
+    await prisma.competitorPost.upsert({
       where: { platformPostId: post.platformPostId },
+      update: {
+        likes: post.likes,
+        comments: post.comments,
+        shares: post.shares,
+        saves: post.saves,
+        engagementRate,
+        isViral,
+        scrapedAt: new Date(),
+      },
+      create: {
+        competitorAccountId,
+        platformPostId: post.platformPostId,
+        contentText: post.contentText,
+        contentType: post.contentType,
+        mediaUrls: post.mediaUrls,
+        hashtags: post.hashtags,
+        likes: post.likes,
+        comments: post.comments,
+        shares: post.shares,
+        saves: post.saves,
+        engagementRate,
+        isViral,
+        postedAt: post.postedAt,
+      },
     });
 
     if (existing) {
-      await prisma.competitorPost.update({
-        where: { platformPostId: post.platformPostId },
-        data: {
-          likes: post.likes,
-          comments: post.comments,
-          shares: post.shares,
-          saves: post.saves,
-          engagementRate,
-          isViral,
-          scrapedAt: new Date(),
-        },
-      });
       updatedPosts++;
     } else {
-      await prisma.competitorPost.create({
-        data: {
-          competitorAccountId,
-          platformPostId: post.platformPostId,
-          contentText: post.contentText,
-          contentType: post.contentType,
-          mediaUrls: post.mediaUrls,
-          hashtags: post.hashtags,
-          likes: post.likes,
-          comments: post.comments,
-          shares: post.shares,
-          saves: post.saves,
-          engagementRate,
-          isViral,
-          postedAt: post.postedAt,
-        },
-      });
       newPosts++;
     }
 
-    // Create viral alert if this is a newly viral post
+    // Collect viral alerts for batch insert
     if (isViral && !existing?.isViral) {
-      await prisma.competitorAlert.create({
-        data: {
-          businessId,
-          competitorId: job.data.competitorId,
-          competitorAccountId,
-          alertType: 'viral_post',
-          title: `Viral post detected from ${handle}`,
-          description: `A post from @${handle} on ${platform} is getting ${engagementRate > avgEngagementRate * 5 ? '5x+' : '3x+'} normal engagement (${post.likes} likes, ${post.comments} comments).`,
-          severity: engagementRate > avgEngagementRate * 5 ? 'critical' : 'warning',
-          metadata: {
-            postId: post.platformPostId,
-            engagementRate,
-            normalRate: avgEngagementRate,
-            likes: post.likes,
-            comments: post.comments,
-          } as any,
-        },
+      viralAlerts.push({
+        businessId,
+        competitorId: job.data.competitorId,
+        competitorAccountId,
+        alertType: 'viral_post',
+        title: `Viral post detected from ${handle}`,
+        description: `A post from @${handle} on ${platform} is getting ${engagementRate > avgEngagementRate * 5 ? '5x+' : '3x+'} normal engagement (${post.likes} likes, ${post.comments} comments).`,
+        severity: engagementRate > avgEngagementRate * 5 ? 'critical' : 'warning',
+        metadata: {
+          postId: post.platformPostId,
+          engagementRate,
+          normalRate: avgEngagementRate,
+          likes: post.likes,
+          comments: post.comments,
+        } as any,
       });
     }
+  }
+
+  // Batch insert viral alerts
+  if (viralAlerts.length > 0) {
+    await prisma.competitorAlert.createMany({ data: viralAlerts });
   }
 
   // Detect strategy changes
@@ -276,14 +296,14 @@ async function detectStrategyChanges(
     }
   }
 
-  for (const alert of alerts) {
-    await prisma.competitorAlert.create({
-      data: {
+  if (alerts.length > 0) {
+    await prisma.competitorAlert.createMany({
+      data: alerts.map(alert => ({
         businessId,
         competitorId,
         competitorAccountId,
         ...alert,
-      },
+      })),
     });
   }
 }

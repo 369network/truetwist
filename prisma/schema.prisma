@@ -491,6 +491,7 @@ model PostAnalytics {
   postSchedule PostSchedule @relation(fields: [postScheduleId], references: [id], onDelete: Cascade)
 
   @@index([postScheduleId])
+  @@index([postScheduleId, fetchedAt])
   @@map("post_analytics")
 }
 
@@ -803,6 +804,8 @@ model ViralTrend {
   @@index([viralScore])
   @@index([lifecycle])
   @@index([discoveredAt])
+  @@index([lastUpdatedAt])
+  @@index([viralScore, lastUpdatedAt])
   @@map("viral_trends")
 }
 
@@ -867,6 +870,7 @@ model Hashtag {
   @@index([competitionLevel])
   @@index([trendDirection])
   @@index([isBanned])
+  @@index([trendDirection, lastUpdatedAt])
   @@map("hashtags")
 }
 
@@ -906,6 +910,7 @@ model TrendAlert {
   @@index([alertType])
   @@index([createdAt])
   @@index([readAt])
+  @@index([userId, trendId, createdAt])
   @@map("trend_alerts")
 }
 
