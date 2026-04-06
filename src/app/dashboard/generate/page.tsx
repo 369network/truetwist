@@ -2,13 +2,26 @@
 import { useState, useRef } from "react";
 import { createClient } from "@/lib/supabase";
 
-const tones = ["Professional", "Casual", "Witty", "Inspirational", "Educational", "Controversial"];
+const tones = ["Professional", "Casual", "Fun & Playful", "Inspirational", "Edgy & Bold", "Educational"];
 const platformList = ["instagram", "twitter", "facebook", "linkedin", "tiktok"];
 const contentTypes = [
   { id: "post", label: "Post", icon: "📝" },
   { id: "story", label: "Story / Reel", icon: "🎬" },
   { id: "carousel", label: "Carousel / Slides", icon: "🖼️" },
   { id: "video", label: "Video Script", icon: "🎥" },
+];
+
+/* TRUA-7: 9 Content Category Templates */
+const contentCategories = [
+  { id: "educational", label: "Educational / Tips", desc: "5 things you didn't know about..." },
+  { id: "behind_scenes", label: "Behind the Scenes", desc: "Show your process and team" },
+  { id: "customer_spotlight", label: "Customer Spotlight", desc: "Testimonials and success stories" },
+  { id: "product_showcase", label: "Product Showcase", desc: "Feature highlights with benefits" },
+  { id: "industry_news", label: "Industry News", desc: "Commentary on trends" },
+  { id: "engagement", label: "Engagement", desc: "Questions, polls, debates" },
+  { id: "promotional", label: "Promotional", desc: "Sales, launches, offers" },
+  { id: "storytelling", label: "Storytelling", desc: "Personal narrative + lesson" },
+  { id: "meme_humor", label: "Meme / Humor", desc: "Relatable industry humor" },
 ];
 
 const platformIcons: Record<string, string> = {
@@ -142,10 +155,37 @@ export default function GeneratePage() {
     if (topic.trim()) handleGenerate();
   };
 
+  const [contentCategory, setContentCategory] = useState("educational");
+
   return (
     <div className="max-w-5xl">
-      <h1 className="text-2xl font-bold mb-2">AI Content Generator</h1>
+      <h1 className="text-2xl font-bold mb-2" style={{ fontFamily: "var(--font-heading)" }}>Content Studio</h1>
       <p className="text-sm mb-8" style={{ color: "var(--tt-text-muted)" }}>Create scroll-stopping posts, stories, reels, and video scripts with AI.</p>
+
+      {/* Content Category Selector (TRUA-7) */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium mb-3" style={{ fontFamily: "var(--font-heading)" }}>Content Category</label>
+        <div className="flex flex-wrap gap-2">
+          {contentCategories.map(cat => (
+            <button
+              key={cat.id}
+              onClick={() => setContentCategory(cat.id)}
+              className="px-3 py-2 rounded-lg text-xs font-medium transition"
+              style={{
+                background: contentCategory === cat.id ? "rgba(99,102,241,0.2)" : "var(--tt-surface)",
+                color: contentCategory === cat.id ? "#a5b4fc" : "var(--tt-text-muted)",
+                border: `1px solid ${contentCategory === cat.id ? "rgba(99,102,241,0.4)" : "var(--tt-border)"}`,
+              }}
+              title={cat.desc}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs mt-2" style={{ color: "var(--tt-text-muted)" }}>
+          {contentCategories.find(c => c.id === contentCategory)?.desc}
+        </p>
+      </div>
 
       {/* Input Section */}
       <div className="p-6 rounded-2xl mb-6" style={{ background: "var(--tt-surface)", border: "1px solid var(--tt-border)" }}>
