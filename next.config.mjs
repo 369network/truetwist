@@ -6,17 +6,16 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // Reduce serverless function size by externalizing heavy server-only packages
-  serverExternalPackages: [
-    'ioredis',
-    'bullmq',
-    'bcryptjs',
-    'jsonwebtoken',
-    'prisma',
-    '@prisma/client',
-  ],
-  // Increase max function size limit
   experimental: {
+    // Reduce serverless function size by externalizing heavy server-only packages
+    serverComponentsExternalPackages: [
+      'ioredis',
+      'bullmq',
+      'bcryptjs',
+      'jsonwebtoken',
+      'prisma',
+      '@prisma/client',
+    ],
     outputFileTracingExcludes: {
       '*': [
         'node_modules/@swc/core-linux-x64-gnu',
