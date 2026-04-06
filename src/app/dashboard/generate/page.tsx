@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 
 const tones = ["Professional", "Casual", "Fun & Playful", "Inspirational", "Edgy & Bold", "Educational"];
@@ -40,11 +41,17 @@ export default function GeneratePage() {
   const [generating, setGenerating] = useState(false);
   const [generated, setGenerated] = useState<any[]>([]);
   const [saving, setSaving] = useState<string | null>(null);
+  const [scheduling, setScheduling] = useState<string | null>(null);
+  const [scheduleModal, setScheduleModal] = useState<any>(null);
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [scheduleTime, setScheduleTime] = useState("");
+  const [useAiTime, setUseAiTime] = useState(true);
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [mediaInput, setMediaInput] = useState("");
   const [mediaPreview, setMediaPreview] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<string>("preview");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
   const supabase = createClient();
 
   const togglePlatform = (p: string) => {
@@ -153,6 +160,81 @@ export default function GeneratePage() {
 
   const regenerate = () => {
     if (topic.trim()) handleGenerate();
+  };
+
+  const openScheduleModal = (post: any) => {
+    const now = new Date();
+    now.setDate(now.getDate() + 1);
+    setScheduleDate(now.toISOString().split("T")[0]);
+    setScheduleTime("09:00");
+    setUseAiTime(true);
+    setScheduleModal(post);
+  };
+
+  const handleSchedulePost = async (post: any) => {
+    setScheduling(post.id);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // First save as post
+      const { data: savedPost, error: saveErr } = await supabase.from("posts").insert({
+        user_id: user.id,
+        content: post.content,
+        title: topic.trim().slice(0, 60),
+        hashtags: post.hashtags,
+        platforms: [post.platform],
+        status: "scheduled",
+        ai_prompt: topic,
+        viral_score: post.viralScore || 0,
+        content_type: contentType,
+        tone,
+        topic: topic.trim(),
+        ai_viral_factors: post.viralFactors || [],
+        ai_improvements: post.improvements || [],
+        alternative_hook: post.alternativeHook || null,
+        media_urls: post.mediaUrls?.length > 0 ? post.mediaUrls : null,
+        scheduled_at: useAiTime ? null : `${scheduleDate}T${scheduleTime}:00`,
+      }).select().single();
+
+      if (saveErr || !savedPost) throw new Error("Failed to save post");
+
+      // Add to schedule queue
+      const scheduledFor = useAiTime
+        ? new Date(new Date(scheduleDate).getTime() + 9 * 60 * 60 * 1000).toISOString()
+        : `${scheduleDate}T${scheduleTime}:00`;
+
+      await supabase.from("schedule_queue").insert({
+        user_id: user.id,
+        post_id: savedPost.id,
+        platform: post.platform,
+        scheduled_for: scheduledFor,
+        ai_recommended: useAiTime,
+        ai_reason: useAiTime ? "AI-optimized posting time for maximum engagement" : "Manually scheduled",
+        status: "queued",
+      });
+
+      // Add calendar event
+      await supabase.from("calendar_events").insert({
+        user_id: user.id,
+        post_id: savedPost.id,
+        title: topic.trim().slice(0, 60),
+        description: post.content.slice(0, 200),
+        scheduled_date: scheduleDate,
+        scheduled_time: scheduleTime + ":00",
+        platforms: [post.platform],
+        color: platformColors[post.platform] || "#6366f1",
+        ai_recommended: useAiTime,
+      });
+
+      setScheduleModal(null);
+      alert("Post scheduled! View it in the Queue or Calendar.");
+    } catch (err: any) {
+      console.error("Schedule error:", err);
+      alert("Failed to schedule: " + (err.message || "Unknown error"));
+    } finally {
+      setScheduling(null);
+    }
   };
 
   const [contentCategory, setContentCategory] = useState("educational");
@@ -298,7 +380,7 @@ export default function GeneratePage() {
           {generated.map(post => (
             <div key={post.id}>
               {activeTab === "preview" ? (
-                <SocialPreviewCard post={post} onSave={savePost} onCopy={copyToClipboard} saving={saving} />
+                <SocialPreviewCard post={post} onSave={savePost} onCopy={copyToClipboard} onSchedule={openScheduleModal} saving={saving} />
               ) : (
                 <div className="p-5 rounded-2xl" style={{ background: "var(--tt-surface)", border: "1px solid var(--tt-border)" }}>
                   <div className="flex items-center justify-between mb-3">
@@ -322,6 +404,84 @@ export default function GeneratePage() {
           ))}
         </div>
       )}
+
+      {/* Schedule Modal */}
+      {scheduleModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setScheduleModal(null)}>
+          <div className="w-full max-w-md p-6 rounded-2xl" style={{ background: "var(--tt-surface)", border: "1px solid var(--tt-border)" }} onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-bold mb-1" style={{ fontFamily: "var(--font-heading)" }}>Schedule Post</h3>
+            <p className="text-xs mb-5" style={{ color: "var(--tt-text-muted)" }}>
+              Schedule this {scheduleModal.platform === "twitter" ? "X" : scheduleModal.platform} post for publishing
+            </p>
+
+            {/* AI Time Toggle */}
+            <div className="flex items-center justify-between p-3 rounded-xl mb-4" style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)" }}>
+              <div className="flex items-center gap-2">
+                <span className="text-sm">✨</span>
+                <div>
+                  <div className="text-sm font-medium" style={{ color: "#a5b4fc" }}>Let AI pick best time</div>
+                  <div className="text-xs" style={{ color: "var(--tt-text-muted)" }}>Optimized for maximum engagement</div>
+                </div>
+              </div>
+              <button
+                onClick={() => setUseAiTime(!useAiTime)}
+                className="w-10 h-5 rounded-full transition relative"
+                style={{ background: useAiTime ? "#6366f1" : "var(--tt-surface-2)" }}
+              >
+                <div className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all" style={{ left: useAiTime ? "22px" : "2px" }} />
+              </button>
+            </div>
+
+            {/* Date/Time Picker */}
+            <div className={`grid grid-cols-2 gap-3 mb-5 transition-opacity ${useAiTime ? "opacity-40 pointer-events-none" : ""}`}>
+              <div>
+                <label className="block text-xs font-medium mb-1.5">Date</label>
+                <input type="date" value={scheduleDate} onChange={e => setScheduleDate(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "var(--tt-surface-2)", border: "1px solid var(--tt-border)", color: "var(--tt-text)" }} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1.5">Time</label>
+                <input type="time" value={scheduleTime} onChange={e => setScheduleTime(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "var(--tt-surface-2)", border: "1px solid var(--tt-border)", color: "var(--tt-text)" }} />
+              </div>
+            </div>
+
+            {/* Post Preview */}
+            <div className="p-3 rounded-xl mb-5" style={{ background: "var(--tt-surface-2)", border: "1px solid var(--tt-border)" }}>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-5 h-5 rounded-full" style={{ background: platformColors[scheduleModal.platform] || "#6366f1" }} />
+                <span className="text-xs font-medium capitalize">{scheduleModal.platform === "twitter" ? "X" : scheduleModal.platform}</span>
+                {scheduleModal.viralScore && (
+                  <span className="text-xs ml-auto" style={{ color: scheduleModal.viralScore >= 80 ? "#10b981" : scheduleModal.viralScore >= 60 ? "#f59e0b" : "#ef4444" }}>
+                    Score: {scheduleModal.viralScore}/100
+                  </span>
+                )}
+              </div>
+              <p className="text-xs line-clamp-3" style={{ color: "var(--tt-text-muted)" }}>{scheduleModal.content}</p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button onClick={() => setScheduleModal(null)} className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium transition" style={{ background: "var(--tt-surface-2)", border: "1px solid var(--tt-border)" }}>
+                Cancel
+              </button>
+              <button
+                onClick={() => handleSchedulePost(scheduleModal)}
+                disabled={scheduling === scheduleModal.id}
+                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition hover:-translate-y-0.5 disabled:opacity-50"
+                style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}
+              >
+                {scheduling === scheduleModal.id ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Scheduling...
+                  </span>
+                ) : "Schedule Post"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -330,7 +490,7 @@ export default function GeneratePage() {
 // Social Media Preview Card — renders posts like real social platforms
 // ============================================================
 
-function SocialPreviewCard({ post, onSave, onCopy, saving }: { post: any; onSave: (p: any) => void; onCopy: (t: string) => void; saving: string | null }) {
+function SocialPreviewCard({ post, onSave, onCopy, onSchedule, saving }: { post: any; onSave: (p: any) => void; onCopy: (t: string) => void; onSchedule: (p: any) => void; saving: string | null }) {
   const pColor = platformColors[post.platform] || "#6366f1";
   const pIcon = platformIcons[post.platform] || "📱";
   const pName = post.platform === "twitter" ? "X (Twitter)" : post.platform;
@@ -356,6 +516,7 @@ function SocialPreviewCard({ post, onSave, onCopy, saving }: { post: any; onSave
         <div className="flex gap-2">
           <button onClick={() => onCopy(post.content + "\n\n" + post.hashtags.map((h: string) => "#" + h).join(" "))} className="px-3 py-1.5 rounded-lg text-xs font-medium transition hover:scale-105" style={{ background: "rgba(99,102,241,0.15)", color: "#a5b4fc", border: "1px solid rgba(99,102,241,0.3)" }}>📋 Copy</button>
           <button onClick={() => onSave(post)} disabled={saving === post.id} className="px-3 py-1.5 rounded-lg text-xs font-medium transition hover:scale-105" style={{ background: "rgba(16,185,129,0.15)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)" }}>{saving === post.id ? "Saving..." : "💾 Save"}</button>
+          <button onClick={() => onSchedule(post)} className="px-3 py-1.5 rounded-lg text-xs font-medium transition hover:scale-105" style={{ background: "rgba(168,85,247,0.15)", color: "#a855f7", border: "1px solid rgba(168,85,247,0.3)" }}>📅 Schedule</button>
         </div>
       </div>
 
