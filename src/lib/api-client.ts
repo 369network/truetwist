@@ -385,4 +385,108 @@ export interface AiSuggestionSlot {
   suggestedPlatforms: string[];
 }
 
+// Video A/B Testing
+export const videoAbTestApi = {
+  list: (params?: { status?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.status) qs.set('status', params.status);
+    return request<{ data: VideoAbTest[] }>(`/ai/video/ab-test?${qs.toString()}`);
+  },
+
+  get: (id: string) => request<{ data: VideoAbTest & { significance: SignificanceResult | null } }>(`/ai/video/ab-test/${id}`),
+
+  create: (data: {
+    businessId: string;
+    name: string;
+    description?: string;
+    targetMetric?: string;
+    baseConfig: {
+      prompt: string;
+      platform: string;
+      template?: string;
+      aspectRatio?: string;
+      durationSeconds?: number;
+    };
+    variationParams: Array<{ field: string; values: string[] }>;
+    autoGenerate?: boolean;
+  }) =>
+    request<{ data: VideoAbTest }>('/ai/video/ab-test', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  action: (id: string, action: 'generate' | 'complete' | 'cancel', winnerId?: string) =>
+    request<{ data: VideoAbTest }>(`/ai/video/ab-test/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ action, winnerId }),
+    }),
+
+  updateMetrics: (testId: string, variantId: string, metrics: {
+    impressions?: number;
+    clicks?: number;
+    watchTimeSeconds?: number;
+    completionRate?: number;
+    conversions?: number;
+    engagements?: number;
+  }) =>
+    request<{ data: VideoAbTestVariant }>(`/ai/video/ab-test/${testId}/variants/${variantId}/metrics`, {
+      method: 'PATCH',
+      body: JSON.stringify(metrics),
+    }),
+
+  selectWinner: (testId: string, winnerId?: string) =>
+    request<{ data: VideoAbTest }>(`/ai/video/ab-test/${testId}/winner`, {
+      method: 'POST',
+      body: JSON.stringify({ winnerId }),
+    }),
+};
+
+export interface VideoAbTest {
+  id: string;
+  name: string;
+  description: string | null;
+  status: 'draft' | 'generating' | 'running' | 'completed' | 'cancelled';
+  targetMetric: string;
+  baseConfig: {
+    prompt: string;
+    platform: string;
+    template?: string;
+    aspectRatio?: string;
+    durationSeconds?: number;
+  };
+  variationParams: Array<{ field: string; values: string[] }>;
+  variants: VideoAbTestVariant[];
+  winnerId: string | null;
+  winnerReason: string | null;
+  startAt: string | null;
+  endAt: string | null;
+  createdAt: string;
+}
+
+export interface VideoAbTestVariant {
+  id: string;
+  label: string;
+  config: Record<string, unknown>;
+  videoJobId: string | null;
+  videoUrl: string | null;
+  thumbnailUrl: string | null;
+  status: string;
+  impressions: number;
+  clicks: number;
+  watchTimeSeconds: number;
+  completionRate: number;
+  conversions: number;
+  engagements: number;
+  engagementRate: number;
+  isWinner: boolean;
+}
+
+export interface SignificanceResult {
+  significant: boolean;
+  confidence: number;
+  winnerId: string | null;
+  winnerLabel: string | null;
+  reason: string;
+}
+
 export { ApiClientError };

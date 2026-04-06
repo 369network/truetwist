@@ -47,6 +47,7 @@ model User {
   webhookEndpoints     WebhookEndpoint[]
   creditBalance        CreditBalance?
   creditTransactions   CreditTransaction[]
+  videoAbTests         VideoAbTest[]
 
   @@map("users")
 }
@@ -595,10 +596,11 @@ model VideoGenerationJob {
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
-  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  parentJob  VideoGenerationJob? @relation("VideoJobParent", fields: [parentJobId], references: [id])
-  childJobs  VideoGenerationJob[] @relation("VideoJobParent")
-  variants   VideoVariant[]
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parentJob         VideoGenerationJob? @relation("VideoJobParent", fields: [parentJobId], references: [id])
+  childJobs         VideoGenerationJob[] @relation("VideoJobParent")
+  variants          VideoVariant[]
+  abTestVariants    VideoAbTestVariant[]
 
   @@index([userId])
   @@index([businessId])
@@ -1104,4 +1106,62 @@ model MlsListing {
   @@index([listingStatus])
   @@index([city, state])
   @@map("mls_listings")
+}
+
+// ============================================
+// VIDEO A/B TESTING
+// ============================================
+
+model VideoAbTest {
+  id                String    @id @default(uuid())
+  userId            String    @map("user_id")
+  businessId        String    @map("business_id")
+  name              String
+  description       String?
+  status            String    @default("draft") // draft, generating, running, completed, cancelled
+  targetMetric      String    @default("watch_time") @map("target_metric") // watch_time, clicks, conversions, engagement_rate
+  baseConfig        Json      @map("base_config") // base video config (prompt, template, platform, etc.)
+  variationParams   Json      @default("[]") @map("variation_params") // which params to vary: headline, cta, avatar, music
+  minSampleSize     Int       @default(100) @map("min_sample_size")
+  winnerId          String?   @map("winner_id")
+  winnerReason      String?   @map("winner_reason")
+  startAt           DateTime? @map("start_at")
+  endAt             DateTime? @map("end_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  user     User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  variants VideoAbTestVariant[]
+
+  @@index([userId])
+  @@index([businessId])
+  @@index([status])
+  @@map("video_ab_tests")
+}
+
+model VideoAbTestVariant {
+  id              String   @id @default(uuid())
+  testId          String   @map("test_id")
+  label           String   // "A", "B", "C", etc.
+  videoJobId      String?  @map("video_job_id") // link to VideoGenerationJob
+  config          Json     @default("{}") // variant-specific overrides (headline, cta, etc.)
+  videoUrl        String?  @map("video_url")
+  thumbnailUrl    String?  @map("thumbnail_url")
+  status          String   @default("pending") // pending, generating, ready, failed
+  impressions     Int      @default(0)
+  clicks          Int      @default(0)
+  watchTimeSeconds Float   @default(0) @map("watch_time_seconds")
+  completionRate  Float    @default(0) @map("completion_rate") // % who watched full video
+  conversions     Int      @default(0)
+  engagements     Int      @default(0)
+  engagementRate  Float    @default(0) @map("engagement_rate")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  test     VideoAbTest          @relation(fields: [testId], references: [id], onDelete: Cascade)
+  videoJob VideoGenerationJob?  @relation(fields: [videoJobId], references: [id])
+
+  @@index([testId])
+  @@index([videoJobId])
+  @@map("video_ab_test_variants")
 }

@@ -16,6 +16,7 @@ import {
   Sun,
   Flame,
   FlaskConical,
+  Video,
 } from "lucide-react";
 
 const navItems = [
@@ -25,6 +26,7 @@ const navItems = [
   { href: "/trends", label: "Viral Trends", icon: Flame },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/ab-testing", label: "A/B Testing", icon: FlaskConical },
+  { href: "/video-ab-testing", label: "Video A/B Testing", icon: Video },
   { href: "/settings/profile", label: "Settings", icon: Settings },
 ];
 
