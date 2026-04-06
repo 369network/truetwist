@@ -47,6 +47,9 @@ model User {
   webhookEndpoints     WebhookEndpoint[]
   creditBalance        CreditBalance?
   creditTransactions   CreditTransaction[]
+  dataExportRequests   DataExportRequest[]
+  dataDeletionRequests DataDeletionRequest[]
+  contentFeedbacks     ContentFeedback[]
 
   @@map("users")
 }
@@ -552,11 +555,38 @@ model AiGeneration {
   durationMs     Int      @default(0) @map("duration_ms")
   createdAt      DateTime @default(now()) @map("created_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feedbacks ContentFeedback[]
 
   @@index([userId])
   @@index([generationType])
   @@map("ai_generations")
+}
+
+// ============================================
+// CONTENT FEEDBACK (recommendation feedback loop)
+// ============================================
+
+model ContentFeedback {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  generationId String   @map("generation_id")
+  action       String   // used, edited, discarded, favorited, regenerated, shared
+  platform     String?
+  editDistance  Float?   @map("edit_distance") // 0-1 ratio of how much was changed
+  postId       String?  @map("post_id")
+  signalWeight Float    @default(0) @map("signal_weight")
+  metadata     Json     @default("{}")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  generation AiGeneration @relation(fields: [generationId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([generationId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("content_feedbacks")
 }
 
 // ============================================
@@ -1004,4 +1034,72 @@ model WebhookDelivery {
   @@index([nextRetryAt])
   @@index([createdAt])
   @@map("webhook_deliveries")
+}
+
+// ============================================
+// SECURITY AUDIT LOG
+// ============================================
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?  @map("user_id")
+  action      String   // auth.login, auth.logout, auth.register, auth.login_failed, user.update, user.delete, apikey.create, apikey.revoke, team.member_added, team.member_removed, data.export, admin.role_change, etc.
+  resource    String?  // Resource type: user, team, business, post, apikey, session, etc.
+  resourceId  String?  @map("resource_id")
+  ipAddress   String?  @map("ip_address")
+  userAgent   String?  @map("user_agent")
+  metadata    Json     @default("{}")
+  severity    String   @default("info") // info, warning, critical
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([action])
+  @@index([resource, resourceId])
+  @@index([severity])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ============================================
+// GDPR COMPLIANCE
+// ============================================
+
+model DataExportRequest {
+  id            String    @id @default(uuid())
+  userId        String    @map("user_id")
+  status        String    @default("pending") // pending, processing, completed, failed, expired
+  format        String    @default("json") // json, csv
+  downloadUrl   String?   @map("download_url")
+  expiresAt     DateTime? @map("expires_at") // download link expiry
+  errorMessage  String?   @map("error_message")
+  completedAt   DateTime? @map("completed_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("data_export_requests")
+}
+
+model DataDeletionRequest {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  status          String    @default("pending") // pending, confirmed, processing, completed, failed
+  confirmationToken String  @unique @map("confirmation_token")
+  confirmedAt     DateTime? @map("confirmed_at")
+  scheduledAt     DateTime? @map("scheduled_at") // grace period before deletion
+  completedAt     DateTime? @map("completed_at")
+  errorMessage    String?   @map("error_message")
+  deletedData     Json      @default("{}") @map("deleted_data") // summary of what was deleted
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([confirmationToken])
+  @@index([scheduledAt])
+  @@map("data_deletion_requests")
 }
