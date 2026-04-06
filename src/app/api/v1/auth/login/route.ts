@@ -5,6 +5,7 @@ import { verifyPassword, generateAccessToken, generateRefreshToken, hashToken, g
 import { loginSchema } from '@/lib/validations';
 import { errorResponse, Errors } from '@/lib/errors';
 import { checkRateLimit } from '@/middleware/rate-limit';
+import { auditFromRequest, AuditActions } from '@/lib/audit';
 import type { PlanTier } from '@/types';
 
 export async function POST(request: NextRequest) {
@@ -35,11 +36,24 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user || !user.hashedPassword) {
+      auditFromRequest(request, {
+        action: AuditActions.LOGIN_FAILED,
+        metadata: { email, reason: 'user_not_found' },
+        severity: 'warning',
+      });
       throw Errors.unauthorized('Invalid email or password');
     }
 
     const isValid = await verifyPassword(password, user.hashedPassword);
     if (!isValid) {
+      auditFromRequest(request, {
+        userId: user.id,
+        action: AuditActions.LOGIN_FAILED,
+        resource: 'user',
+        resourceId: user.id,
+        metadata: { email, reason: 'invalid_password' },
+        severity: 'warning',
+      });
       throw Errors.unauthorized('Invalid email or password');
     }
 
@@ -53,6 +67,14 @@ export async function POST(request: NextRequest) {
         tokenHash: hashToken(refreshToken),
         expiresAt: getRefreshTokenExpiry(),
       },
+    });
+
+    auditFromRequest(request, {
+      userId: user.id,
+      action: AuditActions.LOGIN_SUCCESS,
+      resource: 'user',
+      resourceId: user.id,
+      metadata: { email: user.email },
     });
 
     const { hashedPassword: _, ...userWithoutPassword } = user;

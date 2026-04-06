@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { verifyRefreshToken, generateAccessToken, generateRefreshToken, hashToken, getRefreshTokenExpiry } from '@/lib/auth';
 import { errorResponse, Errors } from '@/lib/errors';
+import { auditFromRequest, AuditActions } from '@/lib/audit';
 import type { PlanTier } from '@/types';
 
 const refreshSchema = z.object({
@@ -44,6 +45,13 @@ export async function POST(request: NextRequest) {
           where: { userId: storedToken.userId },
           data: { revokedAt: new Date() },
         });
+        auditFromRequest(request, {
+          userId: storedToken.userId,
+          action: 'auth.token_reuse_detected',
+          resource: 'session',
+          metadata: { jti: payload.jti },
+          severity: 'critical',
+        });
       }
       throw Errors.unauthorized('Token has been revoked');
     }
@@ -74,6 +82,13 @@ export async function POST(request: NextRequest) {
         },
       }),
     ]);
+
+    auditFromRequest(request, {
+      userId: user.id,
+      action: AuditActions.TOKEN_REFRESH,
+      resource: 'session',
+      metadata: { oldJti: payload.jti, newJti },
+    });
 
     const accessToken = generateAccessToken(user.id, user.email, user.plan as PlanTier);
 

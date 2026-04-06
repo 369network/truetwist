@@ -5,6 +5,7 @@ import { hashPassword, generateAccessToken, generateRefreshToken, hashToken, get
 import { registerSchema } from '@/lib/validations';
 import { errorResponse, Errors } from '@/lib/errors';
 import { sendWelcomeEmail } from '@/lib/email';
+import { auditFromRequest, AuditActions } from '@/lib/audit';
 import type { PlanTier } from '@/types';
 
 export async function POST(request: NextRequest) {
@@ -53,6 +54,14 @@ export async function POST(request: NextRequest) {
         tokenHash: hashToken(refreshToken),
         expiresAt: getRefreshTokenExpiry(),
       },
+    });
+
+    auditFromRequest(request, {
+      userId: user.id,
+      action: AuditActions.REGISTER,
+      resource: 'user',
+      resourceId: user.id,
+      metadata: { email: user.email, provider: 'email' },
     });
 
     // Send welcome email (non-blocking)
