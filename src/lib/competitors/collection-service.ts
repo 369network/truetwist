@@ -5,18 +5,29 @@ import type { CollectionJobData, CompetitorCollectionResult } from './types';
 const QUEUE_NAME = 'competitor-collection';
 const COLLECTION_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
 
-const connection = {
-  host: new URL(process.env.REDIS_URL || 'redis://localhost:6379').hostname,
-  port: parseInt(new URL(process.env.REDIS_URL || 'redis://localhost:6379').port || '6379'),
-};
+function getConnection() {
+  return {
+    host: new URL(process.env.REDIS_URL || 'redis://localhost:6379').hostname,
+    port: parseInt(new URL(process.env.REDIS_URL || 'redis://localhost:6379').port || '6379'),
+  };
+}
 
-export const competitorCollectionQueue = new Queue<CollectionJobData>(QUEUE_NAME, {
-  connection,
-  defaultJobOptions: {
-    attempts: 3,
-    backoff: { type: 'exponential', delay: 60000 },
-    removeOnComplete: { count: 500 },
-    removeOnFail: { count: 1000 },
+let _competitorCollectionQueue: Queue<CollectionJobData> | undefined;
+export const competitorCollectionQueue = new Proxy({} as Queue<CollectionJobData>, {
+  get(_, prop) {
+    if (!_competitorCollectionQueue) {
+      _competitorCollectionQueue = new Queue<CollectionJobData>(QUEUE_NAME, {
+        connection: getConnection(),
+        defaultJobOptions: {
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 60000 },
+          removeOnComplete: { count: 500 },
+          removeOnFail: { count: 1000 },
+        },
+      });
+    }
+    const val = (_competitorCollectionQueue as any)[prop];
+    return typeof val === 'function' ? val.bind(_competitorCollectionQueue) : val;
   },
 });
 
@@ -372,7 +383,7 @@ export function createCompetitorCollectionWorker() {
   return new Worker<CollectionJobData>(
     QUEUE_NAME,
     processCollectionJob,
-    { connection, concurrency: 5 }
+    { connection: getConnection(), concurrency: 5 }
   );
 }
 

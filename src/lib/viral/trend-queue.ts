@@ -8,18 +8,34 @@ import { getAvailableSources } from './collectors';
 
 const QUEUE_NAME = 'trend-collection';
 
-const connection = {
-  host: new URL(process.env.REDIS_URL || 'redis://localhost:6379').hostname,
-  port: parseInt(new URL(process.env.REDIS_URL || 'redis://localhost:6379').port || '6379'),
-};
+function getConnection() {
+  return {
+    host: new URL(process.env.REDIS_URL || 'redis://localhost:6379').hostname,
+    port: parseInt(new URL(process.env.REDIS_URL || 'redis://localhost:6379').port || '6379'),
+  };
+}
 
-export const trendCollectionQueue = new Queue<TrendCollectionJobData>(QUEUE_NAME, {
-  connection,
-  defaultJobOptions: {
-    attempts: 3,
-    backoff: { type: 'exponential', delay: 60000 },
-    removeOnComplete: { count: 500 },
-    removeOnFail: { count: 1000 },
+let _trendCollectionQueue: Queue<TrendCollectionJobData> | undefined;
+function getTrendCollectionQueue(): Queue<TrendCollectionJobData> {
+  if (!_trendCollectionQueue) {
+    _trendCollectionQueue = new Queue<TrendCollectionJobData>(QUEUE_NAME, {
+      connection: getConnection(),
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 60000 },
+        removeOnComplete: { count: 500 },
+        removeOnFail: { count: 1000 },
+      },
+    });
+  }
+  return _trendCollectionQueue;
+}
+
+export const trendCollectionQueue = new Proxy({} as Queue<TrendCollectionJobData>, {
+  get(_, prop) {
+    const q = getTrendCollectionQueue();
+    const val = (q as any)[prop];
+    return typeof val === 'function' ? val.bind(q) : val;
   },
 });
 
@@ -103,7 +119,7 @@ async function processTrendCollectionJob(job: Job<TrendCollectionJobData>): Prom
 
 export function createTrendCollectionWorker() {
   return new Worker<TrendCollectionJobData>(QUEUE_NAME, processTrendCollectionJob, {
-    connection,
+    connection: getConnection(),
     concurrency: 3,
   });
 }

@@ -1,17 +1,29 @@
 import { Queue, Worker, FlowProducer, type Job } from 'bullmq';
 import { redis } from '@/lib/redis';
 
-const connection = {
-  host: new URL(process.env.REDIS_URL || 'redis://localhost:6379').hostname,
-  port: parseInt(new URL(process.env.REDIS_URL || 'redis://localhost:6379').port || '6379'),
-};
+function getConnection() {
+  return {
+    host: new URL(process.env.REDIS_URL || 'redis://localhost:6379').hostname,
+    port: parseInt(new URL(process.env.REDIS_URL || 'redis://localhost:6379').port || '6379'),
+  };
+}
 
 // ============================================
-// Queue Definitions
+// Queue Definitions (lazy to avoid build-time Redis connections)
 // ============================================
 
-export const postingQueue = new Queue('posting-queue', {
-  connection,
+function lazyQueue<T>(name: string, opts?: object): Queue<T> {
+  let instance: Queue<T> | undefined;
+  return new Proxy({} as Queue<T>, {
+    get(_, prop) {
+      if (!instance) instance = new Queue<T>(name, { connection: getConnection(), ...opts });
+      const val = (instance as any)[prop];
+      return typeof val === 'function' ? val.bind(instance) : val;
+    },
+  });
+}
+
+export const postingQueue = lazyQueue('posting-queue', {
   defaultJobOptions: {
     attempts: 4,
     backoff: { type: 'custom' },
@@ -20,13 +32,20 @@ export const postingQueue = new Queue('posting-queue', {
   },
 });
 
-export const contentGenerationQueue = new Queue('content-generation-queue', { connection });
-export const analyticsQueue = new Queue('analytics-queue', { connection });
-export const deadLetterQueue = new Queue('dead-letter-queue', { connection });
-export const preflightQueue = new Queue('preflight-queue', { connection });
+export const contentGenerationQueue = lazyQueue('content-generation-queue');
+export const analyticsQueue = lazyQueue('analytics-queue');
+export const deadLetterQueue = lazyQueue('dead-letter-queue');
+export const preflightQueue = lazyQueue('preflight-queue');
 
 // Flow producer for multi-step workflows (preflight -> post -> analytics)
-export const flowProducer = new FlowProducer({ connection });
+let _flowProducer: FlowProducer | undefined;
+export const flowProducer = new Proxy({} as FlowProducer, {
+  get(_, prop) {
+    if (!_flowProducer) _flowProducer = new FlowProducer({ connection: getConnection() });
+    const val = (_flowProducer as any)[prop];
+    return typeof val === 'function' ? val.bind(_flowProducer) : val;
+  },
+});
 
 // ============================================
 // Job Data Interfaces
@@ -201,7 +220,7 @@ export function createPostingWorker(
   processor: (job: Job<PostingJobData>) => Promise<void>
 ) {
   return new Worker<PostingJobData>('posting-queue', processor, {
-    connection,
+    connection: getConnection(),
     concurrency: 10,
     settings: {
       backoffStrategy: (attemptsMade: number) => {
@@ -215,7 +234,7 @@ export function createPreflightWorker(
   processor: (job: Job<PreflightJobData>) => Promise<void>
 ) {
   return new Worker<PreflightJobData>('preflight-queue', processor, {
-    connection,
+    connection: getConnection(),
     concurrency: 20,
   });
 }
@@ -224,7 +243,7 @@ export function createContentGenerationWorker(
   processor: (job: Job<ContentGenerationJobData>) => Promise<void>
 ) {
   return new Worker<ContentGenerationJobData>('content-generation-queue', processor, {
-    connection,
+    connection: getConnection(),
     concurrency: 5,
   });
 }
@@ -233,7 +252,7 @@ export function createAnalyticsWorker(
   processor: (job: Job<AnalyticsJobData>) => Promise<void>
 ) {
   return new Worker<AnalyticsJobData>('analytics-queue', processor, {
-    connection,
+    connection: getConnection(),
     concurrency: 3,
   });
 }
