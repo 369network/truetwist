@@ -10,6 +10,8 @@ export {
   getMonthlySpend,
 } from './credit-service';
 export { moderateContent } from './content-moderation';
+export { optimizeAdBudget } from './ad-optimization-service';
+export { generateAdCreative } from './ad-creative-service';
 
 // Video Pipeline (Phase 3)
 export {
