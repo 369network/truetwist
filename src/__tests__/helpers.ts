@@ -54,7 +54,7 @@ export const TEST_BUSINESS = {
 };
 
 export const TEST_POST = {
-  id: 'post-test-001',
+  id: '00000000-0000-4000-a000-000000000001',
   userId: TEST_USER.id,
   businessId: TEST_BUSINESS.id,
   contentText: 'Hello world! This is a test post.',
@@ -140,9 +140,12 @@ export function createPrismaMock() {
       count: vi.fn(),
     },
     postSchedule: {
+      findMany: vi.fn(),
       findFirst: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn(),
     },
     socialAccount: {
       findFirst: vi.fn(),
@@ -153,6 +156,56 @@ export function createPrismaMock() {
       create: vi.fn(),
       update: vi.fn(),
       updateMany: vi.fn(),
+    },
+    auditLog: {
+      create: vi.fn().mockResolvedValue({}),
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+    schedule: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn(),
+    },
+    recurringSchedule: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
+    team: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn(),
+    },
+    teamMember: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
+    teamInvite: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
+    apiKey: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn(),
     },
     $transaction: vi.fn((fns: unknown[]) => Promise.all(fns)),
   };
