@@ -1,0 +1,1007 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================
+// USERS & AUTHENTICATION
+// ============================================
+
+model User {
+  id                  String    @id @default(uuid())
+  email               String    @unique
+  name                String
+  hashedPassword      String?   @map("hashed_password")
+  avatarUrl           String?   @map("avatar_url")
+  provider            String    @default("email") // email, google, apple
+  plan                String    @default("free") // free, starter, pro, enterprise
+  onboardingCompleted Boolean   @default(false) @map("onboarding_completed")
+  emailVerified       DateTime? @map("email_verified")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  sessions        Session[]
+  businesses      Business[]
+  subscription    Subscription?
+  ownedTeams      Team[]          @relation("TeamOwner")
+  teamMemberships TeamMember[]
+  posts           Post[]
+  approvedPosts   Post[]          @relation("PostApprover")
+  rejectedPosts   Post[]          @relation("PostRejecter")
+  postComments    PostComment[]   @relation("PostCommenter")
+  sentInvites     TeamInvite[]    @relation("InviteSender")
+  activityLogs    ActivityLog[]   @relation("ActivityAuthor")
+  aiGenerations   AiGeneration[]
+  socialAccounts  SocialAccount[]
+  refreshTokens        RefreshToken[]
+  videoGenerationJobs  VideoGenerationJob[]
+  trendAlerts          TrendAlert[]
+  trendAlertPrefs      TrendAlertPreference[]
+  viralSuggestions     ViralSuggestion[]
+  apiKeys              ApiKey[]
+  webhookEndpoints     WebhookEndpoint[]
+  creditBalance        CreditBalance?
+  creditTransactions   CreditTransaction[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  tokenHash String   @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  tokenHash String   @unique @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  replacedBy String? @map("replaced_by")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Subscription {
+  id                   String   @id @default(uuid())
+  userId               String   @unique @map("user_id")
+  plan                 String   // starter, pro, enterprise
+  status               String   // active, past_due, canceled, etc.
+  stripeCustomerId     String?  @unique @map("stripe_customer_id")
+  stripeSubscriptionId String?  @unique @map("stripe_subscription_id")
+  currentPeriodEnd     DateTime? @map("current_period_end")
+  cancelAtPeriodEnd    Boolean  @default(false) @map("cancel_at_period_end")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+model CreditBalance {
+  id                String   @id @default(uuid())
+  userId            String   @unique @map("user_id")
+  balance           Int      @default(0)
+  monthlyAllocation Int      @default(0) @map("monthly_allocation")
+  topUpCredits      Int      @default(0) @map("top_up_credits")
+  periodStart       DateTime @map("period_start")
+  periodEnd         DateTime @map("period_end")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("credit_balances")
+}
+
+model CreditTransaction {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  amount       Int      // positive = credit, negative = debit
+  type         String   // monthly_allocation, topup, consumption
+  description  String
+  balanceAfter Int      @map("balance_after")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, createdAt])
+  @@map("credit_transactions")
+}
+
+// ============================================
+// TEAMS
+// ============================================
+
+model Team {
+  id        String   @id @default(uuid())
+  name      String
+  ownerId   String   @map("owner_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  owner      User           @relation("TeamOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members    TeamMember[]
+  invites    TeamInvite[]
+  activities ActivityLog[]
+
+  @@index([ownerId])
+  @@map("teams")
+}
+
+model TeamMember {
+  teamId       String    @map("team_id")
+  userId       String    @map("user_id")
+  role         String    // owner, admin, editor, viewer
+  businessIds  Json      @default("[]") @map("business_ids") // which businesses this member can access (empty = all)
+  invitedAt    DateTime  @default(now()) @map("invited_at")
+  joinedAt     DateTime? @map("joined_at")
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([teamId, userId])
+  @@index([userId])
+  @@map("team_members")
+}
+
+model TeamInvite {
+  id        String    @id @default(uuid())
+  teamId    String    @map("team_id")
+  email     String
+  role      String    @default("viewer") // admin, editor, viewer
+  token     String    @unique
+  expiresAt DateTime  @map("expires_at")
+  acceptedAt DateTime? @map("accepted_at")
+  revokedAt DateTime? @map("revoked_at")
+  invitedById String  @map("invited_by_id")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  team      Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  invitedBy User @relation("InviteSender", fields: [invitedById], references: [id])
+
+  @@index([teamId])
+  @@index([email])
+  @@index([token])
+  @@map("team_invites")
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  teamId    String   @map("team_id")
+  userId    String   @map("user_id")
+  action    String   // member_invited, member_removed, role_changed, post_created, post_approved, post_rejected, business_created, settings_changed
+  targetType String? @map("target_type") // user, post, business, invite
+  targetId   String? @map("target_id")
+  metadata   Json    @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation("ActivityAuthor", fields: [userId], references: [id])
+
+  @@index([teamId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("activity_logs")
+}
+
+// ============================================
+// BUSINESS PROFILES
+// ============================================
+
+model Business {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  teamId          String?  @map("team_id")
+  name            String
+  industry        String?
+  description     String?
+  website         String?
+  targetAudience  Json     @default("{}") @map("target_audience")
+  brandVoice      String?  @map("brand_voice")
+  logoUrl         String?  @map("logo_url")
+  colors          Json     @default("{\"primary\": \"#3B82F6\", \"secondary\": \"#10B981\", \"accent\": \"#8B5CF6\"}") @map("colors")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  competitors Competitor[]
+  posts       Post[]
+
+  @@index([userId])
+  @@index([teamId])
+  @@map("businesses")
+}
+
+// ============================================
+// COMPETITORS
+// ============================================
+
+model Competitor {
+  id         String   @id @default(uuid())
+  businessId String   @map("business_id")
+  name       String
+  websiteUrl String?  @map("website_url")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  business Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  accounts CompetitorAccount[]
+
+  @@index([businessId])
+  @@map("competitors")
+}
+
+model CompetitorAccount {
+  id               String    @id @default(uuid())
+  competitorId     String    @map("competitor_id")
+  platform         String
+  handle           String
+  profileUrl       String?   @map("profile_url")
+  followerCount    Int       @default(0) @map("follower_count")
+  followingCount   Int       @default(0) @map("following_count")
+  postCount        Int       @default(0) @map("post_count")
+  engagementRate   Float     @default(0) @map("engagement_rate")
+  avgLikes         Float     @default(0) @map("avg_likes")
+  avgComments      Float     @default(0) @map("avg_comments")
+  postingFrequency Float     @default(0) @map("posting_frequency") // posts per week
+  topHashtags      Json      @default("[]") @map("top_hashtags")
+  contentMix       Json      @default("{}") @map("content_mix") // { text: %, image: %, video: % }
+  peakPostingHours Json      @default("[]") @map("peak_posting_hours")
+  lastScrapedAt    DateTime? @map("last_scraped_at")
+
+  competitor  Competitor                  @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+  posts       CompetitorPost[]
+  snapshots   CompetitorAccountSnapshot[]
+
+  @@index([competitorId])
+  @@map("competitor_accounts")
+}
+
+model CompetitorPost {
+  id                   String   @id @default(uuid())
+  competitorAccountId  String   @map("competitor_account_id")
+  platformPostId       String   @unique @map("platform_post_id")
+  contentText          String?  @map("content_text")
+  contentType          String   @default("text") @map("content_type") // text, image, video, carousel
+  mediaUrls            Json     @default("[]") @map("media_urls")
+  hashtags             Json     @default("[]")
+  likes                Int      @default(0)
+  comments             Int      @default(0)
+  shares               Int      @default(0)
+  saves                Int      @default(0)
+  engagementRate       Float    @default(0) @map("engagement_rate")
+  isViral              Boolean  @default(false) @map("is_viral")
+  postedAt             DateTime @map("posted_at")
+  scrapedAt            DateTime @default(now()) @map("scraped_at")
+
+  competitorAccount CompetitorAccount @relation(fields: [competitorAccountId], references: [id], onDelete: Cascade)
+
+  @@index([competitorAccountId])
+  @@index([postedAt])
+  @@index([isViral])
+  @@map("competitor_posts")
+}
+
+model CompetitorAccountSnapshot {
+  id                  String   @id @default(uuid())
+  competitorAccountId String   @map("competitor_account_id")
+  followerCount       Int      @map("follower_count")
+  followingCount      Int      @default(0) @map("following_count")
+  postCount           Int      @default(0) @map("post_count")
+  engagementRate      Float    @default(0) @map("engagement_rate")
+  postingFrequency    Float    @default(0) @map("posting_frequency")
+  snapshotAt          DateTime @default(now()) @map("snapshot_at")
+
+  competitorAccount CompetitorAccount @relation(fields: [competitorAccountId], references: [id], onDelete: Cascade)
+
+  @@index([competitorAccountId])
+  @@index([snapshotAt])
+  @@map("competitor_account_snapshots")
+}
+
+model CompetitorAlert {
+  id                  String    @id @default(uuid())
+  businessId          String    @map("business_id")
+  competitorId        String?   @map("competitor_id")
+  competitorAccountId String?   @map("competitor_account_id")
+  alertType           String    @map("alert_type") // viral_post, strategy_change, follower_spike, new_competitor
+  title               String
+  description         String
+  severity            String    @default("info") // info, warning, critical
+  metadata            Json      @default("{}")
+  readAt              DateTime? @map("read_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+
+  @@index([businessId])
+  @@index([alertType])
+  @@index([createdAt])
+  @@map("competitor_alerts")
+}
+
+// ============================================
+// SOCIAL ACCOUNTS
+// ============================================
+
+model SocialAccount {
+  id                String    @id @default(uuid())
+  userId            String    @map("user_id")
+  platform          String    // instagram, facebook, twitter, linkedin, tiktok, youtube, pinterest, threads
+  platformAccountId String    @map("platform_account_id")
+  accessToken       String    @map("access_token")
+  refreshToken      String?   @map("refresh_token")
+  tokenExpiresAt    DateTime? @map("token_expires_at")
+  accountName       String?   @map("account_name")
+  accountHandle     String?   @map("account_handle")
+  followerCount     Int       @default(0) @map("follower_count")
+  isActive          Boolean   @default(true) @map("is_active")
+  connectedAt       DateTime  @default(now()) @map("connected_at")
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postSchedules PostSchedule[]
+
+  @@unique([userId, platform, platformAccountId])
+  @@index([userId])
+  @@map("social_accounts")
+}
+
+// ============================================
+// CONTENT & POSTS
+// ============================================
+
+model Post {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  businessId  String   @map("business_id")
+  contentText String?  @map("content_text")
+  contentType String   @default("text") @map("content_type") // text, image, video, carousel
+  status      String   @default("draft") // draft, pending_review, approved, rejected, scheduled, queued, posting, posted, failed, cancelled
+  aiGenerated Boolean  @default(false) @map("ai_generated")
+  viralScore  Float?   @map("viral_score")
+  approvedById String? @map("approved_by_id")
+  approvedAt   DateTime? @map("approved_at")
+  rejectedById String? @map("rejected_by_id")
+  rejectedAt   DateTime? @map("rejected_at")
+  rejectionReason String? @map("rejection_reason")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  business   Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  approvedBy User?          @relation("PostApprover", fields: [approvedById], references: [id])
+  rejectedBy User?          @relation("PostRejecter", fields: [rejectedById], references: [id])
+  media      PostMedia[]
+  schedules  PostSchedule[]
+  comments   PostComment[]
+
+  @@index([userId])
+  @@index([businessId])
+  @@index([status])
+  @@map("posts")
+}
+
+model PostComment {
+  id        String   @id @default(uuid())
+  postId    String   @map("post_id")
+  userId    String   @map("user_id")
+  content   String
+  mentions  Json     @default("[]") // array of mentioned user IDs
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation("PostCommenter", fields: [userId], references: [id])
+
+  @@index([postId])
+  @@index([userId])
+  @@map("post_comments")
+}
+
+model PostMedia {
+  id            String  @id @default(uuid())
+  postId        String  @map("post_id")
+  mediaType     String  @map("media_type") // image, video
+  mediaUrl      String  @map("media_url")
+  thumbnailUrl  String? @map("thumbnail_url")
+  altText       String? @map("alt_text")
+  width         Int?
+  height        Int?
+  durationSec   Float?  @map("duration_sec")
+  platformSpecs Json    @default("{}") @map("platform_specs")
+  sortOrder     Int     @default(0) @map("sort_order")
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@map("post_media")
+}
+
+model PostSchedule {
+  id              String    @id @default(uuid())
+  postId          String    @map("post_id")
+  socialAccountId String    @map("social_account_id")
+  platform        String
+  scheduledAt     DateTime  @map("scheduled_at")
+  postedAt        DateTime? @map("posted_at")
+  platformPostId  String?   @map("platform_post_id")
+  platformPostUrl String?   @map("platform_post_url")
+  status          String    @default("draft") // draft, scheduled, queued, posting, posted, failed, cancelled
+  bullJobId       String?   @map("bull_job_id")
+  errorMessage    String?   @map("error_message")
+  retryCount      Int       @default(0) @map("retry_count")
+  maxRetries      Int       @default(3) @map("max_retries")
+  nextRetryAt     DateTime? @map("next_retry_at")
+  crossPostGroup  String?   @map("cross_post_group") // links schedules across platforms for same content
+  recurringId     String?   @map("recurring_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  post          Post               @relation(fields: [postId], references: [id], onDelete: Cascade)
+  socialAccount SocialAccount      @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
+  recurring     RecurringSchedule? @relation(fields: [recurringId], references: [id])
+  analytics     PostAnalytics[]
+
+  @@index([postId])
+  @@index([socialAccountId])
+  @@index([scheduledAt])
+  @@index([status])
+  @@index([crossPostGroup])
+  @@index([recurringId])
+  @@map("post_schedules")
+}
+
+model PostAnalytics {
+  id              String   @id @default(uuid())
+  postScheduleId  String   @map("post_schedule_id")
+  impressions     Int      @default(0)
+  reach           Int      @default(0)
+  likes           Int      @default(0)
+  comments        Int      @default(0)
+  shares          Int      @default(0)
+  saves           Int      @default(0)
+  clicks          Int      @default(0)
+  engagementRate  Float    @default(0) @map("engagement_rate")
+  fetchedAt       DateTime @default(now()) @map("fetched_at")
+
+  postSchedule PostSchedule @relation(fields: [postScheduleId], references: [id], onDelete: Cascade)
+
+  @@index([postScheduleId])
+  @@map("post_analytics")
+}
+
+// ============================================
+// SCHEDULING ENGINE
+// ============================================
+
+model OptimalPostingTime {
+  id              String   @id @default(uuid())
+  socialAccountId String   @map("social_account_id")
+  platform        String
+  dayOfWeek       Int      @map("day_of_week") // 0=Sunday, 6=Saturday
+  hourUtc         Int      @map("hour_utc") // 0-23
+  score           Float    @default(0) // engagement score for this slot
+  sampleSize      Int      @default(0) @map("sample_size") // number of posts analyzed
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@unique([socialAccountId, platform, dayOfWeek, hourUtc])
+  @@index([socialAccountId, platform])
+  @@map("optimal_posting_times")
+}
+
+model RecurringSchedule {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  businessId      String    @map("business_id")
+  socialAccountId String    @map("social_account_id")
+  platform        String
+  frequency       String    // daily, weekly, biweekly, monthly
+  dayOfWeek       Int?      @map("day_of_week") // for weekly: 0-6
+  timeUtc         String    @map("time_utc") // HH:mm format
+  timezone        String    @default("UTC")
+  templatePostId  String?   @map("template_post_id") // optional template post
+  isActive        Boolean   @default(true) @map("is_active")
+  lastGeneratedAt DateTime? @map("last_generated_at")
+  nextOccurrence  DateTime? @map("next_occurrence")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  schedules PostSchedule[]
+
+  @@index([userId])
+  @@index([isActive, nextOccurrence])
+  @@map("recurring_schedules")
+}
+
+// ============================================
+// AI GENERATIONS
+// ============================================
+
+model AiGeneration {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  generationType String   @map("generation_type") // text, image, video
+  prompt         String
+  modelUsed      String   @map("model_used")
+  outputText     String?  @map("output_text")
+  outputMediaUrl String?  @map("output_media_url")
+  tokensInput    Int      @default(0) @map("tokens_input")
+  tokensOutput   Int      @default(0) @map("tokens_output")
+  costCents      Int      @default(0) @map("cost_cents")
+  durationMs     Int      @default(0) @map("duration_ms")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([generationType])
+  @@map("ai_generations")
+}
+
+// ============================================
+// VIDEO GENERATION PIPELINE
+// ============================================
+
+model VideoGenerationJob {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  businessId      String    @map("business_id")
+  status          String    @default("queued") // queued, generating, processing, ready, failed
+  prompt          String
+  platform        String
+  template        String?
+  aspectRatio     String    @map("aspect_ratio") // 9:16, 16:9, 1:1
+  durationSeconds Int       @map("duration_seconds")
+  scriptJson      Json?     @map("script_json")
+  sourceVideoUrl  String?   @map("source_video_url") // raw Runway output
+  outputVideoUrl  String?   @map("output_video_url") // post-processed final
+  thumbnailUrl    String?   @map("thumbnail_url")
+  srtUrl          String?   @map("srt_url") // subtitle file
+  runwayTaskId    String?   @map("runway_task_id")
+  provider        String    @default("runway") // runway, fallback
+  costCents       Int       @default(0) @map("cost_cents")
+  creditsCost     Int       @default(1) @map("credits_cost")
+  errorMessage    String?   @map("error_message")
+  retryCount      Int       @default(0) @map("retry_count")
+  maxRetries      Int       @default(3) @map("max_retries")
+  parentJobId     String?   @map("parent_job_id") // for batch variants
+  batchGroup      String?   @map("batch_group") // links batch variants together
+  metadata        Json      @default("{}") // extra config (watermark, captions, etc.)
+  startedAt       DateTime? @map("started_at")
+  completedAt     DateTime? @map("completed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parentJob  VideoGenerationJob? @relation("VideoJobParent", fields: [parentJobId], references: [id])
+  childJobs  VideoGenerationJob[] @relation("VideoJobParent")
+  variants   VideoVariant[]
+
+  @@index([userId])
+  @@index([businessId])
+  @@index([status])
+  @@index([batchGroup])
+  @@index([runwayTaskId])
+  @@map("video_generation_jobs")
+}
+
+model VideoVariant {
+  id              String   @id @default(uuid())
+  jobId           String   @map("job_id")
+  platform        String
+  aspectRatio     String   @map("aspect_ratio")
+  durationSeconds Int      @map("duration_seconds")
+  videoUrl        String?  @map("video_url")
+  thumbnailUrl    String?  @map("thumbnail_url")
+  width           Int?
+  height          Int?
+  fileSizeBytes   Int?     @map("file_size_bytes")
+  format          String   @default("mp4")
+  status          String   @default("pending") // pending, processing, ready, failed
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  job VideoGenerationJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([platform])
+  @@map("video_variants")
+}
+
+// ============================================
+// ANALYTICS ROLLUPS
+// ============================================
+
+model AnalyticsRollup {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  businessId      String?  @map("business_id")
+  platform        String?  // null = cross-platform aggregate
+  period          String   // daily, weekly, monthly
+  periodStart     DateTime @map("period_start")
+  periodEnd       DateTime @map("period_end")
+  impressions     Int      @default(0)
+  reach           Int      @default(0)
+  engagements     Int      @default(0)
+  likes           Int      @default(0)
+  comments        Int      @default(0)
+  shares          Int      @default(0)
+  saves           Int      @default(0)
+  clicks          Int      @default(0)
+  followerCount   Int      @default(0) @map("follower_count")
+  followerGrowth  Int      @default(0) @map("follower_growth")
+  postCount       Int      @default(0) @map("post_count")
+  engagementRate  Float    @default(0) @map("engagement_rate")
+  contentBreakdown Json    @default("{}") @map("content_breakdown")
+  hourlyEngagement Json    @default("{}") @map("hourly_engagement")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, businessId, platform, period, periodStart])
+  @@index([userId, period])
+  @@index([periodStart])
+  @@map("analytics_rollups")
+}
+
+// ============================================
+// A/B TESTING
+// ============================================
+
+model AbTest {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  businessId      String    @map("business_id")
+  name            String
+  description     String?
+  status          String    @default("draft") // draft, running, completed, cancelled
+  targetMetric    String    @default("engagement_rate") @map("target_metric")
+  startAt         DateTime? @map("start_at")
+  endAt           DateTime? @map("end_at")
+  minSampleSize   Int       @default(100) @map("min_sample_size")
+  winnerId        String?   @map("winner_id")
+  winnerReason    String?   @map("winner_reason")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  variants AbTestVariant[]
+
+  @@index([userId])
+  @@index([businessId])
+  @@index([status])
+  @@map("ab_tests")
+}
+
+model AbTestVariant {
+  id              String   @id @default(uuid())
+  testId          String   @map("test_id")
+  label           String   // "A", "B"
+  postId          String?  @map("post_id")
+  platform        String?
+  socialAccountId String?  @map("social_account_id")
+  impressions     Int      @default(0)
+  reach           Int      @default(0)
+  engagements     Int      @default(0)
+  likes           Int      @default(0)
+  comments        Int      @default(0)
+  shares          Int      @default(0)
+  clicks          Int      @default(0)
+  engagementRate  Float    @default(0) @map("engagement_rate")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  test AbTest @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  @@index([testId])
+  @@map("ab_test_variants")
+}
+
+// ============================================
+// REPORTS
+// ============================================
+
+model AnalyticsReport {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  businessId      String?  @map("business_id")
+  reportType      String   @map("report_type") // weekly, monthly, competitor
+  title           String
+  period          String   // e.g. "2026-W14", "2026-03"
+  summary         String?
+  insights        Json     @default("[]")
+  recommendations Json     @default("[]")
+  metrics         Json     @default("{}")
+  generatedAt     DateTime @default(now()) @map("generated_at")
+
+  @@index([userId])
+  @@index([reportType])
+  @@index([generatedAt])
+  @@map("analytics_reports")
+}
+
+// ============================================
+// VIRAL RESEARCH
+// ============================================
+
+model ViralTrend {
+  id                String    @id @default(uuid())
+  platform          String
+  source            String    @default("manual") // youtube, google_trends, twitter, tiktok, instagram, manual
+  category          String?
+  title             String
+  description       String?
+  exampleUrls       Json      @default("[]") @map("example_urls")
+  engagementMetrics Json      @default("{}") @map("engagement_metrics")
+  viralScore        Float     @default(0) @map("viral_score")
+  velocity          Float     @default(0) // engagement velocity
+  acceleration      Float     @default(0) // engagement acceleration
+  sentiment         Float     @default(0) // -1 to 1
+  lifecycle         String    @default("emerging") // emerging, rising, peaking, declining, expired
+  region            String    @default("US")
+  rawPayload        Json      @default("{}") @map("raw_payload") // original API response
+  discoveredAt      DateTime  @default(now()) @map("discovered_at")
+  peakedAt          DateTime? @map("peaked_at")
+  expiresAt         DateTime? @map("expires_at")
+  lastUpdatedAt     DateTime  @default(now()) @map("last_updated_at")
+
+  suggestions ViralSuggestion[]
+  snapshots   TrendSnapshot[]
+  hashtags    TrendHashtag[]
+  alerts      TrendAlert[]
+
+  @@unique([platform, source, title, region])
+  @@index([platform])
+  @@index([source])
+  @@index([viralScore])
+  @@index([lifecycle])
+  @@index([discoveredAt])
+  @@map("viral_trends")
+}
+
+model TrendSnapshot {
+  id          String   @id @default(uuid())
+  trendId     String   @map("trend_id")
+  viralScore  Float    @map("viral_score")
+  velocity    Float    @default(0)
+  volume      Int      @default(0) // search volume or tweet count
+  sentiment   Float    @default(0)
+  snapshotAt  DateTime @default(now()) @map("snapshot_at")
+
+  trend ViralTrend @relation(fields: [trendId], references: [id], onDelete: Cascade)
+
+  @@index([trendId])
+  @@index([snapshotAt])
+  @@map("trend_snapshots")
+}
+
+model ViralSuggestion {
+  id               String    @id @default(uuid())
+  userId           String    @map("user_id")
+  trendId          String?   @map("trend_id")
+  suggestedContent String    @map("suggested_content")
+  viralScore       Float     @default(0) @map("viral_score")
+  status           String    @default("pending") // pending, accepted, rejected, implemented
+  acceptedAt       DateTime? @map("accepted_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trend  ViralTrend? @relation(fields: [trendId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([trendId])
+  @@index([status])
+  @@map("viral_suggestions")
+}
+
+// ============================================
+// HASHTAG ANALYSIS
+// ============================================
+
+model Hashtag {
+  id              String    @id @default(uuid())
+  tag             String    // without #
+  platform        String
+  reach           Int       @default(0)
+  postCount       Int       @default(0) @map("post_count")
+  competitionLevel String   @default("medium") @map("competition_level") // low, medium, high, saturated
+  trendDirection  String    @default("stable") @map("trend_direction") // rising, stable, declining
+  isBanned        Boolean   @default(false) @map("is_banned")
+  category        String?
+  relatedTags     Json      @default("[]") @map("related_tags")
+  lastUpdatedAt   DateTime  @default(now()) @map("last_updated_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  trendHashtags TrendHashtag[]
+
+  @@unique([tag, platform])
+  @@index([platform])
+  @@index([competitionLevel])
+  @@index([trendDirection])
+  @@index([isBanned])
+  @@map("hashtags")
+}
+
+model TrendHashtag {
+  id        String @id @default(uuid())
+  trendId   String @map("trend_id")
+  hashtagId String @map("hashtag_id")
+  relevance Float  @default(0) // 0-1 relevance score
+
+  trend   ViralTrend @relation(fields: [trendId], references: [id], onDelete: Cascade)
+  hashtag Hashtag    @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+
+  @@unique([trendId, hashtagId])
+  @@map("trend_hashtags")
+}
+
+// ============================================
+// TREND ALERTS
+// ============================================
+
+model TrendAlert {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  trendId     String?   @map("trend_id")
+  alertType   String    @map("alert_type") // trend_emerging, trend_peaking, niche_match, hashtag_trending
+  title       String
+  description String
+  severity    String    @default("info") // info, warning, critical
+  metadata    Json      @default("{}")
+  readAt      DateTime? @map("read_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  user  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trend ViralTrend? @relation(fields: [trendId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([alertType])
+  @@index([createdAt])
+  @@index([readAt])
+  @@map("trend_alerts")
+}
+
+model TrendAlertPreference {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  businessId      String?  @map("business_id")
+  nicheKeywords   Json     @default("[]") @map("niche_keywords") // keywords to match trends against
+  platforms       Json     @default("[]") // platforms to monitor
+  minViralScore   Float    @default(30) @map("min_viral_score") // 0-100 threshold
+  alertTypes      Json     @default("[\"trend_emerging\",\"niche_match\"]") @map("alert_types")
+  digestFrequency String   @default("daily") @map("digest_frequency") // realtime, daily, weekly
+  webhookUrl      String?  @map("webhook_url")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, businessId])
+  @@index([userId])
+  @@index([isActive])
+  @@map("trend_alert_preferences")
+}
+
+// ============================================
+// TREND COLLECTION JOBS
+// ============================================
+
+model TrendCollectionJob {
+  id            String    @id @default(uuid())
+  source        String    // youtube, google_trends, twitter, tiktok, instagram
+  region        String    @default("US")
+  status        String    @default("pending") // pending, running, completed, failed
+  trendsFound   Int       @default(0) @map("trends_found")
+  trendsUpdated Int       @default(0) @map("trends_updated")
+  errorMessage  String?   @map("error_message")
+  startedAt     DateTime? @map("started_at")
+  completedAt   DateTime? @map("completed_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@index([source])
+  @@index([status])
+  @@index([createdAt])
+  @@map("trend_collection_jobs")
+}
+
+// ============================================
+// API KEY MANAGEMENT
+// ============================================
+
+model ApiKey {
+  id            String    @id @default(uuid())
+  userId        String    @map("user_id")
+  name          String
+  keyPrefix     String    @map("key_prefix") // first 8 chars for identification (tt_xxxxxxxx)
+  keyHash       String    @unique @map("key_hash") // SHA-256 hash of the full key
+  scope         String    @default("read") // read, write, admin
+  status        String    @default("active") // active, revoked, expired
+  revokedAt     DateTime? @map("revoked_at")
+  expiresAt     DateTime? @map("expires_at")
+  lastUsedAt    DateTime? @map("last_used_at")
+  requestCount  Int       @default(0) @map("request_count")
+  rotatedFromId String?   @unique @map("rotated_from_id")
+  rotationGraceEndsAt DateTime? @map("rotation_grace_ends_at") // old key still valid until this
+  metadata      Json      @default("{}")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rotatedFrom  ApiKey? @relation("ApiKeyRotation", fields: [rotatedFromId], references: [id])
+  rotatedTo    ApiKey? @relation("ApiKeyRotation")
+
+  @@index([userId])
+  @@index([keyPrefix])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("api_keys")
+}
+
+// ============================================
+// WEBHOOK OUTBOUND SYSTEM
+// ============================================
+
+model WebhookEndpoint {
+  id            String    @id @default(uuid())
+  userId        String    @map("user_id")
+  url           String
+  secret        String    // HMAC signing secret
+  events        Json      @default("[]") // ["post.published", "post.failed", "analytics.threshold", "trend.viral"]
+  status        String    @default("active") // active, paused, disabled
+  description   String?
+  failureCount  Int       @default(0) @map("failure_count")
+  lastTriggeredAt DateTime? @map("last_triggered_at")
+  disabledAt    DateTime? @map("disabled_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveries WebhookDelivery[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("webhook_endpoints")
+}
+
+model WebhookDelivery {
+  id            String    @id @default(uuid())
+  endpointId    String    @map("endpoint_id")
+  event         String    // post.published, post.failed, analytics.threshold, trend.viral
+  payload       Json
+  status        String    @default("pending") // pending, delivered, failed, retrying
+  httpStatus    Int?      @map("http_status")
+  responseBody  String?   @map("response_body")
+  attempts      Int       @default(0)
+  maxAttempts   Int       @default(5) @map("max_attempts")
+  nextRetryAt   DateTime? @map("next_retry_at")
+  deliveredAt   DateTime? @map("delivered_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  endpoint WebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+
+  @@index([endpointId])
+  @@index([event])
+  @@index([status])
+  @@index([nextRetryAt])
+  @@index([createdAt])
+  @@map("webhook_deliveries")
+}

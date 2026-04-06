@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrueTwist — Video Template Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --indigo-50:#EEF2FF;--indigo-100:#E0E7FF;--indigo-200:#C7D2FE;--indigo-300:#A5B4FC;
+  --indigo-400:#818CF8;--indigo-500:#6366F1;--indigo-600:#4F46E5;--indigo-700:#4338CA;
+  --indigo-800:#3730A3;--indigo-900:#312E81;--indigo-950:#1E1B4B;
+  --coral-500:#FF6B6B;--coral-600:#FA5252;
+  --violet-400:#C084FC;--violet-500:#A855F7;--violet-600:#9333EA;
+  --success:#40C057;--warning:#FAB005;--error:#FA5252;--info:#339AF0;
+  --g50:#F8F9FA;--g100:#F1F3F5;--g200:#E9ECEF;--g300:#DEE2E6;--g400:#CED4DA;
+  --g500:#ADB5BD;--g600:#868E96;--g700:#495057;--g800:#343A40;--g900:#212529;
+  --dark-bg:#0F0D1A;--dark-s1:#1A1726;--dark-s2:#252236;--dark-border:#3D3856;
+  --dark-text:#E8E6F0;--dark-muted:#9B97B0;
+  --r-sm:6px;--r-md:10px;--r-lg:16px;--r-xl:24px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--g800);line-height:1.6;-webkit-font-smoothing:antialiased;}
+.container{max-width:1280px;margin:0 auto;padding:0 32px;}
+
+/* Header */
+.page-header{padding:80px 0 60px;text-align:center;background:linear-gradient(135deg,var(--indigo-950) 0%,var(--indigo-800) 50%,var(--violet-600) 100%);color:#fff;position:relative;overflow:hidden;}
+.page-header::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 20%,rgba(99,102,241,.3) 0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(168,85,247,.2) 0%,transparent 50%);}
+.page-header .container{position:relative;z-index:1;}
+.page-header .badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);padding:6px 16px;border-radius:100px;margin-bottom:24px;color:var(--indigo-200);}
+.page-header h1{font-family:'Outfit',sans-serif;font-weight:800;font-size:52px;line-height:1.1;margin-bottom:16px;letter-spacing:-1px;}
+.page-header h1 span{background:linear-gradient(135deg,var(--coral-500),var(--violet-400));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.page-header p{font-size:17px;color:var(--indigo-200);max-width:720px;margin:0 auto;line-height:1.7;}
+
+/* Sections */
+.section{padding:64px 0;}
+.section+.section{border-top:1px solid var(--g200);}
+.section-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:2.5px;text-transform:uppercase;color:var(--indigo-500);margin-bottom:10px;}
+.section-title{font-family:'Outfit',sans-serif;font-size:28px;font-weight:700;color:var(--g900);margin-bottom:8px;letter-spacing:-0.5px;}
+.section-desc{font-size:15px;color:var(--g600);max-width:640px;margin-bottom:40px;}
+
+/* Tables */
+.spec-table-wrap{background:#fff;border-radius:var(--r-lg);border:1px solid var(--g200);overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.spec-table{width:100%;border-collapse:collapse;font-size:14px;}
+.spec-table thead{background:var(--indigo-50);}
+.spec-table th{font-family:'Outfit',sans-serif;font-weight:600;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--indigo-700);padding:14px 20px;text-align:left;border-bottom:1px solid var(--indigo-100);}
+.spec-table td{padding:14px 20px;border-bottom:1px solid var(--g100);color:var(--g700);vertical-align:middle;}
+.spec-table tr:last-child td{border-bottom:none;}
+.spec-table tbody tr:hover{background:var(--g50);}
+.spec-table .mono{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--indigo-600);}
+.spec-table .badge-sm{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px;background:var(--indigo-50);color:var(--indigo-600);font-family:'JetBrains Mono',monospace;}
+.spec-table .badge-green{background:rgba(64,192,87,.1);color:#2b8a3e;}
+.spec-table .badge-violet{background:rgba(168,85,247,.1);color:var(--violet-600);}
+.spec-table .badge-coral{background:rgba(255,107,107,.1);color:var(--coral-600);}
+
+/* Template Cards */
+.template-grid{display:flex;flex-direction:column;gap:56px;}
+.template-card{background:#fff;border-radius:var(--r-xl);border:1px solid var(--g200);overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04);}
+.template-card-header{display:flex;align-items:center;gap:16px;padding:28px 32px;border-bottom:1px solid var(--g100);}
+.template-number{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--indigo-600),var(--violet-500));color:#fff;font-family:'Outfit',sans-serif;font-weight:800;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.template-card-header h3{font-family:'Outfit',sans-serif;font-weight:700;font-size:22px;color:var(--g900);}
+.template-card-header .tag{font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--indigo-50);color:var(--indigo-600);padding:4px 10px;border-radius:6px;margin-left:auto;white-space:nowrap;}
+.template-body{display:grid;grid-template-columns:220px 1fr;gap:0;}
+
+/* Phone Frame */
+.phone-col{padding:28px;border-right:1px solid var(--g100);display:flex;justify-content:center;align-items:flex-start;}
+.phone-frame{width:180px;aspect-ratio:9/18.5;background:#1a1a1a;border-radius:28px;padding:8px;position:relative;box-shadow:0 8px 32px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.08);}
+.phone-frame::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:50px;height:6px;background:#000;border-radius:3px;z-index:2;}
+.phone-screen{width:100%;height:100%;border-radius:20px;overflow:hidden;position:relative;}
+
+/* Template-specific screens */
+.screen-quote{background:linear-gradient(135deg,var(--indigo-700),var(--violet-600));display:flex;flex-direction:column;justify-content:center;align-items:center;padding:16px 12px;text-align:center;color:#fff;}
+.screen-quote .q-mark{font-size:28px;opacity:.4;margin-bottom:4px;font-family:Georgia,serif;}
+.screen-quote .q-text{font-family:'Outfit',sans-serif;font-weight:700;font-size:11px;line-height:1.4;margin-bottom:8px;}
+.screen-quote .q-attr{font-size:8px;opacity:.7;}
+.screen-quote .q-cta{margin-top:12px;background:var(--coral-500);color:#fff;font-size:7px;font-weight:600;padding:4px 12px;border-radius:100px;}
+.screen-quote .q-logo{position:absolute;bottom:8px;right:8px;font-family:'Outfit',sans-serif;font-size:6px;opacity:.5;color:#fff;}
+
+.screen-product{background:linear-gradient(180deg,#fff 0%,var(--g100) 100%);display:flex;flex-direction:column;align-items:center;padding:20px 12px 12px;}
+.screen-product .prod-img{width:72px;height:72px;border-radius:16px;background:linear-gradient(135deg,var(--indigo-100),var(--indigo-200));margin-bottom:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(79,70,229,.15);}
+.screen-product .prod-img::after{content:'';width:32px;height:32px;background:var(--indigo-400);border-radius:8px;opacity:.5;}
+.screen-product .prod-name{font-family:'Outfit',sans-serif;font-weight:700;font-size:10px;color:var(--g900);margin-bottom:2px;}
+.screen-product .prod-price{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;color:var(--indigo-600);margin-bottom:8px;}
+.screen-product .prod-feat{font-size:7px;color:var(--g600);text-align:left;width:100%;}
+.screen-product .prod-feat div{padding:3px 0;border-bottom:1px solid var(--g200);display:flex;align-items:center;gap:4px;}
+.screen-product .prod-feat div::before{content:'';width:4px;height:4px;background:var(--success);border-radius:50%;flex-shrink:0;}
+
+.screen-beforeafter{background:var(--g800);display:flex;position:relative;overflow:hidden;}
+.screen-ba-left{width:50%;height:100%;background:linear-gradient(180deg,#554,#443);display:flex;align-items:center;justify-content:center;}
+.screen-ba-right{width:50%;height:100%;background:linear-gradient(180deg,var(--indigo-500),var(--violet-500));display:flex;align-items:center;justify-content:center;}
+.screen-ba-label{font-family:'Outfit',sans-serif;font-size:7px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:1px;}
+.screen-ba-divider{position:absolute;left:50%;top:0;bottom:0;width:3px;background:#fff;transform:translateX(-50%);box-shadow:0 0 8px rgba(255,255,255,.5);}
+.screen-ba-divider::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:16px;height:16px;background:#fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.3);}
+
+.screen-testimonial{background:var(--dark-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 12px;text-align:center;}
+.screen-testimonial .t-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--indigo-400),var(--violet-400));margin-bottom:8px;box-shadow:0 0 0 3px rgba(99,102,241,.3),0 0 16px rgba(99,102,241,.2);}
+.screen-testimonial .t-quote{font-size:8px;color:var(--dark-text);line-height:1.5;margin-bottom:8px;font-style:italic;}
+.screen-testimonial .t-stars{display:flex;gap:2px;justify-content:center;margin-bottom:6px;}
+.screen-testimonial .t-star{width:10px;height:10px;background:var(--warning);clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);}
+.screen-testimonial .t-name{font-family:'Outfit',sans-serif;font-size:8px;font-weight:600;color:var(--dark-text);}
+.screen-testimonial .t-role{font-size:6px;color:var(--dark-muted);}
+
+.screen-stat{background:linear-gradient(180deg,var(--dark-bg),var(--dark-s2));display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 12px;text-align:center;}
+.screen-stat .s-label{font-size:8px;color:var(--dark-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;font-family:'JetBrains Mono',monospace;}
+.screen-stat .s-number{font-family:'Outfit',sans-serif;font-weight:800;font-size:36px;color:#fff;line-height:1;margin-bottom:4px;background:linear-gradient(135deg,var(--coral-500),var(--violet-400));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.screen-stat .s-unit{font-size:9px;color:var(--dark-text);margin-bottom:12px;}
+.screen-stat .s-bar-wrap{width:100%;height:6px;background:var(--dark-border);border-radius:3px;overflow:hidden;}
+.screen-stat .s-bar{height:100%;width:73%;background:linear-gradient(90deg,var(--indigo-500),var(--coral-500));border-radius:3px;}
+.screen-stat .s-context{font-size:7px;color:var(--dark-muted);margin-top:6px;}
+
+.screen-carousel{background:linear-gradient(180deg,var(--indigo-600),var(--indigo-800));display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 10px;position:relative;}
+.screen-carousel .c-card{width:100%;background:rgba(255,255,255,.12);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 10px;text-align:center;margin-bottom:8px;}
+.screen-carousel .c-num{font-family:'Outfit',sans-serif;font-weight:800;font-size:22px;color:rgba(255,255,255,.3);line-height:1;}
+.screen-carousel .c-tip{font-size:8px;color:#fff;line-height:1.4;margin-top:4px;}
+.screen-carousel .c-dots{display:flex;gap:4px;justify-content:center;}
+.screen-carousel .c-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.25);}
+.screen-carousel .c-dot.active{background:#fff;box-shadow:0 0 6px rgba(255,255,255,.4);}
+
+/* Storyboard */
+.detail-col{padding:28px 32px;display:flex;flex-direction:column;gap:24px;}
+.detail-col h4{font-family:'Outfit',sans-serif;font-weight:600;font-size:14px;color:var(--g800);margin-bottom:12px;}
+.storyboard-strip{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch;}
+.storyboard-strip::-webkit-scrollbar{height:4px;}
+.storyboard-strip::-webkit-scrollbar-track{background:var(--g100);border-radius:2px;}
+.storyboard-strip::-webkit-scrollbar-thumb{background:var(--g400);border-radius:2px;}
+.sb-frame{min-width:140px;flex-shrink:0;border:1px solid var(--g200);border-radius:var(--r-md);overflow:hidden;background:#fff;}
+.sb-frame-img{height:90px;background:var(--g100);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.sb-frame-info{padding:8px 10px;}
+.sb-frame-time{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--indigo-500);margin-bottom:2px;}
+.sb-frame-desc{font-size:11px;color:var(--g700);line-height:1.4;}
+
+/* Frame visual contents */
+.sbv{width:100%;height:100%;display:flex;align-items:center;justify-content:center;position:relative;}
+.sbv-gradient-iv{background:linear-gradient(135deg,var(--indigo-700),var(--violet-600));}
+.sbv-gradient-iv.fade{opacity:.4;}
+.sbv-text-white{color:#fff;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;text-align:center;padding:6px;}
+.sbv-typewriter{border-right:2px solid #fff;padding-right:3px;display:inline;}
+.sbv-cta-pill{background:var(--coral-500);color:#fff;font-size:7px;padding:3px 8px;border-radius:100px;box-shadow:0 0 8px rgba(255,107,107,.4);}
+.sbv-product-bg{background:linear-gradient(180deg,#fff,var(--g100));}
+.sbv-box{width:36px;height:36px;border-radius:8px;background:var(--indigo-200);}
+.sbv-feats{display:flex;flex-direction:column;gap:3px;position:absolute;right:8px;}
+.sbv-feat-line{width:28px;height:3px;background:var(--indigo-300);border-radius:2px;}
+.sbv-price-tag{background:var(--indigo-600);color:#fff;font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 8px;border-radius:6px;}
+.sbv-ba{display:flex;width:100%;height:100%;}
+.sbv-ba-l{flex:1;background:#554;}
+.sbv-ba-r{flex:1;background:linear-gradient(135deg,var(--indigo-500),var(--violet-500));}
+.sbv-ba-d{width:2px;background:#fff;}
+.sbv-dark{background:var(--dark-bg);}
+.sbv-avatar{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--indigo-400),var(--violet-400));box-shadow:0 0 0 2px rgba(99,102,241,.3);}
+.sbv-bubble{background:var(--dark-s2);border-radius:6px;padding:4px 6px;font-size:7px;color:var(--dark-text);max-width:80%;margin-top:4px;text-align:center;}
+.sbv-stars-row{display:flex;gap:2px;}
+.sbv-mini-star{width:7px;height:7px;background:var(--warning);clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);}
+.sbv-stat-bg{background:linear-gradient(180deg,var(--dark-bg),var(--dark-s2));}
+.sbv-big-num{font-family:'Outfit',sans-serif;font-weight:800;font-size:24px;background:linear-gradient(135deg,var(--coral-500),var(--violet-400));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.sbv-bar-track{width:80%;height:5px;background:var(--dark-border);border-radius:3px;overflow:hidden;}
+.sbv-bar-fill{height:100%;background:linear-gradient(90deg,var(--indigo-500),var(--coral-500));border-radius:3px;}
+.sbv-carousel-bg{background:linear-gradient(135deg,var(--indigo-600),var(--indigo-800));}
+.sbv-mini-card{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:6px 8px;color:#fff;font-size:8px;text-align:center;font-family:'Outfit',sans-serif;font-weight:600;}
+.sbv-dots-row{display:flex;gap:3px;margin-top:6px;}
+.sbv-dot-s{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.25);}
+.sbv-dot-s.act{background:#fff;}
+.sbv-overlay{position:absolute;inset:0;background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;}
+
+/* Motion Spec mini table */
+.motion-specs{width:100%;}
+.motion-specs table{width:100%;border-collapse:collapse;font-size:12px;}
+.motion-specs th{font-family:'Outfit',sans-serif;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--g500);padding:8px 12px;text-align:left;border-bottom:1px solid var(--g200);background:var(--g50);}
+.motion-specs td{padding:8px 12px;border-bottom:1px solid var(--g100);color:var(--g700);}
+.motion-specs .prop{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--indigo-600);}
+.motion-specs .val{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--g800);}
+.motion-specs .easing{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--violet-500);}
+
+/* Brand Customization */
+.brand-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:32px;}
+.brand-card{border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--g200);background:#fff;}
+.brand-card-header{padding:16px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--g100);}
+.brand-swatch{display:flex;gap:4px;}
+.brand-swatch span{width:20px;height:20px;border-radius:6px;}
+.brand-card-header h4{font-family:'Outfit',sans-serif;font-weight:600;font-size:15px;color:var(--g900);}
+.brand-card-header .brand-type{font-size:12px;color:var(--g500);margin-left:auto;}
+.brand-preview{padding:16px;display:flex;justify-content:center;}
+.brand-phone{width:120px;aspect-ratio:9/18.5;background:#1a1a1a;border-radius:20px;padding:5px;box-shadow:0 4px 16px rgba(0,0,0,.15);}
+.brand-phone-screen{width:100%;height:100%;border-radius:15px;overflow:hidden;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:10px 8px;text-align:center;color:#fff;}
+.brand-phone-screen .bq-mark{font-size:20px;opacity:.4;font-family:Georgia,serif;margin-bottom:2px;}
+.brand-phone-screen .bq-text{font-family:'Outfit',sans-serif;font-weight:700;font-size:8px;line-height:1.4;margin-bottom:6px;}
+.brand-phone-screen .bq-attr{font-size:6px;opacity:.7;margin-bottom:8px;}
+.brand-phone-screen .bq-cta{font-size:6px;font-weight:600;padding:3px 10px;border-radius:100px;color:#fff;}
+
+/* Brand A */
+.brand-a-screen{background:linear-gradient(135deg,#1e40af,#3b82f6);}
+.brand-a-cta{background:#f97316;}
+/* Brand B */
+.brand-b-screen{background:linear-gradient(135deg,#166534,#22c55e);}
+.brand-b-cta{background:#ca8a04;}
+/* Brand C */
+.brand-c-screen{background:linear-gradient(135deg,#be185d,#a855f7);}
+.brand-c-cta{background:#ec4899;}
+
+/* Motion Tokens Section */
+.token-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;}
+.token-card{background:#fff;border-radius:var(--r-lg);border:1px solid var(--g200);overflow:hidden;}
+.token-card-title{font-family:'Outfit',sans-serif;font-weight:600;font-size:15px;color:var(--g900);padding:16px 20px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:8px;}
+.token-card-title .token-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.token-card table{width:100%;border-collapse:collapse;font-size:13px;}
+.token-card th{font-family:'Outfit',sans-serif;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--g500);padding:10px 20px;text-align:left;border-bottom:1px solid var(--g100);background:var(--g50);}
+.token-card td{padding:10px 20px;border-bottom:1px solid var(--g100);vertical-align:middle;}
+.token-card tr:last-child td{border-bottom:none;}
+.token-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--indigo-600);font-weight:500;}
+.token-value{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--g800);}
+.token-bar{height:4px;border-radius:2px;background:linear-gradient(90deg,var(--indigo-400),var(--violet-400));margin-top:4px;}
+.token-bezier{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--violet-500);}
+
+/* Platform Adaptations */
+.platform-row{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;}
+.platform-card{text-align:center;}
+.platform-card h5{font-family:'Outfit',sans-serif;font-weight:600;font-size:14px;color:var(--g800);margin-bottom:4px;}
+.platform-card .platform-dim{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--g500);margin-bottom:12px;}
+.platform-phone{margin:0 auto;background:#1a1a1a;padding:5px;position:relative;box-shadow:0 6px 24px rgba(0,0,0,.15);}
+.platform-phone.vertical{width:140px;aspect-ratio:9/18.5;border-radius:22px;}
+.platform-phone.square{width:180px;aspect-ratio:1/1;border-radius:14px;}
+.platform-phone-screen{width:100%;height:100%;overflow:hidden;position:relative;}
+.platform-phone.vertical .platform-phone-screen{border-radius:17px;}
+.platform-phone.square .platform-phone-screen{border-radius:9px;}
+.platform-phone-screen .pp-content{width:100%;height:100%;background:linear-gradient(180deg,#fff,var(--g100));display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 8px;}
+.platform-phone-screen .pp-product{width:36px;height:36px;border-radius:10px;background:var(--indigo-200);margin-bottom:6px;}
+.platform-phone-screen .pp-name{font-family:'Outfit',sans-serif;font-size:8px;font-weight:700;color:var(--g900);}
+.platform-phone-screen .pp-price{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--indigo-600);}
+
+/* Platform UI overlays */
+.ui-overlay{position:absolute;inset:0;pointer-events:none;z-index:2;}
+.ui-overlay .ui-bottom{position:absolute;bottom:8px;left:8px;right:8px;display:flex;justify-content:space-between;align-items:flex-end;}
+.ui-overlay .ui-right{position:absolute;right:6px;bottom:40px;display:flex;flex-direction:column;align-items:center;gap:10px;}
+.ui-icon{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.2);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;}
+.ui-icon svg{width:12px;height:12px;fill:#fff;}
+.ui-icon-count{font-size:6px;color:#fff;margin-top:1px;font-family:'DM Sans',sans-serif;}
+.ui-username{font-size:7px;color:#fff;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,.5);}
+.ui-caption{font-size:6px;color:rgba(255,255,255,.8);text-shadow:0 1px 3px rgba(0,0,0,.5);max-width:80px;}
+.ui-music{font-size:6px;color:rgba(255,255,255,.7);display:flex;align-items:center;gap:3px;}
+.ui-tiktok-logo{position:absolute;top:8px;left:8px;font-family:'Outfit',sans-serif;font-size:8px;font-weight:800;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.3);}
+.ui-reels-label{position:absolute;top:8px;left:8px;font-family:'Outfit',sans-serif;font-size:7px;font-weight:700;color:#fff;display:flex;align-items:center;gap:3px;}
+.ui-reels-label::before{content:'';width:10px;height:10px;background:linear-gradient(135deg,#f58529,#dd2a7b,#8134af);border-radius:3px;}
+.ui-shorts-label{position:absolute;top:8px;left:8px;display:flex;align-items:center;gap:3px;}
+.ui-shorts-label span{font-family:'Outfit',sans-serif;font-size:7px;font-weight:700;color:#fff;}
+.ui-shorts-label::before{content:'';width:10px;height:12px;background:#f00;border-radius:2px;display:flex;align-items:center;justify-content:center;}
+.ui-feed-top{position:absolute;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;align-items:center;}
+.ui-feed-user{display:flex;align-items:center;gap:4px;}
+.ui-feed-avatar{width:14px;height:14px;border-radius:50%;background:var(--indigo-300);}
+.ui-feed-name{font-size:7px;font-weight:600;color:var(--g800);}
+
+.stagger-desc{font-size:12px;color:var(--g600);margin-top:16px;padding:12px 16px;background:var(--indigo-50);border-radius:var(--r-md);border-left:3px solid var(--indigo-400);font-family:'JetBrains Mono',monospace;font-size:11px;}
+
+/* Responsive */
+@media(max-width:1024px){
+  .template-body{grid-template-columns:1fr;}
+  .phone-col{border-right:none;border-bottom:1px solid var(--g100);}
+  .brand-grid{grid-template-columns:1fr 1fr;}
+  .platform-row{grid-template-columns:1fr 1fr;}
+  .token-grid{grid-template-columns:1fr;}
+}
+@media(max-width:640px){
+  .page-header h1{font-size:32px;}
+  .brand-grid{grid-template-columns:1fr;}
+  .platform-row{grid-template-columns:1fr 1fr;}
+  .container{padding:0 16px;}
+}
+</style>
+</head>
+<body>
+
+<!-- Page Header -->
+<header class="page-header">
+  <div class="container">
+    <div class="badge">TrueTwist Design System</div>
+    <h1>Video Template <span>Design System</span></h1>
+    <p>6 video template styles with motion specifications, brand customization system, and platform-specific previews for TikTok, Instagram Reels, YouTube Shorts, and feed video formats.</p>
+  </div>
+</header>
+
+<main>
+
+<!-- Section 1: Platform Video Specifications -->
+<section class="section">
+  <div class="container">
+    <div class="section-label">01 &mdash; Video Specifications</div>
+    <h2 class="section-title">Platform Video Specifications</h2>
+    <p class="section-desc">Required dimensions, aspect ratios, and duration limits for each supported social media platform.</p>
+    <div class="spec-table-wrap">
+      <table class="spec-table">
+        <thead>
+          <tr>
+            <th>Platform</th>
+            <th>Dimensions</th>
+            <th>Aspect Ratio</th>
+            <th>Max Duration</th>
+            <th>Format</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>TikTok</strong></td>
+            <td class="mono">1080 &times; 1920</td>
+            <td><span class="badge-sm">9:16</span></td>
+            <td>3 min</td>
+            <td>Vertical</td>
+          </tr>
+          <tr>
+            <td><strong>Instagram Reels</strong></td>
+            <td class="mono">1080 &times; 1920</td>
+            <td><span class="badge-sm">9:16</span></td>
+            <td>90s</td>
+            <td>Vertical</td>
+          </tr>
+          <tr>
+            <td><strong>YouTube Shorts</strong></td>
+            <td class="mono">1080 &times; 1920</td>
+            <td><span class="badge-sm">9:16</span></td>
+            <td>60s</td>
+            <td>Vertical</td>
+          </tr>
+          <tr>
+            <td><strong>Instagram Feed Video</strong></td>
+            <td class="mono">1080 &times; 1080</td>
+            <td><span class="badge-sm badge-violet">1:1</span></td>
+            <td>60s</td>
+            <td>Square</td>
+          </tr>
+          <tr>
+            <td><strong>Facebook Feed Video</strong></td>
+            <td class="mono">1280 &times; 720</td>
+            <td><span class="badge-sm badge-green">16:9</span></td>
+            <td>4 min</td>
+            <td>Landscape</td>
+          </tr>
+          <tr>
+            <td><strong>LinkedIn Video</strong></td>
+            <td class="mono">1920 &times; 1080</td>
+            <td><span class="badge-sm badge-green">16:9</span></td>
+            <td>10 min</td>
+            <td>Landscape</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Section 2: The 6 Video Templates -->
+<section class="section">
+  <div class="container">
+    <div class="section-label">02 &mdash; Video Templates</div>
+    <h2 class="section-title">Template Library</h2>
+    <p class="section-desc">Each template includes a phone-frame preview, storyboard animation sequence, and detailed motion specifications.</p>
+
+    <div class="template-grid">
+
+      <!-- Template 1: Quote Graphic -->
+      <div class="template-card">
+        <div class="template-card-header">
+          <div class="template-number">1</div>
+          <h3>Quote Graphic</h3>
+          <span class="tag">9:16 &bull; 15-30s</span>
+        </div>
+        <div class="template-body">
+          <div class="phone-col">
+            <div class="phone-frame">
+              <div class="phone-screen screen-quote">
+                <div class="q-mark">&ldquo;</div>
+                <div class="q-text">Design is not just what it looks like. Design is how it works.</div>
+                <div class="q-attr">&mdash; Steve Jobs</div>
+                <div class="q-cta">Learn More</div>
+                <div class="q-logo">TrueTwist</div>
+              </div>
+            </div>
+          </div>
+          <div class="detail-col">
+            <div>
+              <h4>Storyboard Sequence</h4>
+              <div class="storyboard-strip">
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv sbv-gradient-iv fade"><div class="sbv-text-white" style="opacity:.4">BG</div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:00 &ndash; 00:01</div><div class="sb-frame-desc">Background gradient fades in from black</div></div>
+                </div>
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv sbv-gradient-iv"><div class="sbv-text-white"><span class="sbv-typewriter">Design is...</span></div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:01 &ndash; 00:03</div><div class="sb-frame-desc">Quote text typewriter effect reveals</div></div>
+                </div>
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv sbv-gradient-iv" style="flex-direction:column;gap:4px;"><div class="sbv-text-white" style="font-size:8px;">Design is how it works.</div><div style="font-size:7px;color:rgba(255,255,255,.6);">&mdash; Steve Jobs</div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:03 &ndash; 00:04</div><div class="sb-frame-desc">Attribution text slides up</div></div>
+                </div>
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv sbv-gradient-iv" style="flex-direction:column;gap:6px;"><div class="sbv-text-white" style="font-size:7px;">Design is how it works.</div><div class="sbv-cta-pill">Learn More</div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:04 &ndash; 00:05</div><div class="sb-frame-desc">CTA button pulses with glow</div></div>
+                </div>
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv sbv-gradient-iv" style="flex-direction:column;gap:6px;"><div class="sbv-cta-pill">Learn More</div><div style="font-size:7px;color:rgba(255,255,255,.5);font-family:Outfit,sans-serif;font-weight:700;">TrueTwist</div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:05 &ndash; 00:06</div><div class="sb-frame-desc">Logo watermark fades in</div></div>
+                </div>
+              </div>
+            </div>
+            <div class="motion-specs">
+              <h4>Motion Specifications</h4>
+              <table>
+                <thead><tr><th>Property</th><th>Duration</th><th>Easing</th></tr></thead>
+                <tbody>
+                  <tr><td class="prop">typewriter</td><td class="val">1.2s</td><td class="easing">ease-out</td></tr>
+                  <tr><td class="prop">slide-up</td><td class="val">0.6s</td><td class="easing">cubic-bezier(0.16, 1, 0.3, 1)</td></tr>
+                  <tr><td class="prop">pulse</td><td class="val">0.8s</td><td class="easing">ease-in-out infinite</td></tr>
+                  <tr><td class="prop">fade-in</td><td class="val">0.4s</td><td class="easing">ease</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Template 2: Product Showcase -->
+      <div class="template-card">
+        <div class="template-card-header">
+          <div class="template-number">2</div>
+          <h3>Product Showcase</h3>
+          <span class="tag">9:16 &bull; 15-30s</span>
+        </div>
+        <div class="template-body">
+          <div class="phone-col">
+            <div class="phone-frame">
+              <div class="phone-screen screen-product">
+                <div class="prod-img"></div>
+                <div class="prod-name">Premium Headphones</div>
+                <div class="prod-price">$299.99</div>
+                <div class="prod-feat">
+                  <div>Active Noise Cancelling</div>
+                  <div>40h Battery Life</div>
+                  <div>Hi-Res Audio</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="detail-col">
+            <div>
+              <h4>Storyboard Sequence</h4>
+              <div class="storyboard-strip">
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv sbv-product-bg"><div class="sbv-box" style="transform:scale(.6);opacity:.6;"></div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:00 &ndash; 00:01</div><div class="sb-frame-desc">Product zooms in from center</div></div>
+                </div>
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv sbv-product-bg"><div class="sbv-box"></div><div class="sbv-feats"><div class="sbv-feat-line"></div><div class="sbv-feat-line" style="width:22px;"></div><div class="sbv-feat-line" style="width:18px;"></div></div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:01 &ndash; 00:03</div><div class="sb-frame-desc">Features slide in from right, staggered</div></div>
+                </div>
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv sbv-product-bg" style="flex-direction:column;gap:6px;"><div class="sbv-box" style="width:28px;height:28px;"></div><div class="sbv-price-tag">$299</div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:03 &ndash; 00:04</div><div class="sb-frame-desc">Price tag bounces in</div></div>
+                </div>
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv sbv-product-bg" style="flex-direction:column;gap:6px;"><div class="sbv-price-tag">$299</div><div class="sbv-cta-pill">Shop Now</div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:04 &ndash; 00:05</div><div class="sb-frame-desc">CTA button slides up</div></div>
+                </div>
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv sbv-product-bg" style="flex-direction:column;gap:6px;"><div class="sbv-cta-pill">Shop Now</div><div style="font-family:Outfit,sans-serif;font-size:8px;font-weight:700;color:var(--indigo-600);opacity:.6;">TrueTwist</div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:05 &ndash; 00:06</div><div class="sb-frame-desc">Brand logo fade in</div></div>
+                </div>
+              </div>
+            </div>
+            <div class="motion-specs">
+              <h4>Motion Specifications</h4>
+              <table>
+                <thead><tr><th>Property</th><th>Duration</th><th>Easing</th></tr></thead>
+                <tbody>
+                  <tr><td class="prop">zoom</td><td class="val">1.0s</td><td class="easing">cubic-bezier(0.34, 1.56, 0.64, 1)</td></tr>
+                  <tr><td class="prop">slide-in</td><td class="val">0.5s</td><td class="easing">staggered 0.15s each</td></tr>
+                  <tr><td class="prop">bounce</td><td class="val">0.7s</td><td class="easing">cubic-bezier(0.34, 1.56, 0.64, 1)</td></tr>
+                  <tr><td class="prop">fade</td><td class="val">0.4s</td><td class="easing">ease</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Template 3: Before/After -->
+      <div class="template-card">
+        <div class="template-card-header">
+          <div class="template-number">3</div>
+          <h3>Before / After</h3>
+          <span class="tag">9:16 &bull; 15-30s</span>
+        </div>
+        <div class="template-body">
+          <div class="phone-col">
+            <div class="phone-frame">
+              <div class="phone-screen screen-beforeafter">
+                <div class="screen-ba-left"><span class="screen-ba-label">Before</span></div>
+                <div class="screen-ba-divider"></div>
+                <div class="screen-ba-right"><span class="screen-ba-label">After</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="detail-col">
+            <div>
+              <h4>Storyboard Sequence</h4>
+              <div class="storyboard-strip">
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv"><div class="sbv-ba"><div class="sbv-ba-l" style="flex:1;"></div></div><div style="position:absolute;color:#fff;font-size:9px;font-family:Outfit,sans-serif;font-weight:700;">BEFORE</div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:00 &ndash; 00:02</div><div class="sb-frame-desc">&ldquo;Before&rdquo; label + full image</div></div>
+                </div>
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv"><div class="sbv-ba"><div class="sbv-ba-l" style="flex:3;"></div><div class="sbv-ba-d"></div><div class="sbv-ba-r" style="flex:1;"></div></div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:02 &ndash; 00:04</div><div class="sb-frame-desc">Sliding divider wipe begins</div></div>
+                </div>
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv"><div class="sbv-ba"><div class="sbv-ba-l"></div><div class="sbv-ba-d"></div><div class="sbv-ba-r"></div></div><div style="position:absolute;right:12px;color:#fff;font-size:9px;font-family:Outfit,sans-serif;font-weight:700;">AFTER</div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:04 &ndash; 00:05</div><div class="sb-frame-desc">&ldquo;After&rdquo; side fully revealed</div></div>
+                </div>
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv"><div class="sbv-ba"><div class="sbv-ba-l"></div><div class="sbv-ba-d"></div><div class="sbv-ba-r"></div></div><div class="sbv-overlay"><div style="background:rgba(255,255,255,.9);border-radius:6px;padding:4px 8px;font-family:Outfit,sans-serif;font-size:9px;font-weight:700;color:var(--indigo-600);">+73%</div></div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:05 &ndash; 00:06</div><div class="sb-frame-desc">Stats overlay pops in</div></div>
+                </div>
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv"><div class="sbv-ba"><div class="sbv-ba-l"></div><div class="sbv-ba-d"></div><div class="sbv-ba-r"></div></div><div class="sbv-overlay"><div class="sbv-cta-pill">See Results</div></div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:06 &ndash; 00:07</div><div class="sb-frame-desc">CTA + logo appear</div></div>
+                </div>
+              </div>
+            </div>
+            <div class="motion-specs">
+              <h4>Motion Specifications</h4>
+              <table>
+                <thead><tr><th>Property</th><th>Duration</th><th>Easing</th></tr></thead>
+                <tbody>
+                  <tr><td class="prop">wipe</td><td class="val">1.5s</td><td class="easing">ease-in-out</td></tr>
+                  <tr><td class="prop">pop</td><td class="val">0.4s</td><td class="easing">spring</td></tr>
+                  <tr><td class="prop">overlay</td><td class="val">0.3s</td><td class="easing">fade</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Template 4: Testimonial -->
+      <div class="template-card">
+        <div class="template-card-header">
+          <div class="template-number">4</div>
+          <h3>Testimonial</h3>
+          <span class="tag">9:16 &bull; 15-30s</span>
+        </div>
+        <div class="template-body">
+          <div class="phone-col">
+            <div class="phone-frame">
+              <div class="phone-screen screen-testimonial">
+                <div class="t-avatar"></div>
+                <div class="t-quote">&ldquo;This product completely transformed our workflow. Incredible results!&rdquo;</div>
+                <div class="t-stars"><div class="t-star"></div><div class="t-star"></div><div class="t-star"></div><div class="t-star"></div><div class="t-star"></div></div>
+                <div class="t-name">Sarah Chen</div>
+                <div class="t-role">VP of Marketing, Acme Inc.</div>
+              </div>
+            </div>
+          </div>
+          <div class="detail-col">
+            <div>
+              <h4>Storyboard Sequence</h4>
+              <div class="storyboard-strip">
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv sbv-dark" style="flex-direction:column;gap:4px;"><div class="sbv-avatar"></div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:00 &ndash; 00:01</div><div class="sb-frame-desc">Avatar scales in with glow ring</div></div>
+                </div>
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv sbv-dark" style="flex-direction:column;gap:4px;"><div class="sbv-avatar" style="width:18px;height:18px;"></div><div class="sbv-bubble">&ldquo;This transformed our workflow...&rdquo;</div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:01 &ndash; 00:03</div><div class="sb-frame-desc">Quote bubble expands outward</div></div>
+                </div>
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv sbv-dark" style="flex-direction:column;gap:4px;"><div class="sbv-bubble" style="font-size:6px;">&ldquo;Incredible results!&rdquo;</div><div class="sbv-stars-row"><div class="sbv-mini-star"></div><div class="sbv-mini-star"></div><div class="sbv-mini-star"></div><div class="sbv-mini-star"></div><div class="sbv-mini-star"></div></div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:03 &ndash; 00:04</div><div class="sb-frame-desc">Stars animate in one by one</div></div>
+                </div>
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv sbv-dark" style="flex-direction:column;gap:3px;"><div class="sbv-stars-row"><div class="sbv-mini-star"></div><div class="sbv-mini-star"></div><div class="sbv-mini-star"></div><div class="sbv-mini-star"></div><div class="sbv-mini-star"></div></div><div style="font-size:8px;color:var(--dark-text);font-family:Outfit,sans-serif;font-weight:600;">Sarah Chen</div><div style="font-size:6px;color:var(--dark-muted);">VP Marketing</div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:04 &ndash; 00:05</div><div class="sb-frame-desc">Name and title slide in</div></div>
+                </div>
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv sbv-dark" style="flex-direction:column;gap:6px;"><div style="font-size:7px;color:var(--dark-muted);">VP Marketing</div><div class="sbv-cta-pill">Get Started</div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:05 &ndash; 00:06</div><div class="sb-frame-desc">Brand CTA appears</div></div>
+                </div>
+              </div>
+            </div>
+            <div class="motion-specs">
+              <h4>Motion Specifications</h4>
+              <table>
+                <thead><tr><th>Property</th><th>Duration</th><th>Easing</th></tr></thead>
+                <tbody>
+                  <tr><td class="prop">scale</td><td class="val">0.8s</td><td class="easing">cubic-bezier(0.34, 1.56, 0.64, 1)</td></tr>
+                  <tr><td class="prop">expand</td><td class="val">0.6s</td><td class="easing">ease-out</td></tr>
+                  <tr><td class="prop">star-stagger</td><td class="val">0.15s each</td><td class="easing">ease-out</td></tr>
+                  <tr><td class="prop">slide</td><td class="val">0.5s</td><td class="easing">cubic-bezier(0.16, 1, 0.3, 1)</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Template 5: Stat Reveal -->
+      <div class="template-card">
+        <div class="template-card-header">
+          <div class="template-number">5</div>
+          <h3>Stat Reveal</h3>
+          <span class="tag">9:16 &bull; 15-30s</span>
+        </div>
+        <div class="template-body">
+          <div class="phone-col">
+            <div class="phone-frame">
+              <div class="phone-screen screen-stat">
+                <div class="s-label">Revenue Growth</div>
+                <div class="s-number">247%</div>
+                <div class="s-unit">Year over Year</div>
+                <div class="s-bar-wrap"><div class="s-bar"></div></div>
+                <div class="s-context">vs. industry average of 12%</div>
+              </div>
+            </div>
+          </div>
+          <div class="detail-col">
+            <div>
+              <h4>Storyboard Sequence</h4>
+              <div class="storyboard-strip">
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv sbv-stat-bg" style="flex-direction:column;"><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--dark-muted);text-transform:uppercase;letter-spacing:1px;">Revenue Growth</div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:00 &ndash; 00:01</div><div class="sb-frame-desc">Label fades in</div></div>
+                </div>
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv sbv-stat-bg" style="flex-direction:column;gap:2px;"><div style="font-size:7px;color:var(--dark-muted);font-family:'JetBrains Mono',monospace;">REVENUE GROWTH</div><div class="sbv-big-num">247%</div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:01 &ndash; 00:03</div><div class="sb-frame-desc">Number counts up 0 &rarr; 247%</div></div>
+                </div>
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv sbv-stat-bg" style="flex-direction:column;gap:6px;"><div class="sbv-big-num" style="font-size:18px;">247%</div><div class="sbv-bar-track"><div class="sbv-bar-fill" style="width:73%;"></div></div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:03 &ndash; 00:04</div><div class="sb-frame-desc">Comparison bar grows</div></div>
+                </div>
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv sbv-stat-bg" style="flex-direction:column;gap:4px;"><div class="sbv-big-num" style="font-size:16px;">247%</div><div class="sbv-bar-track"><div class="sbv-bar-fill" style="width:73%;"></div></div><div style="font-size:7px;color:var(--dark-muted);">vs. 12% avg</div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:04 &ndash; 00:05</div><div class="sb-frame-desc">Context text fades in</div></div>
+                </div>
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv sbv-stat-bg" style="flex-direction:column;gap:6px;"><div style="font-size:7px;color:var(--dark-muted);">vs. 12% avg</div><div class="sbv-cta-pill">See How</div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:05 &ndash; 00:06</div><div class="sb-frame-desc">CTA slides in</div></div>
+                </div>
+              </div>
+            </div>
+            <div class="motion-specs">
+              <h4>Motion Specifications</h4>
+              <table>
+                <thead><tr><th>Property</th><th>Duration</th><th>Easing</th></tr></thead>
+                <tbody>
+                  <tr><td class="prop">count-up</td><td class="val">2.0s</td><td class="easing">ease-out</td></tr>
+                  <tr><td class="prop">bar-grow</td><td class="val">1.0s</td><td class="easing">cubic-bezier(0.16, 1, 0.3, 1)</td></tr>
+                  <tr><td class="prop">fade</td><td class="val">0.4s</td><td class="easing">ease</td></tr>
+                  <tr><td class="prop">slide</td><td class="val">0.5s</td><td class="easing">cubic-bezier(0.16, 1, 0.3, 1)</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Template 6: Tip Carousel -->
+      <div class="template-card">
+        <div class="template-card-header">
+          <div class="template-number">6</div>
+          <h3>Tip Carousel</h3>
+          <span class="tag">9:16 &bull; 30-60s</span>
+        </div>
+        <div class="template-body">
+          <div class="phone-col">
+            <div class="phone-frame">
+              <div class="phone-screen screen-carousel">
+                <div class="c-card">
+                  <div class="c-num">03</div>
+                  <div class="c-tip">Use consistent brand colors across all your social media posts</div>
+                </div>
+                <div class="c-dots">
+                  <div class="c-dot"></div>
+                  <div class="c-dot"></div>
+                  <div class="c-dot active"></div>
+                  <div class="c-dot"></div>
+                  <div class="c-dot"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="detail-col">
+            <div>
+              <h4>Storyboard Sequence</h4>
+              <div class="storyboard-strip">
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv sbv-carousel-bg" style="flex-direction:column;gap:4px;"><div class="sbv-mini-card">5 Tips for Better Content</div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:00 &ndash; 00:03</div><div class="sb-frame-desc">Title card intro animation</div></div>
+                </div>
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv sbv-carousel-bg" style="flex-direction:column;gap:4px;"><div class="sbv-mini-card"><div style="font-size:14px;opacity:.3;">01</div><div style="font-size:7px;margin-top:2px;">Know your audience</div></div><div class="sbv-dots-row"><div class="sbv-dot-s act"></div><div class="sbv-dot-s"></div><div class="sbv-dot-s"></div><div class="sbv-dot-s"></div><div class="sbv-dot-s"></div></div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:03 &ndash; 00:06</div><div class="sb-frame-desc">Tip 1 slides in from right</div></div>
+                </div>
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv sbv-carousel-bg" style="flex-direction:column;gap:4px;"><div class="sbv-mini-card"><div style="font-size:14px;opacity:.3;">03</div><div style="font-size:7px;margin-top:2px;">Brand consistency</div></div><div class="sbv-dots-row"><div class="sbv-dot-s"></div><div class="sbv-dot-s"></div><div class="sbv-dot-s act"></div><div class="sbv-dot-s"></div><div class="sbv-dot-s"></div></div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:06 &ndash; 00:18</div><div class="sb-frame-desc">Tips 2&ndash;4 auto-advance with swipe</div></div>
+                </div>
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv sbv-carousel-bg" style="flex-direction:column;gap:4px;"><div class="sbv-mini-card"><div style="font-size:14px;opacity:.3;">05</div><div style="font-size:7px;margin-top:2px;">Engage & respond</div></div><div class="sbv-dots-row"><div class="sbv-dot-s"></div><div class="sbv-dot-s"></div><div class="sbv-dot-s"></div><div class="sbv-dot-s"></div><div class="sbv-dot-s act"></div></div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:18 &ndash; 00:24</div><div class="sb-frame-desc">Tip 5 + quick recap flash</div></div>
+                </div>
+                <div class="sb-frame">
+                  <div class="sb-frame-img"><div class="sbv sbv-carousel-bg" style="flex-direction:column;gap:6px;"><div class="sbv-mini-card" style="background:rgba(255,255,255,.2);">Follow for more!</div><div class="sbv-cta-pill">Subscribe</div></div></div>
+                  <div class="sb-frame-info"><div class="sb-frame-time">00:24 &ndash; 00:30</div><div class="sb-frame-desc">CTA card with follow prompt</div></div>
+                </div>
+              </div>
+            </div>
+            <div class="motion-specs">
+              <h4>Motion Specifications</h4>
+              <table>
+                <thead><tr><th>Property</th><th>Duration</th><th>Easing</th></tr></thead>
+                <tbody>
+                  <tr><td class="prop">slide</td><td class="val">0.5s</td><td class="easing">cubic-bezier(0.16, 1, 0.3, 1)</td></tr>
+                  <tr><td class="prop">auto-advance</td><td class="val">3.0s interval</td><td class="easing">linear</td></tr>
+                  <tr><td class="prop">card-stack</td><td class="val">0.3s</td><td class="easing">ease-out</td></tr>
+                  <tr><td class="prop">dot-transition</td><td class="val">0.2s</td><td class="easing">ease</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Section 3: Brand Customization System -->
+<section class="section">
+  <div class="container">
+    <div class="section-label">03 &mdash; Brand Customization</div>
+    <h2 class="section-title">Brand Customization System</h2>
+    <p class="section-desc">Templates dynamically adapt to any brand identity. Below, the Quote Graphic template is shown rendered in three distinct brand palettes.</p>
+
+    <div class="brand-grid">
+      <!-- Brand A -->
+      <div class="brand-card">
+        <div class="brand-card-header">
+          <div class="brand-swatch">
+            <span style="background:#1e40af;"></span>
+            <span style="background:#3b82f6;"></span>
+            <span style="background:#f97316;"></span>
+          </div>
+          <h4>Brand A</h4>
+          <span class="brand-type">Tech</span>
+        </div>
+        <div class="brand-preview">
+          <div class="brand-phone">
+            <div class="brand-phone-screen brand-a-screen">
+              <div class="bq-mark">&ldquo;</div>
+              <div class="bq-text">Innovation distinguishes between a leader and a follower.</div>
+              <div class="bq-attr">&mdash; Steve Jobs</div>
+              <div class="bq-cta brand-a-cta">Explore</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Brand B -->
+      <div class="brand-card">
+        <div class="brand-card-header">
+          <div class="brand-swatch">
+            <span style="background:#166534;"></span>
+            <span style="background:#22c55e;"></span>
+            <span style="background:#ca8a04;"></span>
+          </div>
+          <h4>Brand B</h4>
+          <span class="brand-type">Organic</span>
+        </div>
+        <div class="brand-preview">
+          <div class="brand-phone">
+            <div class="brand-phone-screen brand-b-screen">
+              <div class="bq-mark">&ldquo;</div>
+              <div class="bq-text">Nature does not hurry, yet everything is accomplished.</div>
+              <div class="bq-attr">&mdash; Lao Tzu</div>
+              <div class="bq-cta brand-b-cta">Discover</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Brand C -->
+      <div class="brand-card">
+        <div class="brand-card-header">
+          <div class="brand-swatch">
+            <span style="background:#be185d;"></span>
+            <span style="background:#ec4899;"></span>
+            <span style="background:#a855f7;"></span>
+          </div>
+          <h4>Brand C</h4>
+          <span class="brand-type">Fashion</span>
+        </div>
+        <div class="brand-preview">
+          <div class="brand-phone">
+            <div class="brand-phone-screen brand-c-screen">
+              <div class="bq-mark">&ldquo;</div>
+              <div class="bq-text">Style is a way to say who you are without speaking.</div>
+              <div class="bq-attr">&mdash; Rachel Zoe</div>
+              <div class="bq-cta brand-c-cta">Shop Now</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="spec-table-wrap">
+      <table class="spec-table">
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>Brand A (Tech)</th>
+            <th>Brand B (Organic)</th>
+            <th>Brand C (Fashion)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Primary Color</strong></td>
+            <td class="mono">#1e40af</td>
+            <td class="mono">#166534</td>
+            <td class="mono">#be185d</td>
+          </tr>
+          <tr>
+            <td><strong>Accent Color</strong></td>
+            <td class="mono">#f97316</td>
+            <td class="mono">#ca8a04</td>
+            <td class="mono">#a855f7</td>
+          </tr>
+          <tr>
+            <td><strong>Font Family</strong></td>
+            <td>Inter / System</td>
+            <td>Merriweather / Serif</td>
+            <td>Playfair Display / Serif</td>
+          </tr>
+          <tr>
+            <td><strong>Logo Position</strong></td>
+            <td><span class="badge-sm">bottom-right</span></td>
+            <td><span class="badge-sm badge-green">bottom-center</span></td>
+            <td><span class="badge-sm badge-violet">top-right</span></td>
+          </tr>
+          <tr>
+            <td><strong>Overlay Opacity</strong></td>
+            <td class="mono">0.85</td>
+            <td class="mono">0.75</td>
+            <td class="mono">0.90</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Section 4: Motion Design Token System -->
+<section class="section">
+  <div class="container">
+    <div class="section-label">04 &mdash; Motion Tokens</div>
+    <h2 class="section-title">Motion Design Token System</h2>
+    <p class="section-desc">Standardized motion primitives used consistently across all video templates to maintain a cohesive, professional animation language.</p>
+
+    <div class="token-grid">
+      <!-- Duration Tokens -->
+      <div class="token-card">
+        <div class="token-card-title">
+          <div class="token-icon" style="background:var(--indigo-50);color:var(--indigo-600);">&#9201;</div>
+          Duration Tokens
+        </div>
+        <table>
+          <thead><tr><th>Token</th><th>Value</th><th style="width:40%;">Visual</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="token-name">--dur-instant</span></td>
+              <td><span class="token-value">100ms</span></td>
+              <td><div class="token-bar" style="width:8%;"></div></td>
+            </tr>
+            <tr>
+              <td><span class="token-name">--dur-fast</span></td>
+              <td><span class="token-value">200ms</span></td>
+              <td><div class="token-bar" style="width:17%;"></div></td>
+            </tr>
+            <tr>
+              <td><span class="token-name">--dur-normal</span></td>
+              <td><span class="token-value">300ms</span></td>
+              <td><div class="token-bar" style="width:25%;"></div></td>
+            </tr>
+            <tr>
+              <td><span class="token-name">--dur-slow</span></td>
+              <td><span class="token-value">600ms</span></td>
+              <td><div class="token-bar" style="width:50%;"></div></td>
+            </tr>
+            <tr>
+              <td><span class="token-name">--dur-dramatic</span></td>
+              <td><span class="token-value">1200ms</span></td>
+              <td><div class="token-bar" style="width:100%;"></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Easing Tokens -->
+      <div class="token-card">
+        <div class="token-card-title">
+          <div class="token-icon" style="background:var(--violet-400);background:rgba(168,85,247,.1);color:var(--violet-600);">&#9889;</div>
+          Easing Tokens
+        </div>
+        <table>
+          <thead><tr><th>Token</th><th>Cubic-Bezier</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="token-name">--ease-default</span></td>
+              <td><span class="token-bezier">cubic-bezier(0.4, 0, 0.2, 1)</span></td>
+            </tr>
+            <tr>
+              <td><span class="token-name">--ease-spring</span></td>
+              <td><span class="token-bezier">cubic-bezier(0.34, 1.56, 0.64, 1)</span></td>
+            </tr>
+            <tr>
+              <td><span class="token-name">--ease-bounce</span></td>
+              <td><span class="token-bezier">cubic-bezier(0.34, 1.56, 0.64, 1)</span></td>
+            </tr>
+            <tr>
+              <td><span class="token-name">--ease-dramatic</span></td>
+              <td><span class="token-bezier">cubic-bezier(0.16, 1, 0.3, 1)</span></td>
+            </tr>
+            <tr>
+              <td><span class="token-name">--ease-smooth</span></td>
+              <td><span class="token-bezier">cubic-bezier(0.45, 0, 0.55, 1)</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="stagger-desc" style="margin-top:24px;">
+      Stagger Pattern: delay = <strong>base-delay</strong> &times; <strong>index</strong><br>
+      Example: base-delay: 150ms, 4 items &rarr; [0ms, 150ms, 300ms, 450ms]
+    </div>
+  </div>
+</section>
+
+<!-- Section 5: Platform-Specific Adaptations -->
+<section class="section">
+  <div class="container">
+    <div class="section-label">05 &mdash; Platform Adaptations</div>
+    <h2 class="section-title">Platform-Specific Adaptations</h2>
+    <p class="section-desc">The Product Showcase template rendered across four platform formats, each with native UI overlays showing how content adapts to platform context.</p>
+
+    <div class="platform-row">
+      <!-- TikTok -->
+      <div class="platform-card">
+        <h5>TikTok</h5>
+        <div class="platform-dim">1080&times;1920 &bull; 9:16</div>
+        <div class="platform-phone vertical">
+          <div class="platform-phone-screen">
+            <div class="pp-content">
+              <div class="pp-product"></div>
+              <div class="pp-name">Premium Headphones</div>
+              <div class="pp-price">$299.99</div>
+            </div>
+            <div class="ui-overlay">
+              <div class="ui-tiktok-logo">TikTok</div>
+              <div class="ui-right">
+                <div><div class="ui-icon"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div><div class="ui-icon-count">24.5K</div></div>
+                <div><div class="ui-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div class="ui-icon-count">1,832</div></div>
+                <div><div class="ui-icon"><svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg></div><div class="ui-icon-count">Share</div></div>
+              </div>
+              <div class="ui-bottom">
+                <div>
+                  <div class="ui-username">@truetwist</div>
+                  <div class="ui-caption">Premium sound. Premium style.</div>
+                  <div class="ui-music">&#9835; Original Sound</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Instagram Reels -->
+      <div class="platform-card">
+        <h5>Instagram Reels</h5>
+        <div class="platform-dim">1080&times;1920 &bull; 9:16</div>
+        <div class="platform-phone vertical">
+          <div class="platform-phone-screen">
+            <div class="pp-content">
+              <div class="pp-product"></div>
+              <div class="pp-name">Premium Headphones</div>
+              <div class="pp-price">$299.99</div>
+            </div>
+            <div class="ui-overlay">
+              <div class="ui-reels-label">Reels</div>
+              <div class="ui-right">
+                <div><div class="ui-icon"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div><div class="ui-icon-count">18.2K</div></div>
+                <div><div class="ui-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div class="ui-icon-count">943</div></div>
+                <div><div class="ui-icon"><svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg></div><div class="ui-icon-count">Send</div></div>
+              </div>
+              <div class="ui-bottom">
+                <div>
+                  <div class="ui-username">truetwist</div>
+                  <div class="ui-caption">Premium sound. Premium style.</div>
+                  <div class="ui-music">&#9835; truetwist &bull; Original</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- YouTube Shorts -->
+      <div class="platform-card">
+        <h5>YouTube Shorts</h5>
+        <div class="platform-dim">1080&times;1920 &bull; 9:16</div>
+        <div class="platform-phone vertical">
+          <div class="platform-phone-screen">
+            <div class="pp-content">
+              <div class="pp-product"></div>
+              <div class="pp-name">Premium Headphones</div>
+              <div class="pp-price">$299.99</div>
+            </div>
+            <div class="ui-overlay">
+              <div class="ui-shorts-label"><span>Shorts</span></div>
+              <div class="ui-right">
+                <div><div class="ui-icon"><svg viewBox="0 0 24 24"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg></div><div class="ui-icon-count">12K</div></div>
+                <div><div class="ui-icon" style="transform:rotate(180deg);"><svg viewBox="0 0 24 24"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg></div><div class="ui-icon-count" style="transform:rotate(180deg);">Dislike</div></div>
+                <div><div class="ui-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div class="ui-icon-count">586</div></div>
+              </div>
+              <div class="ui-bottom">
+                <div>
+                  <div class="ui-username">@TrueTwist</div>
+                  <div class="ui-caption">Premium Headphones Review</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feed 1:1 -->
+      <div class="platform-card">
+        <h5>Feed Video</h5>
+        <div class="platform-dim">1080&times;1080 &bull; 1:1</div>
+        <div class="platform-phone square">
+          <div class="platform-phone-screen">
+            <div class="pp-content" style="padding:16px;">
+              <div class="pp-product" style="width:48px;height:48px;margin-bottom:8px;"></div>
+              <div class="pp-name" style="font-size:10px;">Premium Headphones</div>
+              <div class="pp-price" style="font-size:11px;">$299.99</div>
+            </div>
+            <div class="ui-overlay">
+              <div class="ui-feed-top">
+                <div class="ui-feed-user">
+                  <div class="ui-feed-avatar"></div>
+                  <div class="ui-feed-name" style="color:var(--g800);">truetwist</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- Footer -->
+<footer style="padding:48px 0;text-align:center;border-top:1px solid var(--g200);">
+  <div class="container">
+    <div style="font-family:'Outfit',sans-serif;font-weight:700;font-size:18px;color:var(--g900);margin-bottom:4px;">TrueTwist</div>
+    <div style="font-size:13px;color:var(--g500);">Video Template Design System &mdash; v1.0</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--g400);margin-top:8px;">Generated April 2026</div>
+  </div>
+</footer>
+
+</body>
+</html>

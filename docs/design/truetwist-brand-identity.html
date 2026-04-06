@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrueTwist — Brand Identity Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Primary Palette */
+    --indigo-50: #EEF2FF;
+    --indigo-100: #E0E7FF;
+    --indigo-200: #C7D2FE;
+    --indigo-300: #A5B4FC;
+    --indigo-400: #818CF8;
+    --indigo-500: #6366F1;
+    --indigo-600: #4F46E5;
+    --indigo-700: #4338CA;
+    --indigo-800: #3730A3;
+    --indigo-900: #312E81;
+    --indigo-950: #1E1B4B;
+
+    /* Accent — Coral */
+    --coral-50: #FFF5F5;
+    --coral-100: #FFE3E3;
+    --coral-200: #FFC9C9;
+    --coral-300: #FFA8A8;
+    --coral-400: #FF8787;
+    --coral-500: #FF6B6B;
+    --coral-600: #FA5252;
+    --coral-700: #F03E3E;
+    --coral-800: #E03131;
+    --coral-900: #C92A2A;
+
+    /* Secondary Accent — Electric Violet */
+    --violet-400: #C084FC;
+    --violet-500: #A855F7;
+    --violet-600: #9333EA;
+
+    /* Semantic */
+    --success-light: #D3F9D8;
+    --success: #40C057;
+    --success-dark: #2B8A3E;
+    --warning-light: #FFF3BF;
+    --warning: #FAB005;
+    --warning-dark: #E67700;
+    --error-light: #FFE3E3;
+    --error: #FA5252;
+    --error-dark: #E03131;
+    --info-light: #D0EBFF;
+    --info: #339AF0;
+    --info-dark: #1C7ED6;
+
+    /* Neutrals */
+    --gray-50: #F8F9FA;
+    --gray-100: #F1F3F5;
+    --gray-200: #E9ECEF;
+    --gray-300: #DEE2E6;
+    --gray-400: #CED4DA;
+    --gray-500: #ADB5BD;
+    --gray-600: #868E96;
+    --gray-700: #495057;
+    --gray-800: #343A40;
+    --gray-900: #212529;
+
+    /* Dark Mode */
+    --dark-bg: #0F0D1A;
+    --dark-surface: #1A1726;
+    --dark-surface-2: #252236;
+    --dark-surface-3: #312D45;
+    --dark-border: #3D3856;
+    --dark-text: #E8E6F0;
+    --dark-text-muted: #9B97B0;
+
+    /* Spacing (8px grid) */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 24px;
+    --space-6: 32px;
+    --space-7: 48px;
+    --space-8: 64px;
+    --space-9: 96px;
+    --space-10: 128px;
+
+    /* Border Radius */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --radius-full: 9999px;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
+    --shadow-xl: 0 24px 64px rgba(0,0,0,0.16);
+    --shadow-glow: 0 0 40px rgba(99,102,241,0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    color: var(--gray-900);
+    background: var(--gray-50);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ===== NAV ===== */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid var(--gray-200);
+    padding: 0 var(--space-7);
+    height: 64px;
+    display: flex; align-items: center; gap: var(--space-6);
+  }
+  nav .logo-mark {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--indigo-600), var(--violet-500));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  nav .logo-mark svg { width: 20px; height: 20px; }
+  nav .nav-title {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700; font-size: 15px;
+    color: var(--gray-900);
+    white-space: nowrap;
+  }
+  nav .nav-links {
+    display: flex; gap: var(--space-1); margin-left: auto;
+    overflow-x: auto;
+  }
+  nav .nav-links a {
+    font-size: 13px; font-weight: 500;
+    color: var(--gray-600);
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  nav .nav-links a:hover {
+    color: var(--indigo-600);
+    background: var(--indigo-50);
+  }
+
+  /* ===== HERO ===== */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    padding: 120px var(--space-7) var(--space-9);
+    background: var(--dark-bg);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 600px 400px at 30% 40%, rgba(99,102,241,0.15), transparent),
+      radial-gradient(ellipse 500px 350px at 70% 60%, rgba(168,85,247,0.1), transparent),
+      radial-gradient(ellipse 400px 300px at 50% 80%, rgba(255,107,107,0.08), transparent);
+    pointer-events: none;
+  }
+  .hero .grid-bg {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black, transparent);
+  }
+  .hero .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(99,102,241,0.15);
+    border: 1px solid rgba(99,102,241,0.25);
+    color: var(--indigo-300);
+    padding: 8px 20px;
+    border-radius: var(--radius-full);
+    font-size: 13px; font-weight: 500;
+    margin-bottom: var(--space-6);
+    position: relative;
+    animation: fadeUp 0.8s ease both;
+  }
+  .hero .badge::before {
+    content: ''; width: 6px; height: 6px;
+    background: var(--success);
+    border-radius: 50%;
+    animation: pulse 2s ease infinite;
+  }
+  .hero h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: clamp(48px, 8vw, 96px);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    color: white;
+    position: relative;
+    animation: fadeUp 0.8s ease 0.1s both;
+  }
+  .hero h1 .gradient-text {
+    background: linear-gradient(135deg, var(--indigo-400), var(--violet-400), var(--coral-400));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero .subtitle {
+    font-size: clamp(16px, 2vw, 20px);
+    color: var(--dark-text-muted);
+    max-width: 560px;
+    margin-top: var(--space-5);
+    line-height: 1.7;
+    animation: fadeUp 0.8s ease 0.2s both;
+  }
+  .hero .version-tag {
+    margin-top: var(--space-7);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--dark-text-muted);
+    opacity: 0.5;
+    animation: fadeUp 0.8s ease 0.3s both;
+  }
+  .hero .scroll-hint {
+    position: absolute; bottom: 40px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    color: var(--dark-text-muted);
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    animation: fadeUp 0.8s ease 0.5s both;
+  }
+  .hero .scroll-hint .line {
+    width: 1px; height: 32px;
+    background: linear-gradient(to bottom, var(--indigo-500), transparent);
+    animation: scrollLine 2s ease infinite;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  @keyframes scrollLine {
+    0% { transform: scaleY(0); transform-origin: top; opacity: 0; }
+    50% { transform: scaleY(1); transform-origin: top; opacity: 1; }
+    50.1% { transform: scaleY(1); transform-origin: bottom; opacity: 1; }
+    100% { transform: scaleY(0); transform-origin: bottom; opacity: 0; }
+  }
+
+  /* ===== SECTIONS ===== */
+  section {
+    padding: var(--space-9) var(--space-7);
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--indigo-500);
+    margin-bottom: var(--space-3);
+  }
+  .section-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: clamp(32px, 4vw, 48px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--gray-900);
+    margin-bottom: var(--space-3);
+  }
+  .section-desc {
+    font-size: 17px;
+    color: var(--gray-600);
+    max-width: 640px;
+    margin-bottom: var(--space-7);
+  }
+
+  /* ===== LOGO SECTION ===== */
+  .logo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: var(--space-5);
+  }
+  .logo-card {
+    border-radius: var(--radius-lg);
+    padding: var(--space-7);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    min-height: 280px;
+    position: relative;
+    overflow: hidden;
+  }
+  .logo-card.light {
+    background: white;
+    border: 1px solid var(--gray-200);
+  }
+  .logo-card.dark {
+    background: var(--dark-bg);
+    border: 1px solid var(--dark-border);
+  }
+  .logo-card.gradient {
+    background: linear-gradient(135deg, var(--indigo-600), var(--violet-600));
+  }
+  .logo-card .card-label {
+    position: absolute; top: 16px; left: 20px;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    opacity: 0.5;
+  }
+  .logo-card.light .card-label { color: var(--gray-700); }
+  .logo-card.dark .card-label, .logo-card.gradient .card-label { color: white; }
+
+  .logo-full { display: flex; align-items: center; gap: 16px; }
+  .logo-full .mark {
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .logo-full .mark.colored {
+    background: linear-gradient(135deg, var(--indigo-600), var(--violet-500));
+  }
+  .logo-full .mark.white-bg {
+    background: white;
+  }
+  .logo-full .mark svg { width: 34px; height: 34px; }
+  .logo-full .wordmark {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 32px;
+    letter-spacing: -0.03em;
+  }
+  .logo-full .wordmark.dark-text { color: var(--gray-900); }
+  .logo-full .wordmark.light-text { color: white; }
+
+  .logo-icon-only {
+    display: flex; gap: var(--space-6); align-items: center;
+  }
+  .logo-icon-size {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .logo-icon-size .icon-box {
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 25%;
+  }
+  .logo-icon-size .icon-box.sz-64 { width: 64px; height: 64px; border-radius: 16px; }
+  .logo-icon-size .icon-box.sz-48 { width: 48px; height: 48px; border-radius: 12px; }
+  .logo-icon-size .icon-box.sz-32 { width: 32px; height: 32px; border-radius: 8px; }
+  .logo-icon-size .icon-box.sz-16 { width: 16px; height: 16px; border-radius: 4px; }
+  .logo-icon-size .icon-box.colored { background: linear-gradient(135deg, var(--indigo-600), var(--violet-500)); }
+  .logo-icon-size .size-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; color: var(--gray-500);
+  }
+
+  .clearspace-demo {
+    position: relative;
+    display: inline-flex;
+    padding: 40px;
+  }
+  .clearspace-demo::before {
+    content: '';
+    position: absolute; inset: 0;
+    border: 1px dashed var(--coral-400);
+    border-radius: var(--radius-md);
+    opacity: 0.6;
+  }
+  .clearspace-demo .measurement {
+    position: absolute;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--coral-500);
+    font-weight: 500;
+  }
+  .clearspace-demo .m-top { top: 12px; left: 50%; transform: translateX(-50%); }
+  .clearspace-demo .m-right { right: 8px; top: 50%; transform: translateY(-50%); }
+  .clearspace-demo .m-bottom { bottom: 12px; left: 50%; transform: translateX(-50%); }
+  .clearspace-demo .m-left { left: 8px; top: 50%; transform: translateY(-50%); }
+
+  /* ===== COLOR SECTION ===== */
+  .color-group {
+    margin-bottom: var(--space-7);
+  }
+  .color-group-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: var(--space-4);
+    color: var(--gray-800);
+  }
+  .color-row {
+    display: flex;
+    gap: 4px;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .color-swatch {
+    flex: 1;
+    min-height: 100px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    position: relative;
+    transition: flex 0.3s ease;
+    cursor: default;
+  }
+  .color-swatch:hover { flex: 1.8; }
+  .color-swatch .swatch-name {
+    font-size: 12px; font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .color-swatch .swatch-hex {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    opacity: 0.8;
+  }
+  .color-swatch.text-light .swatch-name,
+  .color-swatch.text-light .swatch-hex { color: white; }
+  .color-swatch.text-dark .swatch-name,
+  .color-swatch.text-dark .swatch-hex { color: var(--gray-900); }
+
+  .semantic-colors {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-4);
+  }
+  .semantic-card {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid var(--gray-200);
+    background: white;
+  }
+  .semantic-card .sc-bar { height: 48px; }
+  .semantic-card .sc-body {
+    padding: 14px 16px;
+  }
+  .semantic-card .sc-label {
+    font-weight: 600; font-size: 14px;
+    color: var(--gray-800);
+  }
+  .semantic-card .sc-hex {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--gray-500);
+    margin-top: 2px;
+  }
+  .semantic-card .sc-use {
+    font-size: 12px;
+    color: var(--gray-600);
+    margin-top: 6px;
+  }
+
+  /* Dark mode palette */
+  .dark-palette {
+    background: var(--dark-bg);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    margin-top: var(--space-5);
+  }
+  .dark-palette .dp-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: var(--space-5);
+  }
+  .dark-swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: var(--space-3);
+  }
+  .dark-swatch {
+    border-radius: var(--radius-md);
+    padding: 16px;
+    border: 1px solid var(--dark-border);
+  }
+  .dark-swatch .ds-name {
+    font-size: 12px; font-weight: 600;
+    color: var(--dark-text);
+    margin-bottom: 4px;
+  }
+  .dark-swatch .ds-hex {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--dark-text-muted);
+  }
+  .dark-swatch .ds-use {
+    font-size: 11px;
+    color: var(--dark-text-muted);
+    margin-top: 8px;
+    opacity: 0.7;
+  }
+
+  /* ===== TYPOGRAPHY SECTION ===== */
+  .type-specimen {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    padding: var(--space-7);
+    margin-bottom: var(--space-5);
+  }
+  .type-specimen .ts-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--indigo-500);
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: var(--space-5);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--gray-100);
+  }
+  .type-scale-row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-5);
+    padding: 12px 0;
+    border-bottom: 1px solid var(--gray-100);
+  }
+  .type-scale-row:last-child { border-bottom: none; }
+  .type-scale-row .ts-meta {
+    flex-shrink: 0;
+    width: 160px;
+  }
+  .type-scale-row .ts-meta .ts-size {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--gray-500);
+  }
+  .type-scale-row .ts-meta .ts-weight {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--gray-400);
+    margin-top: 2px;
+  }
+  .type-scale-row .ts-sample {
+    flex: 1;
+    color: var(--gray-900);
+  }
+
+  .font-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-5);
+    margin-bottom: var(--space-5);
+  }
+  .font-card {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+  }
+  .font-card .fc-name {
+    font-size: 13px; font-weight: 600;
+    color: var(--gray-500);
+    margin-bottom: var(--space-4);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .font-card .fc-preview {
+    font-size: 56px;
+    line-height: 1.1;
+    color: var(--gray-900);
+    margin-bottom: var(--space-4);
+  }
+  .font-card .fc-alphabet {
+    font-size: 14px;
+    color: var(--gray-500);
+    line-height: 1.8;
+    letter-spacing: 0.02em;
+  }
+  .font-card.heading .fc-preview,
+  .font-card.heading .fc-alphabet {
+    font-family: 'Outfit', sans-serif;
+  }
+  .font-card.body .fc-preview,
+  .font-card.body .fc-alphabet {
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* ===== ICONOGRAPHY ===== */
+  .icon-style-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-5);
+    margin-bottom: var(--space-6);
+  }
+  .icon-style-card {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    text-align: center;
+  }
+  .icon-style-card.selected {
+    border-color: var(--indigo-500);
+    box-shadow: 0 0 0 3px var(--indigo-100);
+  }
+  .icon-style-card .isc-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    margin-bottom: var(--space-4);
+  }
+  .icon-style-card.selected .isc-badge {
+    background: var(--indigo-100);
+    color: var(--indigo-700);
+  }
+  .icon-style-card:not(.selected) .isc-badge {
+    background: var(--gray-100);
+    color: var(--gray-600);
+  }
+  .icon-style-card .isc-name {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    margin-bottom: var(--space-4);
+    color: var(--gray-800);
+  }
+  .icon-grid-demo {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-5);
+    margin-bottom: var(--space-4);
+  }
+  .icon-grid-demo svg {
+    color: var(--gray-700);
+  }
+  .icon-style-card .isc-desc {
+    font-size: 13px;
+    color: var(--gray-500);
+    line-height: 1.6;
+  }
+
+  .icon-specs {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+  }
+  .icon-spec-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--gray-100);
+    gap: var(--space-5);
+  }
+  .icon-spec-row:last-child { border-bottom: none; }
+  .icon-spec-row .isr-label {
+    width: 140px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-700);
+  }
+  .icon-spec-row .isr-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--indigo-600);
+    background: var(--indigo-50);
+    padding: 4px 12px;
+    border-radius: var(--radius-sm);
+  }
+  .icon-size-demo {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-5);
+    margin-top: var(--space-5);
+    padding: var(--space-5);
+    background: var(--gray-50);
+    border-radius: var(--radius-md);
+  }
+  .icon-size-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .icon-size-item svg { color: var(--indigo-600); }
+  .icon-size-item .isi-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--gray-500);
+  }
+
+  /* ===== SPACING ===== */
+  .spacing-scale {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    margin-bottom: var(--space-5);
+  }
+  .spacing-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: 8px 0;
+  }
+  .spacing-row .sr-label {
+    width: 80px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--gray-500);
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .spacing-row .sr-bar {
+    height: 24px;
+    background: linear-gradient(135deg, var(--indigo-400), var(--indigo-600));
+    border-radius: 4px;
+    position: relative;
+  }
+  .spacing-row .sr-bar::after {
+    content: attr(data-px);
+    position: absolute;
+    right: -48px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--gray-400);
+    white-space: nowrap;
+  }
+
+  .radius-demo {
+    display: flex;
+    gap: var(--space-5);
+    flex-wrap: wrap;
+  }
+  .radius-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .radius-item .ri-box {
+    width: 80px; height: 80px;
+    background: var(--indigo-100);
+    border: 2px solid var(--indigo-400);
+  }
+  .radius-item .ri-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--gray-500);
+  }
+  .radius-item .ri-name {
+    font-size: 11px;
+    color: var(--gray-400);
+  }
+
+  /* ===== GRADIENT SECTION ===== */
+  .gradient-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-4);
+  }
+  .gradient-card {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--gray-200);
+  }
+  .gradient-card .gc-preview {
+    height: 120px;
+  }
+  .gradient-card .gc-info {
+    background: white;
+    padding: 16px;
+  }
+  .gradient-card .gc-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--gray-800);
+    margin-bottom: 4px;
+  }
+  .gradient-card .gc-css {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--gray-500);
+    line-height: 1.6;
+  }
+  .gradient-card .gc-use {
+    font-size: 12px;
+    color: var(--gray-500);
+    margin-top: 6px;
+  }
+
+  /* ===== FOOTER ===== */
+  footer {
+    text-align: center;
+    padding: var(--space-8) var(--space-7);
+    border-top: 1px solid var(--gray-200);
+    margin-top: var(--space-9);
+  }
+  footer p {
+    font-size: 13px;
+    color: var(--gray-400);
+  }
+  footer .footer-logo {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    color: var(--gray-300);
+    margin-bottom: var(--space-3);
+  }
+
+  @media (max-width: 768px) {
+    section { padding: var(--space-7) var(--space-4); }
+    .font-cards { grid-template-columns: 1fr; }
+    .icon-style-cards { grid-template-columns: 1fr; }
+    nav .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo-mark">
+    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+      <path d="M12 3C7.5 3 4 7 4 12s3.5 9 8 9c2 0 3.5-1 4.5-2.5"/>
+      <path d="M12 3c4.5 0 8 4 8 9s-3.5 9-8 9"/>
+      <circle cx="12" cy="12" r="2.5" fill="white" stroke="none"/>
+    </svg>
+  </div>
+  <span class="nav-title">TrueTwist Brand Guide</span>
+  <div class="nav-links">
+    <a href="#logo">Logo</a>
+    <a href="#color">Color</a>
+    <a href="#typography">Typography</a>
+    <a href="#iconography">Iconography</a>
+    <a href="#spacing">Spacing</a>
+    <a href="#gradients">Gradients</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="grid-bg"></div>
+  <div class="badge">Brand Identity System v1.0</div>
+  <h1>True<span class="gradient-text">Twist</span></h1>
+  <p class="subtitle">A complete brand identity system for the AI-powered social media automation platform that helps creators and businesses go viral.</p>
+  <p class="version-tag">April 2026 &middot; Confidential</p>
+  <div class="scroll-hint">
+    <span>Explore</span>
+    <div class="line"></div>
+  </div>
+</div>
+
+<!-- LOGO -->
+<section id="logo">
+  <div class="section-label">01 &mdash; Logo</div>
+  <h2 class="section-title">Logo System</h2>
+  <p class="section-desc">The TrueTwist logo combines a dynamic twist mark with a bold wordmark. The twist symbolizes content transformation through AI, while the connected loops evoke social networks and viral reach.</p>
+
+  <div class="logo-grid">
+    <!-- Primary on light -->
+    <div class="logo-card light">
+      <span class="card-label">Primary — Light</span>
+      <div class="logo-full">
+        <div class="mark colored">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round">
+            <path d="M12 3C7.5 3 4 7 4 12s3.5 9 8 9c2 0 3.5-1 4.5-2.5"/>
+            <path d="M12 3c4.5 0 8 4 8 9s-3.5 9-8 9"/>
+            <circle cx="12" cy="12" r="2.5" fill="white" stroke="none"/>
+          </svg>
+        </div>
+        <span class="wordmark dark-text">TrueTwist</span>
+      </div>
+    </div>
+
+    <!-- Primary on dark -->
+    <div class="logo-card dark">
+      <span class="card-label">Primary — Dark</span>
+      <div class="logo-full">
+        <div class="mark colored">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round">
+            <path d="M12 3C7.5 3 4 7 4 12s3.5 9 8 9c2 0 3.5-1 4.5-2.5"/>
+            <path d="M12 3c4.5 0 8 4 8 9s-3.5 9-8 9"/>
+            <circle cx="12" cy="12" r="2.5" fill="white" stroke="none"/>
+          </svg>
+        </div>
+        <span class="wordmark light-text">TrueTwist</span>
+      </div>
+    </div>
+
+    <!-- On gradient -->
+    <div class="logo-card gradient">
+      <span class="card-label">Reversed — Gradient</span>
+      <div class="logo-full">
+        <div class="mark white-bg">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round">
+            <defs>
+              <linearGradient id="mark-grad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#4F46E5"/>
+                <stop offset="100%" stop-color="#9333EA"/>
+              </linearGradient>
+            </defs>
+            <path d="M12 3C7.5 3 4 7 4 12s3.5 9 8 9c2 0 3.5-1 4.5-2.5" stroke="url(#mark-grad)"/>
+            <path d="M12 3c4.5 0 8 4 8 9s-3.5 9-8 9" stroke="url(#mark-grad)"/>
+            <circle cx="12" cy="12" r="2.5" fill="url(#mark-grad)" stroke="none"/>
+          </svg>
+        </div>
+        <span class="wordmark light-text">TrueTwist</span>
+      </div>
+    </div>
+
+    <!-- Icon only + sizes -->
+    <div class="logo-card light">
+      <span class="card-label">Icon Sizes</span>
+      <div class="logo-icon-only">
+        <div class="logo-icon-size">
+          <div class="icon-box sz-64 colored">
+            <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round">
+              <path d="M12 3C7.5 3 4 7 4 12s3.5 9 8 9c2 0 3.5-1 4.5-2.5"/>
+              <path d="M12 3c4.5 0 8 4 8 9s-3.5 9-8 9"/>
+              <circle cx="12" cy="12" r="2.5" fill="white" stroke="none"/>
+            </svg>
+          </div>
+          <span class="size-label">64px</span>
+        </div>
+        <div class="logo-icon-size">
+          <div class="icon-box sz-48 colored">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round">
+              <path d="M12 3C7.5 3 4 7 4 12s3.5 9 8 9c2 0 3.5-1 4.5-2.5"/>
+              <path d="M12 3c4.5 0 8 4 8 9s-3.5 9-8 9"/>
+              <circle cx="12" cy="12" r="2.5" fill="white" stroke="none"/>
+            </svg>
+          </div>
+          <span class="size-label">48px</span>
+        </div>
+        <div class="logo-icon-size">
+          <div class="icon-box sz-32 colored">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="white" stroke-width="2.6" stroke-linecap="round">
+              <path d="M12 3C7.5 3 4 7 4 12s3.5 9 8 9c2 0 3.5-1 4.5-2.5"/>
+              <path d="M12 3c4.5 0 8 4 8 9s-3.5 9-8 9"/>
+              <circle cx="12" cy="12" r="2.5" fill="white" stroke="none"/>
+            </svg>
+          </div>
+          <span class="size-label">32px</span>
+        </div>
+        <div class="logo-icon-size">
+          <div class="icon-box sz-16 colored">
+            <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round">
+              <path d="M12 3C7.5 3 4 7 4 12s3.5 9 8 9c2 0 3.5-1 4.5-2.5"/>
+              <path d="M12 3c4.5 0 8 4 8 9s-3.5 9-8 9"/>
+              <circle cx="12" cy="12" r="3" fill="white" stroke="none"/>
+            </svg>
+          </div>
+          <span class="size-label">16px</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clearspace -->
+    <div class="logo-card light">
+      <span class="card-label">Clear Space</span>
+      <div class="clearspace-demo">
+        <span class="measurement m-top">1x</span>
+        <span class="measurement m-right">1x</span>
+        <span class="measurement m-bottom">1x</span>
+        <span class="measurement m-left">1x</span>
+        <div class="logo-full" style="transform: scale(0.8);">
+          <div class="mark colored">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round">
+              <path d="M12 3C7.5 3 4 7 4 12s3.5 9 8 9c2 0 3.5-1 4.5-2.5"/>
+              <path d="M12 3c4.5 0 8 4 8 9s-3.5 9-8 9"/>
+              <circle cx="12" cy="12" r="2.5" fill="white" stroke="none"/>
+            </svg>
+          </div>
+          <span class="wordmark dark-text">TrueTwist</span>
+        </div>
+      </div>
+      <p style="font-size: 12px; color: var(--gray-500); margin-top: 16px; text-align: center;">Minimum clear space = 1&times; mark height on all sides</p>
+    </div>
+
+    <!-- Minimum size -->
+    <div class="logo-card light">
+      <span class="card-label">Minimum Size</span>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 24px;">
+        <div>
+          <p style="font-size: 11px; color: var(--gray-500); margin-bottom: 8px; text-align: center;">Full logo — min 120px wide</p>
+          <div class="logo-full" style="transform: scale(0.55); transform-origin: center;">
+            <div class="mark colored">
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round">
+                <path d="M12 3C7.5 3 4 7 4 12s3.5 9 8 9c2 0 3.5-1 4.5-2.5"/>
+                <path d="M12 3c4.5 0 8 4 8 9s-3.5 9-8 9"/>
+                <circle cx="12" cy="12" r="2.5" fill="white" stroke="none"/>
+              </svg>
+            </div>
+            <span class="wordmark dark-text" style="font-size: 24px;">TrueTwist</span>
+          </div>
+        </div>
+        <div>
+          <p style="font-size: 11px; color: var(--gray-500); margin-bottom: 8px; text-align: center;">Icon only — min 16px</p>
+          <div class="icon-box sz-16 colored" style="margin: 0 auto;">
+            <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round">
+              <path d="M12 3C7.5 3 4 7 4 12s3.5 9 8 9c2 0 3.5-1 4.5-2.5"/>
+              <path d="M12 3c4.5 0 8 4 8 9s-3.5 9-8 9"/>
+              <circle cx="12" cy="12" r="3" fill="white" stroke="none"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COLOR -->
+<section id="color">
+  <div class="section-label">02 &mdash; Color</div>
+  <h2 class="section-title">Color System</h2>
+  <p class="section-desc">A rich, layered palette built around an indigo core with coral energy and violet depth. Designed for both light and dark environments with strong accessibility contrast.</p>
+
+  <!-- Primary: Indigo -->
+  <div class="color-group">
+    <h3 class="color-group-title">Primary &mdash; Indigo</h3>
+    <div class="color-row">
+      <div class="color-swatch text-dark" style="background: var(--indigo-50);"><span class="swatch-name">50</span><span class="swatch-hex">#EEF2FF</span></div>
+      <div class="color-swatch text-dark" style="background: var(--indigo-100);"><span class="swatch-name">100</span><span class="swatch-hex">#E0E7FF</span></div>
+      <div class="color-swatch text-dark" style="background: var(--indigo-200);"><span class="swatch-name">200</span><span class="swatch-hex">#C7D2FE</span></div>
+      <div class="color-swatch text-dark" style="background: var(--indigo-300);"><span class="swatch-name">300</span><span class="swatch-hex">#A5B4FC</span></div>
+      <div class="color-swatch text-light" style="background: var(--indigo-400);"><span class="swatch-name">400</span><span class="swatch-hex">#818CF8</span></div>
+      <div class="color-swatch text-light" style="background: var(--indigo-500);"><span class="swatch-name">500</span><span class="swatch-hex">#6366F1</span></div>
+      <div class="color-swatch text-light" style="background: var(--indigo-600);"><span class="swatch-name">600</span><span class="swatch-hex">#4F46E5</span></div>
+      <div class="color-swatch text-light" style="background: var(--indigo-700);"><span class="swatch-name">700</span><span class="swatch-hex">#4338CA</span></div>
+      <div class="color-swatch text-light" style="background: var(--indigo-800);"><span class="swatch-name">800</span><span class="swatch-hex">#3730A3</span></div>
+      <div class="color-swatch text-light" style="background: var(--indigo-900);"><span class="swatch-name">900</span><span class="swatch-hex">#312E81</span></div>
+      <div class="color-swatch text-light" style="background: var(--indigo-950);"><span class="swatch-name">950</span><span class="swatch-hex">#1E1B4B</span></div>
+    </div>
+  </div>
+
+  <!-- Accent: Coral -->
+  <div class="color-group">
+    <h3 class="color-group-title">Accent &mdash; Coral</h3>
+    <div class="color-row">
+      <div class="color-swatch text-dark" style="background: var(--coral-50);"><span class="swatch-name">50</span><span class="swatch-hex">#FFF5F5</span></div>
+      <div class="color-swatch text-dark" style="background: var(--coral-100);"><span class="swatch-name">100</span><span class="swatch-hex">#FFE3E3</span></div>
+      <div class="color-swatch text-dark" style="background: var(--coral-200);"><span class="swatch-name">200</span><span class="swatch-hex">#FFC9C9</span></div>
+      <div class="color-swatch text-dark" style="background: var(--coral-300);"><span class="swatch-name">300</span><span class="swatch-hex">#FFA8A8</span></div>
+      <div class="color-swatch text-dark" style="background: var(--coral-400);"><span class="swatch-name">400</span><span class="swatch-hex">#FF8787</span></div>
+      <div class="color-swatch text-light" style="background: var(--coral-500);"><span class="swatch-name">500</span><span class="swatch-hex">#FF6B6B</span></div>
+      <div class="color-swatch text-light" style="background: var(--coral-600);"><span class="swatch-name">600</span><span class="swatch-hex">#FA5252</span></div>
+      <div class="color-swatch text-light" style="background: var(--coral-700);"><span class="swatch-name">700</span><span class="swatch-hex">#F03E3E</span></div>
+      <div class="color-swatch text-light" style="background: var(--coral-800);"><span class="swatch-name">800</span><span class="swatch-hex">#E03131</span></div>
+      <div class="color-swatch text-light" style="background: var(--coral-900);"><span class="swatch-name">900</span><span class="swatch-hex">#C92A2A</span></div>
+    </div>
+  </div>
+
+  <!-- Secondary: Violet -->
+  <div class="color-group">
+    <h3 class="color-group-title">Secondary &mdash; Electric Violet</h3>
+    <div class="color-row">
+      <div class="color-swatch text-dark" style="background: var(--violet-400); flex: 1;"><span class="swatch-name">400</span><span class="swatch-hex">#C084FC</span></div>
+      <div class="color-swatch text-light" style="background: var(--violet-500); flex: 1;"><span class="swatch-name">500</span><span class="swatch-hex">#A855F7</span></div>
+      <div class="color-swatch text-light" style="background: var(--violet-600); flex: 1;"><span class="swatch-name">600</span><span class="swatch-hex">#9333EA</span></div>
+    </div>
+  </div>
+
+  <!-- Neutrals -->
+  <div class="color-group">
+    <h3 class="color-group-title">Neutrals</h3>
+    <div class="color-row">
+      <div class="color-swatch text-dark" style="background: var(--gray-50);"><span class="swatch-name">50</span><span class="swatch-hex">#F8F9FA</span></div>
+      <div class="color-swatch text-dark" style="background: var(--gray-100);"><span class="swatch-name">100</span><span class="swatch-hex">#F1F3F5</span></div>
+      <div class="color-swatch text-dark" style="background: var(--gray-200);"><span class="swatch-name">200</span><span class="swatch-hex">#E9ECEF</span></div>
+      <div class="color-swatch text-dark" style="background: var(--gray-300);"><span class="swatch-name">300</span><span class="swatch-hex">#DEE2E6</span></div>
+      <div class="color-swatch text-dark" style="background: var(--gray-400);"><span class="swatch-name">400</span><span class="swatch-hex">#CED4DA</span></div>
+      <div class="color-swatch text-light" style="background: var(--gray-500);"><span class="swatch-name">500</span><span class="swatch-hex">#ADB5BD</span></div>
+      <div class="color-swatch text-light" style="background: var(--gray-600);"><span class="swatch-name">600</span><span class="swatch-hex">#868E96</span></div>
+      <div class="color-swatch text-light" style="background: var(--gray-700);"><span class="swatch-name">700</span><span class="swatch-hex">#495057</span></div>
+      <div class="color-swatch text-light" style="background: var(--gray-800);"><span class="swatch-name">800</span><span class="swatch-hex">#343A40</span></div>
+      <div class="color-swatch text-light" style="background: var(--gray-900);"><span class="swatch-name">900</span><span class="swatch-hex">#212529</span></div>
+    </div>
+  </div>
+
+  <!-- Semantic -->
+  <div class="color-group">
+    <h3 class="color-group-title">Semantic Colors</h3>
+    <div class="semantic-colors">
+      <div class="semantic-card">
+        <div class="sc-bar" style="background: var(--success);"></div>
+        <div class="sc-body">
+          <div class="sc-label">Success</div>
+          <div class="sc-hex">#40C057</div>
+          <div class="sc-use">Confirmations, published posts, growth metrics</div>
+        </div>
+      </div>
+      <div class="semantic-card">
+        <div class="sc-bar" style="background: var(--warning);"></div>
+        <div class="sc-body">
+          <div class="sc-label">Warning</div>
+          <div class="sc-hex">#FAB005</div>
+          <div class="sc-use">Approaching limits, schedule conflicts, low credits</div>
+        </div>
+      </div>
+      <div class="semantic-card">
+        <div class="sc-bar" style="background: var(--error);"></div>
+        <div class="sc-body">
+          <div class="sc-label">Error</div>
+          <div class="sc-hex">#FA5252</div>
+          <div class="sc-use">Failed posts, disconnected accounts, validation errors</div>
+        </div>
+      </div>
+      <div class="semantic-card">
+        <div class="sc-bar" style="background: var(--info);"></div>
+        <div class="sc-body">
+          <div class="sc-label">Info</div>
+          <div class="sc-hex">#339AF0</div>
+          <div class="sc-use">Tooltips, help text, feature announcements</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dark mode -->
+  <div class="dark-palette">
+    <div class="dp-title">Dark Mode Palette</div>
+    <div class="dark-swatches">
+      <div class="dark-swatch" style="background: var(--dark-bg);">
+        <div class="ds-name">Background</div>
+        <div class="ds-hex">#0F0D1A</div>
+        <div class="ds-use">App background, page base</div>
+      </div>
+      <div class="dark-swatch" style="background: var(--dark-surface);">
+        <div class="ds-name">Surface</div>
+        <div class="ds-hex">#1A1726</div>
+        <div class="ds-use">Cards, sidebar, elevated areas</div>
+      </div>
+      <div class="dark-swatch" style="background: var(--dark-surface-2);">
+        <div class="ds-name">Surface 2</div>
+        <div class="ds-hex">#252236</div>
+        <div class="ds-use">Hover states, active elements</div>
+      </div>
+      <div class="dark-swatch" style="background: var(--dark-surface-3);">
+        <div class="ds-name">Surface 3</div>
+        <div class="ds-hex">#312D45</div>
+        <div class="ds-use">Input backgrounds, overlays</div>
+      </div>
+      <div class="dark-swatch" style="background: var(--dark-border);">
+        <div class="ds-name">Border</div>
+        <div class="ds-hex">#3D3856</div>
+        <div class="ds-use">Dividers, outlines, separators</div>
+      </div>
+      <div class="dark-swatch" style="background: var(--dark-surface-2);">
+        <div class="ds-name" style="color: var(--dark-text);">Text Primary</div>
+        <div class="ds-hex">#E8E6F0</div>
+        <div class="ds-use">Headings, body text</div>
+      </div>
+      <div class="dark-swatch" style="background: var(--dark-surface-2);">
+        <div class="ds-name" style="color: var(--dark-text-muted);">Text Muted</div>
+        <div class="ds-hex">#9B97B0</div>
+        <div class="ds-use">Secondary text, captions</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TYPOGRAPHY -->
+<section id="typography">
+  <div class="section-label">03 &mdash; Typography</div>
+  <h2 class="section-title">Type System</h2>
+  <p class="section-desc">A deliberate pairing of Outfit (geometric, modern energy) for display and headings with DM Sans (humanist clarity) for body text. JetBrains Mono for code and data.</p>
+
+  <div class="font-cards">
+    <div class="font-card heading">
+      <div class="fc-name">Display &mdash; Outfit</div>
+      <div class="fc-preview" style="font-weight: 800;">Ag</div>
+      <div class="fc-alphabet">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 !@#$%&amp;*</div>
+    </div>
+    <div class="font-card body">
+      <div class="fc-name">Body &mdash; DM Sans</div>
+      <div class="fc-preview" style="font-weight: 400;">Ag</div>
+      <div class="fc-alphabet">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 !@#$%&amp;*</div>
+    </div>
+  </div>
+
+  <!-- Heading scale -->
+  <div class="type-specimen">
+    <div class="ts-label">Heading Scale &mdash; Outfit</div>
+
+    <div class="type-scale-row">
+      <div class="ts-meta"><div class="ts-size">64px / 1.05</div><div class="ts-weight">Black 900</div></div>
+      <div class="ts-sample" style="font-family: 'Outfit', sans-serif; font-size: 64px; font-weight: 900; line-height: 1.05; letter-spacing: -0.03em;">Display</div>
+    </div>
+    <div class="type-scale-row">
+      <div class="ts-meta"><div class="ts-size">48px / 1.1</div><div class="ts-weight">ExtraBold 800</div></div>
+      <div class="ts-sample" style="font-family: 'Outfit', sans-serif; font-size: 48px; font-weight: 800; line-height: 1.1; letter-spacing: -0.02em;">Heading 1</div>
+    </div>
+    <div class="type-scale-row">
+      <div class="ts-meta"><div class="ts-size">36px / 1.15</div><div class="ts-weight">Bold 700</div></div>
+      <div class="ts-sample" style="font-family: 'Outfit', sans-serif; font-size: 36px; font-weight: 700; line-height: 1.15; letter-spacing: -0.02em;">Heading 2</div>
+    </div>
+    <div class="type-scale-row">
+      <div class="ts-meta"><div class="ts-size">28px / 1.2</div><div class="ts-weight">SemiBold 600</div></div>
+      <div class="ts-sample" style="font-family: 'Outfit', sans-serif; font-size: 28px; font-weight: 600; line-height: 1.2; letter-spacing: -0.01em;">Heading 3</div>
+    </div>
+    <div class="type-scale-row">
+      <div class="ts-meta"><div class="ts-size">22px / 1.3</div><div class="ts-weight">SemiBold 600</div></div>
+      <div class="ts-sample" style="font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 600; line-height: 1.3;">Heading 4</div>
+    </div>
+    <div class="type-scale-row">
+      <div class="ts-meta"><div class="ts-size">18px / 1.4</div><div class="ts-weight">Medium 500</div></div>
+      <div class="ts-sample" style="font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 500; line-height: 1.4;">Heading 5</div>
+    </div>
+    <div class="type-scale-row">
+      <div class="ts-meta"><div class="ts-size">15px / 1.4</div><div class="ts-weight">Medium 500</div></div>
+      <div class="ts-sample" style="font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 500; line-height: 1.4; letter-spacing: 0.01em;">Heading 6</div>
+    </div>
+  </div>
+
+  <!-- Body scale -->
+  <div class="type-specimen">
+    <div class="ts-label">Body Scale &mdash; DM Sans</div>
+
+    <div class="type-scale-row">
+      <div class="ts-meta"><div class="ts-size">17px / 1.7</div><div class="ts-weight">Regular 400</div></div>
+      <div class="ts-sample" style="font-family: 'DM Sans', sans-serif; font-size: 17px; font-weight: 400; line-height: 1.7;">Body large &mdash; Used for introductions, feature descriptions, and hero text that needs comfortable readability.</div>
+    </div>
+    <div class="type-scale-row">
+      <div class="ts-meta"><div class="ts-size">15px / 1.6</div><div class="ts-weight">Regular 400</div></div>
+      <div class="ts-sample" style="font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 400; line-height: 1.6;">Body default &mdash; Primary paragraph text throughout the application and marketing pages.</div>
+    </div>
+    <div class="type-scale-row">
+      <div class="ts-meta"><div class="ts-size">13px / 1.5</div><div class="ts-weight">Regular 400</div></div>
+      <div class="ts-sample" style="font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 400; line-height: 1.5;">Body small &mdash; Secondary text, table content, form helper text.</div>
+    </div>
+    <div class="type-scale-row">
+      <div class="ts-meta"><div class="ts-size">11px / 1.4</div><div class="ts-weight">Medium 500</div></div>
+      <div class="ts-sample" style="font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500; line-height: 1.4; letter-spacing: 0.02em;">CAPTION &mdash; Labels, badges, timestamps, metadata</div>
+    </div>
+    <div class="type-scale-row">
+      <div class="ts-meta"><div class="ts-size">14px / 1</div><div class="ts-weight">SemiBold 600</div></div>
+      <div class="ts-sample" style="font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; line-height: 1; letter-spacing: 0.01em;">Button Text</div>
+    </div>
+  </div>
+
+  <!-- Mono -->
+  <div class="type-specimen">
+    <div class="ts-label">Monospace &mdash; JetBrains Mono</div>
+    <div class="type-scale-row">
+      <div class="ts-meta"><div class="ts-size">13px / 1.5</div><div class="ts-weight">Regular 400</div></div>
+      <div class="ts-sample" style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 400; line-height: 1.5; color: var(--indigo-700); background: var(--indigo-50); padding: 12px 16px; border-radius: 8px;">const schedule = await truetwist.generateWeek({ platforms: ['instagram', 'tiktok'], tone: 'engaging' });</div>
+    </div>
+  </div>
+</section>
+
+<!-- ICONOGRAPHY -->
+<section id="iconography">
+  <div class="section-label">04 &mdash; Iconography</div>
+  <h2 class="section-title">Icon System</h2>
+  <p class="section-desc">A duo-tone icon style combining outlined structure with selective filled accents. Rounded corners and consistent stroke weight create a friendly, modern feel aligned with the brand.</p>
+
+  <div class="icon-style-cards">
+    <div class="icon-style-card">
+      <div class="isc-badge">Option A</div>
+      <div class="isc-name">Outline</div>
+      <div class="icon-grid-demo">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 12h6M12 9v6"/></svg>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </div>
+      <div class="isc-desc">Clean, lightweight. Best for dense UI and navigation.</div>
+    </div>
+    <div class="icon-style-card selected">
+      <div class="isc-badge">Recommended</div>
+      <div class="isc-name">Duo-Tone</div>
+      <div class="icon-grid-demo">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3" fill="#EEF2FF" stroke="#4F46E5" stroke-width="1.75"/><path d="M9 12h6M12 9v6" stroke="#4F46E5" stroke-width="1.75"/></svg>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z" fill="#EEF2FF" stroke="#4F46E5" stroke-width="1.75"/><path d="M2 17l10 5 10-5" stroke="#4F46E5" stroke-width="1.75"/><path d="M2 12l10 5 10-5" stroke="#4F46E5" stroke-width="1.75"/></svg>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" fill="#EEF2FF" stroke="#4F46E5" stroke-width="1.75"/><path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="#4F46E5" stroke-width="1.75"/></svg>
+      </div>
+      <div class="isc-desc">Outline + soft fill accent. Adds depth and brand color without heaviness.</div>
+    </div>
+    <div class="icon-style-card">
+      <div class="isc-badge">Option C</div>
+      <div class="isc-name">Filled</div>
+      <div class="icon-grid-demo">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="#4F46E5" stroke="none"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 12h6" stroke="white" stroke-width="2" stroke-linecap="round"/><path d="M12 9v6" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="#4F46E5" stroke="none"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 12l10 5 10-5" stroke="#4F46E5" stroke-width="2" fill="none"/><path d="M2 17l10 5 10-5" stroke="#4F46E5" stroke-width="2" fill="none"/></svg>
+        <svg width="32" height="32" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#4F46E5"/><path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="white" stroke-width="1.75" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="isc-desc">Bold, high contrast. Best for CTAs, feature highlights, and emphasis.</div>
+    </div>
+  </div>
+
+  <div class="icon-specs">
+    <h3 style="font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 18px; margin-bottom: 16px; color: var(--gray-800);">Icon Specifications</h3>
+    <div class="icon-spec-row">
+      <span class="isr-label">Stroke Width</span>
+      <span class="isr-value">1.75px</span>
+    </div>
+    <div class="icon-spec-row">
+      <span class="isr-label">Corner Radius</span>
+      <span class="isr-value">2px (inner) / 3px (outer)</span>
+    </div>
+    <div class="icon-spec-row">
+      <span class="isr-label">Line Cap</span>
+      <span class="isr-value">round</span>
+    </div>
+    <div class="icon-spec-row">
+      <span class="isr-label">Line Join</span>
+      <span class="isr-value">round</span>
+    </div>
+    <div class="icon-spec-row">
+      <span class="isr-label">Duo-Tone Fill</span>
+      <span class="isr-value">indigo-50 (#EEF2FF)</span>
+    </div>
+    <div class="icon-spec-row">
+      <span class="isr-label">Duo-Tone Stroke</span>
+      <span class="isr-value">indigo-600 (#4F46E5)</span>
+    </div>
+    <div class="icon-spec-row">
+      <span class="isr-label">Size Grid</span>
+      <span class="isr-value">16px &middot; 20px &middot; 24px &middot; 32px</span>
+    </div>
+
+    <div class="icon-size-demo">
+      <div class="icon-size-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3" fill="#EEF2FF" stroke="#4F46E5" stroke-width="2"/><path d="M9 12h6M12 9v6" stroke="#4F46E5" stroke-width="2"/></svg>
+        <span class="isi-label">16px</span>
+      </div>
+      <div class="icon-size-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3" fill="#EEF2FF" stroke="#4F46E5" stroke-width="1.85"/><path d="M9 12h6M12 9v6" stroke="#4F46E5" stroke-width="1.85"/></svg>
+        <span class="isi-label">20px</span>
+      </div>
+      <div class="icon-size-item">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3" fill="#EEF2FF" stroke="#4F46E5" stroke-width="1.75"/><path d="M9 12h6M12 9v6" stroke="#4F46E5" stroke-width="1.75"/></svg>
+        <span class="isi-label">24px</span>
+      </div>
+      <div class="icon-size-item">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3" fill="#EEF2FF" stroke="#4F46E5" stroke-width="1.75"/><path d="M9 12h6M12 9v6" stroke="#4F46E5" stroke-width="1.75"/></svg>
+        <span class="isi-label">32px</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SPACING & GRID -->
+<section id="spacing">
+  <div class="section-label">05 &mdash; Spacing &amp; Grid</div>
+  <h2 class="section-title">Spacing System</h2>
+  <p class="section-desc">All spacing derives from an 8px base grid, ensuring pixel-perfect alignment across every component and layout. The scale provides enough granularity without decision fatigue.</p>
+
+  <div class="spacing-scale">
+    <h3 style="font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 18px; margin-bottom: 20px; color: var(--gray-800);">Spacing Scale</h3>
+    <div class="spacing-row">
+      <span class="sr-label">space-1</span>
+      <div class="sr-bar" style="width: 4px;" data-px="4px"></div>
+    </div>
+    <div class="spacing-row">
+      <span class="sr-label">space-2</span>
+      <div class="sr-bar" style="width: 8px;" data-px="8px"></div>
+    </div>
+    <div class="spacing-row">
+      <span class="sr-label">space-3</span>
+      <div class="sr-bar" style="width: 12px;" data-px="12px"></div>
+    </div>
+    <div class="spacing-row">
+      <span class="sr-label">space-4</span>
+      <div class="sr-bar" style="width: 16px;" data-px="16px"></div>
+    </div>
+    <div class="spacing-row">
+      <span class="sr-label">space-5</span>
+      <div class="sr-bar" style="width: 24px;" data-px="24px"></div>
+    </div>
+    <div class="spacing-row">
+      <span class="sr-label">space-6</span>
+      <div class="sr-bar" style="width: 32px;" data-px="32px"></div>
+    </div>
+    <div class="spacing-row">
+      <span class="sr-label">space-7</span>
+      <div class="sr-bar" style="width: 48px;" data-px="48px"></div>
+    </div>
+    <div class="spacing-row">
+      <span class="sr-label">space-8</span>
+      <div class="sr-bar" style="width: 64px;" data-px="64px"></div>
+    </div>
+    <div class="spacing-row">
+      <span class="sr-label">space-9</span>
+      <div class="sr-bar" style="width: 96px;" data-px="96px"></div>
+    </div>
+    <div class="spacing-row">
+      <span class="sr-label">space-10</span>
+      <div class="sr-bar" style="width: 128px;" data-px="128px"></div>
+    </div>
+  </div>
+
+  <div class="spacing-scale">
+    <h3 style="font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 18px; margin-bottom: 20px; color: var(--gray-800);">Border Radius</h3>
+    <div class="radius-demo">
+      <div class="radius-item">
+        <div class="ri-box" style="border-radius: 6px;"></div>
+        <span class="ri-label">6px</span>
+        <span class="ri-name">sm</span>
+      </div>
+      <div class="radius-item">
+        <div class="ri-box" style="border-radius: 10px;"></div>
+        <span class="ri-label">10px</span>
+        <span class="ri-name">md</span>
+      </div>
+      <div class="radius-item">
+        <div class="ri-box" style="border-radius: 16px;"></div>
+        <span class="ri-label">16px</span>
+        <span class="ri-name">lg</span>
+      </div>
+      <div class="radius-item">
+        <div class="ri-box" style="border-radius: 24px;"></div>
+        <span class="ri-label">24px</span>
+        <span class="ri-name">xl</span>
+      </div>
+      <div class="radius-item">
+        <div class="ri-box" style="border-radius: 9999px;"></div>
+        <span class="ri-label">9999px</span>
+        <span class="ri-name">full</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="spacing-scale">
+    <h3 style="font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 18px; margin-bottom: 20px; color: var(--gray-800);">Shadow System</h3>
+    <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+      <div style="width: 140px; height: 100px; background: white; border-radius: 12px; box-shadow: var(--shadow-sm); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 12px;">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--gray-500);">shadow-sm</span>
+      </div>
+      <div style="width: 140px; height: 100px; background: white; border-radius: 12px; box-shadow: var(--shadow-md); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 12px;">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--gray-500);">shadow-md</span>
+      </div>
+      <div style="width: 140px; height: 100px; background: white; border-radius: 12px; box-shadow: var(--shadow-lg); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 12px;">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--gray-500);">shadow-lg</span>
+      </div>
+      <div style="width: 140px; height: 100px; background: white; border-radius: 12px; box-shadow: var(--shadow-xl); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 12px;">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--gray-500);">shadow-xl</span>
+      </div>
+      <div style="width: 140px; height: 100px; background: white; border-radius: 12px; box-shadow: var(--shadow-glow); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 12px;">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--gray-500);">shadow-glow</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GRADIENTS -->
+<section id="gradients">
+  <div class="section-label">06 &mdash; Gradients</div>
+  <h2 class="section-title">Brand Gradients</h2>
+  <p class="section-desc">Signature gradients used across hero sections, CTAs, and feature highlights. Each gradient has a specific application context.</p>
+
+  <div class="gradient-grid">
+    <div class="gradient-card">
+      <div class="gc-preview" style="background: linear-gradient(135deg, #4F46E5, #9333EA);"></div>
+      <div class="gc-info">
+        <div class="gc-name">Primary Brand</div>
+        <div class="gc-css">linear-gradient(135deg, #4F46E5, #9333EA)</div>
+        <div class="gc-use">Logo mark, primary CTAs, hero backgrounds</div>
+      </div>
+    </div>
+    <div class="gradient-card">
+      <div class="gc-preview" style="background: linear-gradient(135deg, #818CF8, #C084FC, #FF8787);"></div>
+      <div class="gc-info">
+        <div class="gc-name">Spectrum</div>
+        <div class="gc-css">linear-gradient(135deg, #818CF8, #C084FC, #FF8787)</div>
+        <div class="gc-use">Feature highlights, marketing hero text, social proof</div>
+      </div>
+    </div>
+    <div class="gradient-card">
+      <div class="gc-preview" style="background: linear-gradient(135deg, #0F0D1A, #312E81);"></div>
+      <div class="gc-info">
+        <div class="gc-name">Deep Space</div>
+        <div class="gc-css">linear-gradient(135deg, #0F0D1A, #312E81)</div>
+        <div class="gc-use">Dark hero sections, dashboard backgrounds, overlays</div>
+      </div>
+    </div>
+    <div class="gradient-card">
+      <div class="gc-preview" style="background: linear-gradient(135deg, #FF6B6B, #FA5252, #E03131);"></div>
+      <div class="gc-info">
+        <div class="gc-name">Coral Energy</div>
+        <div class="gc-css">linear-gradient(135deg, #FF6B6B, #FA5252, #E03131)</div>
+        <div class="gc-use">Viral alerts, trending badges, notification emphasis</div>
+      </div>
+    </div>
+    <div class="gradient-card">
+      <div class="gc-preview" style="background: linear-gradient(135deg, #40C057, #339AF0);"></div>
+      <div class="gc-info">
+        <div class="gc-name">Growth</div>
+        <div class="gc-css">linear-gradient(135deg, #40C057, #339AF0)</div>
+        <div class="gc-use">Analytics charts, growth metrics, success states</div>
+      </div>
+    </div>
+    <div class="gradient-card">
+      <div class="gc-preview" style="background: linear-gradient(180deg, rgba(79,70,229,0.08), rgba(147,51,234,0.02), transparent);"></div>
+      <div class="gc-info">
+        <div class="gc-name">Subtle Wash</div>
+        <div class="gc-css">linear-gradient(180deg, rgba(79,70,229,0.08), transparent)</div>
+        <div class="gc-use">Page section backgrounds, card hover states</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">TrueTwist</div>
+  <p>Brand Identity Guide v1.0 &middot; April 2026 &middot; Confidential</p>
+  <p style="margin-top: 8px;">Designed for the TrueTwist team. Do not distribute externally without approval.</p>
+</footer>
+
+</body>
+</html>

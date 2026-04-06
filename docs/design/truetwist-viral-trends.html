@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrueTwist — Viral Trends Discovery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --indigo-50:#EEF2FF;--indigo-100:#E0E7FF;--indigo-200:#C7D2FE;--indigo-300:#A5B4FC;
+  --indigo-400:#818CF8;--indigo-500:#6366F1;--indigo-600:#4F46E5;--indigo-700:#4338CA;
+  --indigo-800:#3730A3;--indigo-900:#312E81;--indigo-950:#1E1B4B;
+  --coral-400:#FF8787;--coral-500:#FF6B6B;--coral-600:#FA5252;
+  --violet-400:#C084FC;--violet-500:#A855F7;--violet-600:#9333EA;
+  --success:#40C057;--warning:#FAB005;--error:#FA5252;--info:#339AF0;
+  --dark-bg:#0F0D1A;--dark-s1:#1A1726;--dark-s2:#252236;--dark-s3:#312D45;
+  --dark-border:#3D3856;--dark-text:#E8E6F0;--dark-muted:#9B97B0;
+  --r-sm:6px;--r-md:10px;--r-lg:16px;--r-xl:24px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'DM Sans',sans-serif;background:var(--dark-bg);color:var(--dark-text);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+
+/* === SIDEBAR === */
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:260px;background:var(--dark-s1);border-right:1px solid var(--dark-border);padding:24px 0;overflow-y:auto;z-index:100;}
+.sidebar .logo{padding:0 24px 24px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--dark-border);margin-bottom:16px;}
+.sidebar .logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--indigo-600),var(--violet-500));border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sidebar .logo-icon svg{width:20px;height:20px;}
+.sidebar .logo-wrap{display:flex;flex-direction:column;}
+.sidebar .logo-text{font-family:'Outfit',sans-serif;font-weight:700;font-size:16px;color:white;line-height:1.2;}
+.sidebar .logo-sub{font-size:11px;color:var(--dark-muted);font-weight:500;}
+.nav-group{padding:0 12px;margin-bottom:20px;}
+.nav-group-label{font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--dark-muted);padding:0 12px;margin-bottom:8px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;font-size:13px;font-weight:500;color:var(--dark-muted);cursor:pointer;transition:all 0.15s;text-decoration:none;}
+.nav-item:hover{background:var(--dark-s2);color:var(--dark-text);}
+.nav-item.active{background:rgba(99,102,241,0.15);color:var(--indigo-300);}
+.nav-item svg{width:18px;height:18px;flex-shrink:0;opacity:0.7;}
+.nav-item.active svg{opacity:1;}
+.nav-item .badge{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--dark-s3);padding:2px 7px;border-radius:99px;color:var(--dark-muted);}
+.nav-item.active .badge{background:rgba(99,102,241,0.25);color:var(--indigo-300);}
+
+/* === MAIN === */
+.main{margin-left:260px;padding:32px 40px 80px;}
+
+/* Top Bar */
+.top-bar{margin-bottom:32px;}
+.top-bar h1{font-family:'Outfit',sans-serif;font-size:28px;font-weight:700;letter-spacing:-0.02em;margin-bottom:4px;}
+.top-bar .subtitle{font-size:14px;color:var(--dark-muted);margin-bottom:20px;}
+.filter-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.category-pills{display:flex;gap:6px;}
+.pill{padding:7px 16px;border-radius:99px;font-size:12px;font-weight:600;background:var(--dark-s2);color:var(--dark-muted);border:1px solid transparent;cursor:pointer;transition:all 0.15s;}
+.pill:hover{color:var(--dark-text);background:var(--dark-s3);}
+.pill.active{background:rgba(99,102,241,0.15);color:var(--indigo-300);border-color:rgba(99,102,241,0.3);}
+.filter-select{appearance:none;background:var(--dark-s2) url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%239B97B0' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 14px center;border:1px solid var(--dark-border);border-radius:8px;padding:8px 36px 8px 14px;font-size:12px;font-family:'DM Sans',sans-serif;font-weight:500;color:var(--dark-text);cursor:pointer;}
+.refresh-btn{width:36px;height:36px;border-radius:8px;background:var(--dark-s2);border:1px solid var(--dark-border);color:var(--dark-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.refresh-btn:hover{color:var(--indigo-300);border-color:var(--indigo-500);background:var(--dark-s3);}
+.refresh-btn:hover svg{animation:spin 0.8s linear infinite;}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+/* === SECTION A: TRENDING NOW BANNER === */
+.section-label{font-family:'Outfit',sans-serif;font-size:18px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.section-label .accent{color:var(--coral-500);}
+.trending-strip{display:flex;gap:16px;overflow-x:auto;padding-bottom:8px;margin-bottom:40px;scrollbar-width:thin;scrollbar-color:var(--dark-s3) transparent;}
+.trending-strip::-webkit-scrollbar{height:4px;}
+.trending-strip::-webkit-scrollbar-thumb{background:var(--dark-s3);border-radius:2px;}
+
+.hot-card{min-width:220px;max-width:220px;padding:2px;border-radius:var(--r-lg);background:linear-gradient(135deg,var(--indigo-500),var(--violet-500),var(--coral-500));flex-shrink:0;transition:transform 0.2s,box-shadow 0.2s;}
+.hot-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(99,102,241,0.2);}
+.hot-card-inner{background:var(--dark-s1);border-radius:calc(var(--r-lg) - 2px);padding:16px;height:100%;display:flex;flex-direction:column;gap:10px;}
+.hot-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:var(--coral-400);background:rgba(255,107,107,0.12);padding:4px 8px;border-radius:99px;width:fit-content;}
+.hot-name{font-family:'Outfit',sans-serif;font-size:15px;font-weight:600;color:white;line-height:1.3;}
+.hot-velocity{font-size:12px;font-weight:600;color:var(--success);display:flex;align-items:center;gap:4px;}
+.hot-platforms{display:flex;gap:4px;}
+.hot-platforms .p-dot{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;}
+.hot-platforms .p-dot.ig{background:var(--indigo-500);}
+.hot-platforms .p-dot.tt{background:#111;}
+.hot-platforms .p-dot.yt{background:#FA5252;}
+.hot-platforms .p-dot.tw{background:#339AF0;}
+.hot-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:auto;}
+.viral-ring{position:relative;width:42px;height:42px;}
+.viral-ring svg{width:42px;height:42px;transform:rotate(-90deg);}
+.viral-ring circle{fill:none;stroke-width:3;}
+.viral-ring .ring-bg{stroke:var(--dark-s3);}
+.viral-ring .ring-fg{stroke-linecap:round;transition:stroke-dashoffset 0.6s;}
+.viral-ring .ring-green{stroke:var(--success);}
+.viral-ring .ring-yellow{stroke:var(--warning);}
+.viral-ring .ring-coral{stroke:var(--coral-500);}
+.viral-ring-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;color:white;}
+
+/* === SECTION B: TRENDS FEED === */
+.trends-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:48px;}
+.trend-card{background:var(--dark-s1);border:1px solid var(--dark-border);border-radius:var(--r-lg);padding:20px;transition:all 0.25s;cursor:pointer;display:flex;flex-direction:column;gap:12px;}
+.trend-card:hover{transform:translateY(-3px);box-shadow:0 16px 40px rgba(79,70,229,0.12);border-color:var(--indigo-600);}
+.trend-card-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.cat-tag{font-size:10px;font-weight:600;padding:4px 10px;border-radius:99px;letter-spacing:0.04em;}
+.cat-tag.entertainment{background:rgba(168,85,247,0.15);color:var(--violet-400);}
+.cat-tag.tech{background:rgba(99,102,241,0.15);color:var(--indigo-300);}
+.cat-tag.business{background:rgba(51,154,240,0.15);color:var(--info);}
+.cat-tag.lifestyle{background:rgba(255,107,107,0.15);color:var(--coral-400);}
+.cat-tag.education{background:rgba(64,192,87,0.15);color:var(--success);}
+.cat-tag.general{background:rgba(250,176,5,0.15);color:var(--warning);}
+.platform-badges{display:flex;gap:3px;margin-left:auto;}
+.platform-badges .p-badge{font-size:9px;font-weight:600;padding:3px 7px;border-radius:4px;background:var(--dark-s3);color:var(--dark-muted);}
+.trend-card-title{font-family:'Outfit',sans-serif;font-size:16px;font-weight:600;color:white;line-height:1.3;}
+.trend-card-desc{font-size:13px;color:var(--dark-muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.trend-metrics{display:flex;align-items:center;gap:16px;font-size:12px;color:var(--dark-muted);}
+.trend-metrics .metric{display:flex;align-items:center;gap:4px;}
+.trend-metrics .metric svg{width:14px;height:14px;opacity:0.6;}
+.trend-metrics .up{color:var(--success);font-weight:600;}
+.trend-metrics .down{color:var(--coral-500);font-weight:600;}
+.velocity-badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:99px;}
+.velocity-badge.high{background:rgba(255,107,107,0.15);color:var(--coral-400);}
+.velocity-badge.medium{background:rgba(250,176,5,0.15);color:var(--warning);}
+.velocity-badge.low{background:rgba(155,151,176,0.15);color:var(--dark-muted);}
+.trend-card-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:12px;border-top:1px solid var(--dark-border);}
+.trend-card-bottom .viral-ring{width:48px;height:48px;}
+.trend-card-bottom .viral-ring svg{width:48px;height:48px;}
+.trend-card-bottom .viral-ring-num{font-size:14px;font-weight:500;}
+.trend-card-actions{display:flex;gap:8px;}
+.btn-ghost-indigo{background:transparent;border:1px solid var(--indigo-500);color:var(--indigo-300);font-size:12px;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif;}
+.btn-ghost-indigo:hover{background:rgba(99,102,241,0.15);}
+.btn-icon-sm{width:32px;height:32px;border:1px solid var(--dark-border);background:transparent;border-radius:8px;color:var(--dark-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.btn-icon-sm:hover{color:var(--warning);border-color:var(--warning);}
+
+/* === SECTION C: MODAL === */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,13,26,0.8);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:200;padding:32px;}
+.modal{background:var(--dark-s1);border:1px solid var(--dark-border);border-radius:var(--r-xl);max-width:720px;width:100%;max-height:calc(100vh - 64px);overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,0.5);scrollbar-width:thin;scrollbar-color:var(--dark-s3) transparent;}
+.modal::-webkit-scrollbar{width:6px;}
+.modal::-webkit-scrollbar-thumb{background:var(--dark-s3);border-radius:3px;}
+.modal-header{display:flex;align-items:center;gap:16px;padding:24px 28px;border-bottom:1px solid var(--dark-border);}
+.modal-close{width:32px;height:32px;border-radius:8px;background:var(--dark-s2);border:1px solid var(--dark-border);color:var(--dark-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;margin-left:auto;flex-shrink:0;}
+.modal-close:hover{color:var(--dark-text);background:var(--dark-s3);}
+.modal-title{font-family:'Outfit',sans-serif;font-size:22px;font-weight:700;color:white;}
+.modal-body{padding:28px;}
+.modal-section{margin-bottom:28px;}
+.modal-section-title{font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;color:var(--dark-text);margin-bottom:14px;display:flex;align-items:center;gap:6px;}
+.modal-section-title svg{width:16px;height:16px;opacity:0.6;}
+
+/* Chart */
+.chart-wrap{background:var(--dark-s2);border:1px solid var(--dark-border);border-radius:var(--r-md);padding:20px;position:relative;height:200px;margin-bottom:24px;}
+.chart-svg{width:100%;height:100%;}
+
+/* Key Metrics */
+.key-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px;}
+.key-metric{background:var(--dark-s2);border:1px solid var(--dark-border);border-radius:var(--r-md);padding:16px;text-align:center;}
+.key-metric .km-value{font-family:'Outfit',sans-serif;font-size:24px;font-weight:700;color:white;margin-bottom:2px;}
+.key-metric .km-label{font-size:11px;color:var(--dark-muted);font-weight:500;}
+
+/* Related Content */
+.related-cards{display:flex;flex-direction:column;gap:10px;margin-bottom:28px;}
+.related-card{display:flex;gap:12px;align-items:center;background:var(--dark-s2);border:1px solid var(--dark-border);border-radius:var(--r-md);padding:12px;transition:background 0.15s;}
+.related-card:hover{background:var(--dark-s3);}
+.related-thumb{width:60px;height:60px;background:var(--dark-s3);border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.related-info{flex:1;min-width:0;}
+.related-title{font-size:13px;font-weight:600;color:var(--dark-text);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.related-creator{font-size:11px;color:var(--dark-muted);margin-bottom:4px;}
+.related-stats{display:flex;gap:12px;font-size:11px;color:var(--dark-muted);}
+.related-stats span{display:flex;align-items:center;gap:3px;}
+
+/* Modal CTAs */
+.modal-ctas{display:flex;gap:10px;flex-wrap:wrap;padding-top:20px;border-top:1px solid var(--dark-border);}
+.btn-gradient{background:linear-gradient(135deg,var(--indigo-600),var(--violet-600));color:white;font-size:13px;font-weight:600;padding:10px 22px;border-radius:10px;border:none;cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+.btn-gradient:hover{box-shadow:0 8px 24px rgba(99,102,241,0.3);transform:translateY(-1px);}
+.btn-outline{background:transparent;border:1px solid var(--dark-border);color:var(--dark-text);font-size:13px;font-weight:600;padding:10px 22px;border-radius:10px;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif;}
+.btn-outline:hover{border-color:var(--indigo-500);color:var(--indigo-300);}
+.btn-ghost{background:transparent;border:none;color:var(--dark-muted);font-size:13px;font-weight:600;padding:10px 22px;border-radius:10px;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif;}
+.btn-ghost:hover{color:var(--dark-text);background:var(--dark-s2);}
+
+/* === SECTION D: NOTIFICATIONS === */
+.notif-stack{display:flex;flex-direction:column;gap:12px;margin-bottom:48px;}
+.notif-card{background:var(--dark-s1);border:1px solid var(--dark-border);border-radius:var(--r-md);padding:16px 20px;display:flex;align-items:center;gap:14px;border-left:4px solid;transition:all 0.2s;position:relative;}
+.notif-card:hover{transform:translateX(4px);box-shadow:0 8px 24px rgba(0,0,0,0.2);}
+.notif-card.coral{border-left-color:var(--coral-500);}
+.notif-card.warning{border-left-color:var(--warning);}
+.notif-card.indigo{border-left-color:var(--indigo-500);}
+.notif-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;}
+.notif-icon.coral{background:rgba(255,107,107,0.15);}
+.notif-icon.warning{background:rgba(250,176,5,0.15);}
+.notif-icon.indigo{background:rgba(99,102,241,0.15);}
+.notif-content{flex:1;min-width:0;}
+.notif-title{font-size:13px;font-weight:600;color:var(--dark-text);margin-bottom:2px;}
+.notif-desc{font-size:12px;color:var(--dark-muted);line-height:1.4;}
+.notif-action{flex-shrink:0;display:flex;align-items:center;gap:12px;}
+.notif-btn{font-size:12px;font-weight:600;padding:7px 14px;border-radius:7px;border:none;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif;}
+.notif-btn.coral{background:rgba(255,107,107,0.15);color:var(--coral-400);}
+.notif-btn.coral:hover{background:rgba(255,107,107,0.25);}
+.notif-btn.warning{background:rgba(250,176,5,0.15);color:var(--warning);}
+.notif-btn.warning:hover{background:rgba(250,176,5,0.25);}
+.notif-btn.indigo{background:rgba(99,102,241,0.15);color:var(--indigo-300);}
+.notif-btn.indigo:hover{background:rgba(99,102,241,0.25);}
+.notif-time{font-size:11px;color:var(--dark-muted);white-space:nowrap;}
+
+/* === SECTION E: INTEGRATION FLOW === */
+.flow-wrap{background:var(--dark-s1);border:1px solid var(--dark-border);border-radius:var(--r-lg);padding:40px 32px;}
+.flow-steps{display:flex;align-items:flex-start;justify-content:center;gap:0;position:relative;}
+.flow-step{display:flex;flex-direction:column;align-items:center;text-align:center;flex:1;max-width:180px;position:relative;z-index:1;}
+.flow-step-icon{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:14px;font-size:24px;box-shadow:0 8px 24px rgba(0,0,0,0.2);}
+.flow-step-icon.indigo{background:linear-gradient(135deg,var(--indigo-600),var(--indigo-500));}
+.flow-step-icon.violet{background:linear-gradient(135deg,var(--violet-500),var(--violet-400));}
+.flow-step-icon.coral{background:linear-gradient(135deg,var(--coral-500),var(--coral-400));}
+.flow-step-icon.success{background:linear-gradient(135deg,var(--success),#69DB7C);}
+.flow-step-label{font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;color:white;margin-bottom:6px;}
+.flow-step-desc{font-size:11px;color:var(--dark-muted);line-height:1.5;max-width:140px;}
+.flow-connector{display:flex;align-items:center;justify-content:center;padding-top:20px;flex:0 0 60px;}
+.flow-connector svg{width:40px;height:20px;}
+
+/* Utilities */
+.mb-8{margin-bottom:8px;}
+.mb-16{margin-bottom:16px;}
+.mb-24{margin-bottom:24px;}
+.mb-32{margin-bottom:32px;}
+.mb-40{margin-bottom:40px;}
+.mb-48{margin-bottom:48px;}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+      </svg>
+    </div>
+    <div class="logo-wrap">
+      <div class="logo-text">TrueTwist</div>
+      <div class="logo-sub">AI Content Platform</div>
+    </div>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">Overview</div>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+      Quick Actions
+    </a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">Analytics</div>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Performance
+    </a>
+    <a class="nav-item active" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Trends
+      <span class="badge">12</span>
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      Audience
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      Insights
+    </a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">Content</div>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Creator Studio
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Scheduler
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Templates
+    </a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">Settings</div>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Settings
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      Notifications
+    </a>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <h1>Viral Trends</h1>
+    <p class="subtitle">Real-time trending topics and content opportunities across platforms</p>
+    <div class="filter-row">
+      <div class="category-pills">
+        <button class="pill active">All</button>
+        <button class="pill">Entertainment</button>
+        <button class="pill">Tech</button>
+        <button class="pill">Business</button>
+        <button class="pill">Lifestyle</button>
+        <button class="pill">Education</button>
+      </div>
+      <select class="filter-select">
+        <option>Last 24h</option>
+        <option>Last 7 days</option>
+        <option>Last 30 days</option>
+      </select>
+      <button class="refresh-btn" title="Refresh">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- SECTION A: TRENDING NOW -->
+  <div class="section-label"><span class="accent">&#128293;</span> Trending Now</div>
+  <div class="trending-strip">
+    <!-- Hot Card 1 -->
+    <div class="hot-card">
+      <div class="hot-card-inner">
+        <div class="hot-badge">&#128293; Trending #1</div>
+        <div class="hot-name">#AIArtChallenge</div>
+        <div class="hot-velocity">&#8593; 340% in 24h</div>
+        <div class="hot-platforms">
+          <div class="p-dot ig" title="Instagram">IG</div>
+          <div class="p-dot tt" title="TikTok">TT</div>
+          <div class="p-dot yt" title="YouTube">YT</div>
+          <div class="p-dot tw" title="Twitter">X</div>
+        </div>
+        <div class="hot-bottom">
+          <div class="hot-platforms" style="visibility:hidden;height:0;"></div>
+          <div class="viral-ring">
+            <svg viewBox="0 0 42 42"><circle class="ring-bg" cx="21" cy="21" r="18"/><circle class="ring-fg ring-green" cx="21" cy="21" r="18" stroke-dasharray="113.1" stroke-dashoffset="9"/></svg>
+            <div class="viral-ring-num">92</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Hot Card 2 -->
+    <div class="hot-card">
+      <div class="hot-card-inner">
+        <div class="hot-badge">&#128293; Trending #2</div>
+        <div class="hot-name">Micro-SaaS Building</div>
+        <div class="hot-velocity">&#8593; 210% in 24h</div>
+        <div class="hot-platforms">
+          <div class="p-dot tw" title="Twitter">X</div>
+          <div class="p-dot yt" title="YouTube">YT</div>
+          <div class="p-dot tt" title="TikTok">TT</div>
+        </div>
+        <div class="hot-bottom">
+          <div class="viral-ring">
+            <svg viewBox="0 0 42 42"><circle class="ring-bg" cx="21" cy="21" r="18"/><circle class="ring-fg ring-green" cx="21" cy="21" r="18" stroke-dasharray="113.1" stroke-dashoffset="14.7"/></svg>
+            <div class="viral-ring-num">87</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Hot Card 3 -->
+    <div class="hot-card">
+      <div class="hot-card-inner">
+        <div class="hot-badge">&#128293; Trending #3</div>
+        <div class="hot-name">Day in My Life 2.0</div>
+        <div class="hot-velocity">&#8593; 185% in 24h</div>
+        <div class="hot-platforms">
+          <div class="p-dot ig" title="Instagram">IG</div>
+          <div class="p-dot tt" title="TikTok">TT</div>
+        </div>
+        <div class="hot-bottom">
+          <div class="viral-ring">
+            <svg viewBox="0 0 42 42"><circle class="ring-bg" cx="21" cy="21" r="18"/><circle class="ring-fg ring-green" cx="21" cy="21" r="18" stroke-dasharray="113.1" stroke-dashoffset="18.1"/></svg>
+            <div class="viral-ring-num">84</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Hot Card 4 -->
+    <div class="hot-card">
+      <div class="hot-card-inner">
+        <div class="hot-badge">&#128293; Trending #4</div>
+        <div class="hot-name">Sustainability Hacks</div>
+        <div class="hot-velocity">&#8593; 128% in 24h</div>
+        <div class="hot-platforms">
+          <div class="p-dot ig" title="Instagram">IG</div>
+          <div class="p-dot yt" title="YouTube">YT</div>
+          <div class="p-dot tw" title="Twitter">X</div>
+        </div>
+        <div class="hot-bottom">
+          <div class="viral-ring">
+            <svg viewBox="0 0 42 42"><circle class="ring-bg" cx="21" cy="21" r="18"/><circle class="ring-fg ring-green" cx="21" cy="21" r="18" stroke-dasharray="113.1" stroke-dashoffset="23.7"/></svg>
+            <div class="viral-ring-num">79</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Hot Card 5 -->
+    <div class="hot-card">
+      <div class="hot-card-inner">
+        <div class="hot-badge">&#128293; Trending #5</div>
+        <div class="hot-name">Retro Tech Aesthetic</div>
+        <div class="hot-velocity">&#8593; 96% in 24h</div>
+        <div class="hot-platforms">
+          <div class="p-dot ig" title="Instagram">IG</div>
+          <div class="p-dot tt" title="TikTok">TT</div>
+          <div class="p-dot tw" title="Twitter">X</div>
+        </div>
+        <div class="hot-bottom">
+          <div class="viral-ring">
+            <svg viewBox="0 0 42 42"><circle class="ring-bg" cx="21" cy="21" r="18"/><circle class="ring-fg ring-green" cx="21" cy="21" r="18" stroke-dasharray="113.1" stroke-dashoffset="27.1"/></svg>
+            <div class="viral-ring-num">76</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION B: TRENDS FEED -->
+  <div class="section-label">Trends Feed</div>
+  <div class="trends-grid">
+    <!-- Card 1 -->
+    <div class="trend-card">
+      <div class="trend-card-top">
+        <span class="cat-tag tech">Tech</span>
+        <span class="cat-tag entertainment">Entertainment</span>
+        <div class="platform-badges">
+          <span class="p-badge">TikTok</span>
+          <span class="p-badge">IG</span>
+          <span class="p-badge">YT</span>
+        </div>
+      </div>
+      <div class="trend-card-title">#AIArtChallenge</div>
+      <div class="trend-card-desc">Creators are using AI image generators to recreate classic paintings in their own style, then rating the results in viral reaction videos.</div>
+      <div class="trend-metrics">
+        <span class="metric">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+          24.5K posts
+        </span>
+        <span class="metric up">&#8593; 340%</span>
+        <span class="velocity-badge high">&#128293; High</span>
+      </div>
+      <div class="trend-card-bottom">
+        <div class="viral-ring">
+          <svg viewBox="0 0 48 48"><circle class="ring-bg" cx="24" cy="24" r="20" stroke-width="3"/><circle class="ring-fg ring-green" cx="24" cy="24" r="20" stroke-width="3" stroke-dasharray="125.66" stroke-dashoffset="10.05"/></svg>
+          <div class="viral-ring-num">92</div>
+        </div>
+        <div class="trend-card-actions">
+          <button class="btn-ghost-indigo">Create Content</button>
+          <button class="btn-icon-sm" title="Save">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="trend-card">
+      <div class="trend-card-top">
+        <span class="cat-tag business">Business</span>
+        <div class="platform-badges">
+          <span class="p-badge">X</span>
+          <span class="p-badge">YT</span>
+          <span class="p-badge">TikTok</span>
+        </div>
+      </div>
+      <div class="trend-card-title">Micro-SaaS Building</div>
+      <div class="trend-card-desc">Solo founders sharing their journey building small SaaS products from scratch with transparent revenue numbers and build-in-public updates.</div>
+      <div class="trend-metrics">
+        <span class="metric">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+          18.2K posts
+        </span>
+        <span class="metric up">&#8593; 210%</span>
+        <span class="velocity-badge high">&#128293; High</span>
+      </div>
+      <div class="trend-card-bottom">
+        <div class="viral-ring">
+          <svg viewBox="0 0 48 48"><circle class="ring-bg" cx="24" cy="24" r="20" stroke-width="3"/><circle class="ring-fg ring-green" cx="24" cy="24" r="20" stroke-width="3" stroke-dasharray="125.66" stroke-dashoffset="16.34"/></svg>
+          <div class="viral-ring-num">87</div>
+        </div>
+        <div class="trend-card-actions">
+          <button class="btn-ghost-indigo">Create Content</button>
+          <button class="btn-icon-sm" title="Save">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 3 -->
+    <div class="trend-card">
+      <div class="trend-card-top">
+        <span class="cat-tag lifestyle">Lifestyle</span>
+        <div class="platform-badges">
+          <span class="p-badge">IG</span>
+          <span class="p-badge">TikTok</span>
+        </div>
+      </div>
+      <div class="trend-card-title">Day in My Life 2.0</div>
+      <div class="trend-card-desc">An evolved format of day-in-my-life vlogs featuring cinematic editing, ambient audio, and aesthetic overlays that feel like mini-films.</div>
+      <div class="trend-metrics">
+        <span class="metric">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+          15.7K posts
+        </span>
+        <span class="metric up">&#8593; 185%</span>
+        <span class="velocity-badge medium">&#9889; Medium</span>
+      </div>
+      <div class="trend-card-bottom">
+        <div class="viral-ring">
+          <svg viewBox="0 0 48 48"><circle class="ring-bg" cx="24" cy="24" r="20" stroke-width="3"/><circle class="ring-fg ring-green" cx="24" cy="24" r="20" stroke-width="3" stroke-dasharray="125.66" stroke-dashoffset="20.1"/></svg>
+          <div class="viral-ring-num">84</div>
+        </div>
+        <div class="trend-card-actions">
+          <button class="btn-ghost-indigo">Create Content</button>
+          <button class="btn-icon-sm" title="Save">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 4 -->
+    <div class="trend-card">
+      <div class="trend-card-top">
+        <span class="cat-tag education">Education</span>
+        <span class="cat-tag lifestyle">Lifestyle</span>
+        <div class="platform-badges">
+          <span class="p-badge">IG</span>
+          <span class="p-badge">YT</span>
+        </div>
+      </div>
+      <div class="trend-card-title">Sustainability Hacks</div>
+      <div class="trend-card-desc">Quick, actionable tips for sustainable living that go beyond the basics. Creators showing zero-waste swaps and eco-friendly DIY projects.</div>
+      <div class="trend-metrics">
+        <span class="metric">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+          12.1K posts
+        </span>
+        <span class="metric up">&#8593; 128%</span>
+        <span class="velocity-badge medium">&#9889; Medium</span>
+      </div>
+      <div class="trend-card-bottom">
+        <div class="viral-ring">
+          <svg viewBox="0 0 48 48"><circle class="ring-bg" cx="24" cy="24" r="20" stroke-width="3"/><circle class="ring-fg ring-green" cx="24" cy="24" r="20" stroke-width="3" stroke-dasharray="125.66" stroke-dashoffset="26.39"/></svg>
+          <div class="viral-ring-num">79</div>
+        </div>
+        <div class="trend-card-actions">
+          <button class="btn-ghost-indigo">Create Content</button>
+          <button class="btn-icon-sm" title="Save">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 5 -->
+    <div class="trend-card">
+      <div class="trend-card-top">
+        <span class="cat-tag entertainment">Entertainment</span>
+        <span class="cat-tag tech">Tech</span>
+        <div class="platform-badges">
+          <span class="p-badge">IG</span>
+          <span class="p-badge">TikTok</span>
+          <span class="p-badge">X</span>
+        </div>
+      </div>
+      <div class="trend-card-title">Retro Tech Aesthetic</div>
+      <div class="trend-card-desc">Nostalgic tech content featuring CRT monitors, floppy disks, and retro computing setups. Blends aesthetic visuals with tech history education.</div>
+      <div class="trend-metrics">
+        <span class="metric">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+          9.8K posts
+        </span>
+        <span class="metric up">&#8593; 96%</span>
+        <span class="velocity-badge medium">&#9889; Medium</span>
+      </div>
+      <div class="trend-card-bottom">
+        <div class="viral-ring">
+          <svg viewBox="0 0 48 48"><circle class="ring-bg" cx="24" cy="24" r="20" stroke-width="3"/><circle class="ring-fg ring-green" cx="24" cy="24" r="20" stroke-width="3" stroke-dasharray="125.66" stroke-dashoffset="30.16"/></svg>
+          <div class="viral-ring-num">76</div>
+        </div>
+        <div class="trend-card-actions">
+          <button class="btn-ghost-indigo">Create Content</button>
+          <button class="btn-icon-sm" title="Save">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 6 -->
+    <div class="trend-card">
+      <div class="trend-card-top">
+        <span class="cat-tag general">General</span>
+        <div class="platform-badges">
+          <span class="p-badge">X</span>
+          <span class="p-badge">IG</span>
+        </div>
+      </div>
+      <div class="trend-card-title">Hot Take Threads</div>
+      <div class="trend-card-desc">Long-form hot take threads that challenge conventional wisdom in tech and business, sparking massive debate and quote-tweet engagement.</div>
+      <div class="trend-metrics">
+        <span class="metric">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+          6.3K posts
+        </span>
+        <span class="metric down">&#8595; 12%</span>
+        <span class="velocity-badge low">Low</span>
+      </div>
+      <div class="trend-card-bottom">
+        <div class="viral-ring">
+          <svg viewBox="0 0 48 48"><circle class="ring-bg" cx="24" cy="24" r="20" stroke-width="3"/><circle class="ring-fg ring-yellow" cx="24" cy="24" r="20" stroke-width="3" stroke-dasharray="125.66" stroke-dashoffset="62.83"/></svg>
+          <div class="viral-ring-num">50</div>
+        </div>
+        <div class="trend-card-actions">
+          <button class="btn-ghost-indigo">Create Content</button>
+          <button class="btn-icon-sm" title="Save">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION D: NOTIFICATIONS -->
+  <div class="section-label">Alerts &amp; Notifications</div>
+  <div class="notif-stack">
+    <div class="notif-card coral">
+      <div class="notif-icon coral">&#128293;</div>
+      <div class="notif-content">
+        <div class="notif-title">New Viral Opportunity: #AIArtChallenge</div>
+        <div class="notif-desc">Score: 92 -- Act within 4 hours for best results</div>
+      </div>
+      <div class="notif-action">
+        <button class="notif-btn coral">Create Now</button>
+        <span class="notif-time">2 hours ago</span>
+      </div>
+    </div>
+    <div class="notif-card warning">
+      <div class="notif-icon warning">&#128200;</div>
+      <div class="notif-content">
+        <div class="notif-title">Trend Alert: Micro-SaaS Building Rising Fast</div>
+        <div class="notif-desc">Up 340% in the last 6 hours</div>
+      </div>
+      <div class="notif-action">
+        <button class="notif-btn warning">View Trend</button>
+        <span class="notif-time">2 hours ago</span>
+      </div>
+    </div>
+    <div class="notif-card indigo">
+      <div class="notif-icon indigo">&#9993;</div>
+      <div class="notif-content">
+        <div class="notif-title">Weekly Trends Digest</div>
+        <div class="notif-desc">12 new trends match your niche this week</div>
+      </div>
+      <div class="notif-action">
+        <button class="notif-btn indigo">View All</button>
+        <span class="notif-time">2 hours ago</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION E: INTEGRATION FLOW -->
+  <div class="section-label">Content Pipeline</div>
+  <div class="flow-wrap">
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="flow-step-icon indigo">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+        <div class="flow-step-label">Discover Trend</div>
+        <div class="flow-step-desc">Find viral trends matching your niche in real-time</div>
+      </div>
+      <div class="flow-connector">
+        <svg viewBox="0 0 40 20" fill="none"><line x1="0" y1="10" x2="36" y2="10" stroke="var(--dark-border)" stroke-width="2" stroke-dasharray="4 4"/><polyline points="32,5 38,10 32,15" stroke="var(--indigo-400)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-icon violet">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        </div>
+        <div class="flow-step-label">Analyze Fit</div>
+        <div class="flow-step-desc">AI matches trend to your brand and audience</div>
+      </div>
+      <div class="flow-connector">
+        <svg viewBox="0 0 40 20" fill="none"><line x1="0" y1="10" x2="36" y2="10" stroke="var(--dark-border)" stroke-width="2" stroke-dasharray="4 4"/><polyline points="32,5 38,10 32,15" stroke="var(--violet-400)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-icon coral">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L9 12h6L9 22"/></svg>
+        </div>
+        <div class="flow-step-label">Generate Content</div>
+        <div class="flow-step-desc">Auto-create using templates and AI tools</div>
+      </div>
+      <div class="flow-connector">
+        <svg viewBox="0 0 40 20" fill="none"><line x1="0" y1="10" x2="36" y2="10" stroke="var(--dark-border)" stroke-width="2" stroke-dasharray="4 4"/><polyline points="32,5 38,10 32,15" stroke="var(--coral-400)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-icon success">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div class="flow-step-label">Schedule &amp; Post</div>
+        <div class="flow-step-desc">Optimal time posting for maximum reach</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION C: MODAL OVERLAY -->
+<div class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;">
+        <div class="modal-title">#AIArtChallenge</div>
+        <span class="cat-tag tech" style="flex-shrink:0;">Tech</span>
+        <span class="cat-tag entertainment" style="flex-shrink:0;">Entertainment</span>
+      </div>
+      <div class="viral-ring" style="flex-shrink:0;">
+        <svg viewBox="0 0 42 42"><circle class="ring-bg" cx="21" cy="21" r="18"/><circle class="ring-fg ring-green" cx="21" cy="21" r="18" stroke-dasharray="113.1" stroke-dashoffset="9"/></svg>
+        <div class="viral-ring-num">92</div>
+      </div>
+      <button class="modal-close">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <!-- Velocity Chart -->
+      <div class="modal-section">
+        <div class="modal-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Trend Velocity (Last 7 Days)
+        </div>
+        <div class="chart-wrap">
+          <svg class="chart-svg" viewBox="0 0 600 160" preserveAspectRatio="none">
+            <!-- Grid lines -->
+            <line x1="50" y1="10" x2="580" y2="10" stroke="var(--dark-border)" stroke-width="0.5" stroke-dasharray="3 3"/>
+            <line x1="50" y1="47.5" x2="580" y2="47.5" stroke="var(--dark-border)" stroke-width="0.5" stroke-dasharray="3 3"/>
+            <line x1="50" y1="85" x2="580" y2="85" stroke="var(--dark-border)" stroke-width="0.5" stroke-dasharray="3 3"/>
+            <line x1="50" y1="122.5" x2="580" y2="122.5" stroke="var(--dark-border)" stroke-width="0.5" stroke-dasharray="3 3"/>
+            <!-- Y-axis labels -->
+            <text x="44" y="14" fill="var(--dark-muted)" font-size="9" text-anchor="end" font-family="JetBrains Mono,monospace">25K</text>
+            <text x="44" y="51" fill="var(--dark-muted)" font-size="9" text-anchor="end" font-family="JetBrains Mono,monospace">18K</text>
+            <text x="44" y="89" fill="var(--dark-muted)" font-size="9" text-anchor="end" font-family="JetBrains Mono,monospace">10K</text>
+            <text x="44" y="126" fill="var(--dark-muted)" font-size="9" text-anchor="end" font-family="JetBrains Mono,monospace">5K</text>
+            <text x="44" y="155" fill="var(--dark-muted)" font-size="9" text-anchor="end" font-family="JetBrains Mono,monospace">2K</text>
+            <!-- X-axis labels -->
+            <text x="88" y="155" fill="var(--dark-muted)" font-size="9" text-anchor="middle" font-family="JetBrains Mono,monospace">Mon</text>
+            <text x="170" y="155" fill="var(--dark-muted)" font-size="9" text-anchor="middle" font-family="JetBrains Mono,monospace">Tue</text>
+            <text x="252" y="155" fill="var(--dark-muted)" font-size="9" text-anchor="middle" font-family="JetBrains Mono,monospace">Wed</text>
+            <text x="334" y="155" fill="var(--dark-muted)" font-size="9" text-anchor="middle" font-family="JetBrains Mono,monospace">Thu</text>
+            <text x="416" y="155" fill="var(--dark-muted)" font-size="9" text-anchor="middle" font-family="JetBrains Mono,monospace">Fri</text>
+            <text x="498" y="155" fill="var(--dark-muted)" font-size="9" text-anchor="middle" font-family="JetBrains Mono,monospace">Sat</text>
+            <text x="562" y="155" fill="var(--dark-muted)" font-size="9" text-anchor="middle" font-family="JetBrains Mono,monospace">Sun</text>
+            <!-- Gradient fill -->
+            <defs>
+              <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--indigo-500)" stop-opacity="0.25"/>
+                <stop offset="100%" stop-color="var(--indigo-500)" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path d="M88,140 L170,132 L252,118 L334,95 L416,60 L498,30 L562,12 L562,145 L88,145 Z" fill="url(#chartGrad)"/>
+            <!-- Line -->
+            <polyline points="88,140 170,132 252,118 334,95 416,60 498,30 562,12" fill="none" stroke="var(--indigo-400)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- Data points -->
+            <circle cx="88" cy="140" r="3.5" fill="var(--dark-s1)" stroke="var(--indigo-400)" stroke-width="2"/>
+            <circle cx="170" cy="132" r="3.5" fill="var(--dark-s1)" stroke="var(--indigo-400)" stroke-width="2"/>
+            <circle cx="252" cy="118" r="3.5" fill="var(--dark-s1)" stroke="var(--indigo-400)" stroke-width="2"/>
+            <circle cx="334" cy="95" r="3.5" fill="var(--dark-s1)" stroke="var(--indigo-400)" stroke-width="2"/>
+            <circle cx="416" cy="60" r="3.5" fill="var(--dark-s1)" stroke="var(--indigo-400)" stroke-width="2"/>
+            <circle cx="498" cy="30" r="3.5" fill="var(--dark-s1)" stroke="var(--indigo-400)" stroke-width="2"/>
+            <circle cx="562" cy="12" r="4" fill="var(--indigo-400)" stroke="var(--dark-s1)" stroke-width="2"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Key Metrics -->
+      <div class="key-metrics">
+        <div class="key-metric">
+          <div class="km-value">24.5K</div>
+          <div class="km-label">Total Posts</div>
+        </div>
+        <div class="key-metric">
+          <div class="km-value">8.2K</div>
+          <div class="km-label">Creators Using</div>
+        </div>
+        <div class="key-metric">
+          <div class="km-value">8.4%</div>
+          <div class="km-label">Avg Engagement</div>
+        </div>
+        <div class="key-metric">
+          <div class="km-value" style="font-size:18px;">TikTok</div>
+          <div class="km-label">Peak Platform</div>
+        </div>
+      </div>
+
+      <!-- Related Content -->
+      <div class="modal-section">
+        <div class="modal-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          Related Content
+        </div>
+        <div class="related-cards">
+          <div class="related-card">
+            <div class="related-thumb">&#127912;</div>
+            <div class="related-info">
+              <div class="related-title">I Let AI Recreate the Mona Lisa in 10 Styles</div>
+              <div class="related-creator">@creative.maya</div>
+              <div class="related-stats">
+                <span>&#128065; 2.4M views</span>
+                <span>&#128153; 12.3% engagement</span>
+              </div>
+            </div>
+          </div>
+          <div class="related-card">
+            <div class="related-thumb">&#127916;</div>
+            <div class="related-info">
+              <div class="related-title">AI Art vs Real Art: Can You Tell the Difference?</div>
+              <div class="related-creator">@techreview.dan</div>
+              <div class="related-stats">
+                <span>&#128065; 1.8M views</span>
+                <span>&#128153; 9.7% engagement</span>
+              </div>
+            </div>
+          </div>
+          <div class="related-card">
+            <div class="related-thumb">&#9997;&#65039;</div>
+            <div class="related-info">
+              <div class="related-title">How Artists Are Actually Using AI (Not What You Think)</div>
+              <div class="related-creator">@artfuture.co</div>
+              <div class="related-stats">
+                <span>&#128065; 980K views</span>
+                <span>&#128153; 7.2% engagement</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CTAs -->
+      <div class="modal-ctas">
+        <button class="btn-gradient">Create Content with This Trend</button>
+        <button class="btn-outline">Set Alert</button>
+        <button class="btn-ghost">View Full Analysis</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

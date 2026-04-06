@@ -1,24 +1,36 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
+import { Providers } from "@/lib/providers";
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
+const geistSans = localFont({
+  src: "./fonts/GeistVF.woff",
+  variable: "--font-geist-sans",
+  weight: "100 900",
+});
+const geistMono = localFont({
+  src: "./fonts/GeistMonoVF.woff",
+  variable: "--font-geist-mono",
+  weight: "100 900",
+});
 
 export const metadata: Metadata = {
-  title: "TrueTwist - AI-Powered Social Media Content Platform",
-  description: "Create viral social media content with AI. Generate, schedule, and post across Instagram, X, Facebook, LinkedIn, and TikTok in seconds.",
-  keywords: ["social media", "AI content", "content generation", "scheduling", "analytics", "TrueTwist"],
-  openGraph: {
-    title: "TrueTwist - AI-Powered Social Media Content Platform",
-    description: "Create viral social media content with AI. Generate, schedule, and post across all platforms.",
-    type: "website",
-  },
+  title: "TrueTwist — AI-Powered Social Media Manager",
+  description: "Generate, schedule, and publish content across 7+ social platforms with AI.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <html lang="en" className="dark scroll-smooth">
-      <body className={`${geist.variable} antialiased`}>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <Providers>
+          {children}
+        </Providers>
+      </body>
     </html>
   );
 }

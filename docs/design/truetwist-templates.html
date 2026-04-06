@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrueTwist — Template System Specification</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --indigo-50:#EEF2FF;--indigo-100:#E0E7FF;--indigo-200:#C7D2FE;--indigo-300:#A5B4FC;
+    --indigo-400:#818CF8;--indigo-500:#6366F1;--indigo-600:#4F46E5;--indigo-700:#4338CA;
+    --coral-400:#FF8787;--coral-500:#FF6B6B;--coral-600:#FA5252;
+    --violet-400:#C084FC;--violet-500:#A855F7;--violet-600:#9333EA;
+    --success:#40C057;--warning:#FAB005;--error:#FA5252;
+    --g50:#F8F9FA;--g100:#F1F3F5;--g200:#E9ECEF;--g300:#DEE2E6;
+    --g400:#CED4DA;--g500:#ADB5BD;--g600:#868E96;--g700:#495057;--g800:#343A40;--g900:#212529;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--g900);-webkit-font-smoothing:antialiased;line-height:1.6;}
+  .container{max-width:1200px;margin:0 auto;padding:48px 32px;}
+  .page-header{margin-bottom:64px;padding-bottom:32px;border-bottom:1px solid var(--g200);}
+  .page-header h1{font-family:'Outfit',sans-serif;font-size:48px;font-weight:800;letter-spacing:-0.03em;margin-bottom:8px;}
+  .page-header p{font-size:16px;color:var(--g600);max-width:600px;}
+
+  .section{margin-bottom:72px;}
+  .section-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--indigo-500);margin-bottom:8px;}
+  .section-title{font-family:'Outfit',sans-serif;font-size:28px;font-weight:700;letter-spacing:-0.01em;margin-bottom:8px;}
+  .section-desc{font-size:14px;color:var(--g600);margin-bottom:24px;max-width:600px;}
+
+  /* Spec tables */
+  .spec-table{width:100%;border-collapse:collapse;font-size:13px;background:white;border-radius:10px;overflow:hidden;border:1px solid var(--g200);}
+  .spec-table th{text-align:left;padding:10px 14px;font-weight:600;color:var(--g600);font-size:11px;text-transform:uppercase;letter-spacing:0.05em;background:var(--g50);border-bottom:2px solid var(--g200);}
+  .spec-table td{padding:10px 14px;border-bottom:1px solid var(--g100);color:var(--g700);}
+  .spec-table tr:last-child td{border-bottom:none;}
+  .spec-table code{font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--indigo-50);color:var(--indigo-700);padding:2px 8px;border-radius:4px;}
+  .spec-table .platform-badge{display:inline-flex;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:600;}
+  .badge-ig{background:#F3E8FF;color:#7C3AED;}
+  .badge-fb{background:#DBEAFE;color:#1D4ED8;}
+  .badge-tw{background:#E0F2FE;color:#0284C7;}
+  .badge-li{background:#DBEAFE;color:#1E40AF;}
+  .badge-yt{background:#FEE2E2;color:#DC2626;}
+  .badge-pi{background:#FEE2E2;color:#BE123C;}
+  .badge-tt{background:#111;color:white;}
+
+  /* Template mockups */
+  .mockup-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;}
+  .mockup{border-radius:12px;overflow:hidden;border:1px solid var(--g200);background:white;transition:transform 0.2s,box-shadow 0.2s;}
+  .mockup:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,0.08);}
+  .mockup .m-preview{position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .mockup .m-preview .m-inner{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;}
+  .mockup .m-info{padding:12px 14px;}
+  .mockup .m-title{font-weight:600;font-size:13px;color:var(--g800);}
+  .mockup .m-dims{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--g500);margin-top:2px;}
+
+  /* Template zone overlays */
+  .zone{position:absolute;border:2px dashed;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;}
+  .zone-headline{border-color:var(--indigo-400);color:var(--indigo-500);background:rgba(99,102,241,0.08);}
+  .zone-body{border-color:var(--violet-400);color:var(--violet-500);background:rgba(168,85,247,0.08);}
+  .zone-cta{border-color:var(--coral-400);color:var(--coral-500);background:rgba(255,107,107,0.08);}
+  .zone-image{border-color:var(--success);color:#2B8A3E;background:rgba(64,192,87,0.08);}
+  .zone-logo{border-color:var(--warning);color:#E67700;background:rgba(250,176,5,0.08);}
+
+  /* Video storyboard */
+  .storyboard{display:flex;gap:4px;overflow-x:auto;padding:4px 0;}
+  .storyboard-frame{min-width:160px;border-radius:8px;overflow:hidden;border:1px solid var(--g200);background:white;flex-shrink:0;}
+  .storyboard-frame .sf-visual{height:90px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--g400);position:relative;}
+  .storyboard-frame .sf-timecode{position:absolute;bottom:4px;right:6px;font-family:'JetBrains Mono',monospace;font-size:9px;background:rgba(0,0,0,0.6);color:white;padding:1px 6px;border-radius:3px;}
+  .storyboard-frame .sf-info{padding:8px 10px;}
+  .storyboard-frame .sf-label{font-weight:600;font-size:11px;color:var(--g800);}
+  .storyboard-frame .sf-desc{font-size:10px;color:var(--g500);margin-top:2px;line-height:1.4;}
+
+  .video-type-card{background:white;border:1px solid var(--g200);border-radius:12px;padding:20px;margin-bottom:16px;}
+  .video-type-card h4{font-family:'Outfit',sans-serif;font-size:18px;font-weight:700;margin-bottom:6px;color:var(--g900);}
+  .video-type-card .vtc-meta{font-size:12px;color:var(--g500);margin-bottom:16px;}
+
+  /* API spec */
+  .api-block{background:var(--g900);border-radius:10px;padding:20px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#A5B4FC;line-height:1.8;overflow-x:auto;margin:12px 0;}
+  .api-block .key{color:#FF8787;}
+  .api-block .str{color:#40C057;}
+  .api-block .num{color:#FAB005;}
+  .api-block .comment{color:#868E96;}
+
+  .subsection{margin-bottom:32px;}
+  .subsection-title{font-family:'Outfit',sans-serif;font-size:20px;font-weight:700;margin-bottom:12px;color:var(--g800);}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="page-header">
+  <h1>Template System</h1>
+  <p>Complete specification for AI-generated social media image and video templates. Covers all platforms, template architecture, dynamic zones, video storyboards, and the template customization API.</p>
+</div>
+
+<!-- ===== PLATFORM SPECS ===== -->
+<div class="section">
+  <div class="section-label">01 — Platform Specifications</div>
+  <div class="section-title">Image Dimensions & Template Types</div>
+  <div class="section-desc">Each platform has specific dimension requirements and content categories. Every category gets 5 base templates with 3 layout variants each.</div>
+
+  <table class="spec-table">
+    <thead><tr><th>Platform</th><th>Format</th><th>Dimensions</th><th>Aspect Ratio</th><th>Template Types</th><th>Count</th></tr></thead>
+    <tbody>
+      <tr><td><span class="platform-badge badge-ig">Instagram</span></td><td>Post</td><td><code>1080×1080</code></td><td>1:1</td><td>Quote, Product, Tip, Testimonial, BTS</td><td>5 × 3</td></tr>
+      <tr><td><span class="platform-badge badge-ig">Instagram</span></td><td>Carousel</td><td><code>1080×1080 ×10</code></td><td>1:1</td><td>Tutorial, Listicle, Before/After, Story</td><td>4 × 3</td></tr>
+      <tr><td><span class="platform-badge badge-ig">Instagram</span></td><td>Story / Reel</td><td><code>1080×1920</code></td><td>9:16</td><td>Poll, Question, Product, Countdown</td><td>4 × 3</td></tr>
+      <tr><td><span class="platform-badge badge-fb">Facebook</span></td><td>Post</td><td><code>1200×630</code></td><td>1.91:1</td><td>Shared Link, Event, Announcement, Photo</td><td>4 × 3</td></tr>
+      <tr><td><span class="platform-badge badge-tw">Twitter/X</span></td><td>Tweet Image</td><td><code>1600×900</code></td><td>16:9</td><td>Quote, Data Viz, Meme, Announcement</td><td>4 × 3</td></tr>
+      <tr><td><span class="platform-badge badge-li">LinkedIn</span></td><td>Post</td><td><code>1200×627</code></td><td>1.91:1</td><td>Insight, Quote, Data, Achievement</td><td>4 × 3</td></tr>
+      <tr><td><span class="platform-badge badge-li">LinkedIn</span></td><td>Document</td><td><code>1080×1350</code></td><td>4:5</td><td>Carousel Tutorial, Checklist, Framework</td><td>3 × 3</td></tr>
+      <tr><td><span class="platform-badge badge-yt">YouTube</span></td><td>Thumbnail</td><td><code>1280×720</code></td><td>16:9</td><td>Face+Text, Before/After, List, How-to</td><td>4 × 3</td></tr>
+      <tr><td><span class="platform-badge badge-pi">Pinterest</span></td><td>Pin</td><td><code>1000×1500</code></td><td>2:3</td><td>Infographic, Step-by-step, Quote, Product</td><td>4 × 3</td></tr>
+      <tr><td><span class="platform-badge badge-tt">TikTok</span></td><td>Cover</td><td><code>1080×1920</code></td><td>9:16</td><td>Text Overlay, Product Showcase, Teaser</td><td>3 × 3</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:12px;color:var(--g500);margin-top:8px;">Total: 40 base templates × 3 layout variants = <strong>120 template configurations</strong></p>
+</div>
+
+<!-- ===== TEMPLATE ARCHITECTURE ===== -->
+<div class="section">
+  <div class="section-label">02 — Template Architecture</div>
+  <div class="section-title">Dynamic Zone System</div>
+  <div class="section-desc">Every template is composed of 5 zone types. Each zone is independently customizable via the API and supports auto-sizing.</div>
+
+  <table class="spec-table" style="margin-bottom:24px;">
+    <thead><tr><th>Zone</th><th>Color</th><th>Contents</th><th>Constraints</th><th>Auto-Behavior</th></tr></thead>
+    <tbody>
+      <tr><td style="font-weight:600;color:var(--indigo-600);">Headline</td><td><div style="display:flex;align-items:center;gap:6px;"><div style="width:12px;height:12px;background:var(--indigo-400);border-radius:2px;"></div><code>indigo-400</code></div></td><td>Primary text, title, hook</td><td>Max 50 characters</td><td>Auto-sizes font from 72px→36px based on length. Bold weight.</td></tr>
+      <tr><td style="font-weight:600;color:var(--violet-600);">Body</td><td><div style="display:flex;align-items:center;gap:6px;"><div style="width:12px;height:12px;background:var(--violet-400);border-radius:2px;"></div><code>violet-400</code></div></td><td>Supporting text, description</td><td>Max 200 characters</td><td>Auto-sizes from 24px→14px. Regular weight. Line clamp at zone boundary.</td></tr>
+      <tr><td style="font-weight:600;color:var(--coral-600);">CTA</td><td><div style="display:flex;align-items:center;gap:6px;"><div style="width:12px;height:12px;background:var(--coral-400);border-radius:2px;"></div><code>coral-400</code></div></td><td>Call-to-action button/text</td><td>Max 30 characters</td><td>Pill-shaped button or underlined text. Uses brand accent color.</td></tr>
+      <tr><td style="font-weight:600;color:#2B8A3E;">Image</td><td><div style="display:flex;align-items:center;gap:6px;"><div style="width:12px;height:12px;background:var(--success);border-radius:2px;"></div><code>success</code></div></td><td>Background, product, person</td><td>AI-generated or uploaded</td><td>object-fit: cover. Applies brand color overlay at 10% when text overlaps.</td></tr>
+      <tr><td style="font-weight:600;color:#E67700;">Logo</td><td><div style="display:flex;align-items:center;gap:6px;"><div style="width:12px;height:12px;background:var(--warning);border-radius:2px;"></div><code>warning</code></div></td><td>Brand logo, watermark</td><td>4 corner positions</td><td>Auto-scales to 8% of shortest edge. Respects safe margin (5%).</td></tr>
+    </tbody>
+  </table>
+
+  <div class="subsection-title">Layout Variants</div>
+  <p style="font-size:14px;color:var(--g600);margin-bottom:16px;">Every template supports 3 layout options. The zone positions adapt while maintaining the same content.</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px;">
+    <div style="background:white;border:1px solid var(--g200);border-radius:10px;padding:16px;">
+      <div style="aspect-ratio:1;background:var(--g100);border-radius:8px;margin-bottom:12px;position:relative;display:flex;align-items:center;justify-content:center;">
+        <div style="text-align:center;">
+          <div style="background:rgba(99,102,241,0.15);padding:4px 16px;border-radius:4px;font-size:14px;font-weight:700;color:var(--indigo-600);margin-bottom:4px;">Headline</div>
+          <div style="background:rgba(168,85,247,0.15);padding:2px 12px;border-radius:4px;font-size:10px;color:var(--violet-600);margin-bottom:8px;">Body text here</div>
+          <div style="background:rgba(255,107,107,0.15);padding:4px 12px;border-radius:99px;font-size:10px;font-weight:600;color:var(--coral-600);">CTA</div>
+        </div>
+        <div style="position:absolute;top:8px;right:8px;width:20px;height:20px;background:rgba(250,176,5,0.2);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:7px;color:#E67700;font-weight:700;">L</div>
+      </div>
+      <div style="font-weight:600;font-size:14px;color:var(--g800);">Centered</div>
+      <div style="font-size:12px;color:var(--g500);">Text centered. Best for quotes, announcements, minimal content.</div>
+    </div>
+    <div style="background:white;border:1px solid var(--g200);border-radius:10px;padding:16px;">
+      <div style="aspect-ratio:1;background:var(--g100);border-radius:8px;margin-bottom:12px;position:relative;display:flex;align-items:flex-end;padding:12px;">
+        <div>
+          <div style="background:rgba(99,102,241,0.15);padding:4px 16px;border-radius:4px;font-size:14px;font-weight:700;color:var(--indigo-600);margin-bottom:4px;display:inline-block;">Headline</div><br>
+          <div style="background:rgba(168,85,247,0.15);padding:2px 12px;border-radius:4px;font-size:10px;color:var(--violet-600);margin-bottom:6px;display:inline-block;">Body text</div><br>
+          <div style="background:rgba(255,107,107,0.15);padding:4px 12px;border-radius:99px;font-size:10px;font-weight:600;color:var(--coral-600);display:inline-block;">CTA</div>
+        </div>
+        <div style="position:absolute;top:8px;left:8px;width:20px;height:20px;background:rgba(250,176,5,0.2);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:7px;color:#E67700;font-weight:700;">L</div>
+      </div>
+      <div style="font-weight:600;font-size:14px;color:var(--g800);">Left-Aligned</div>
+      <div style="font-size:12px;color:var(--g500);">Text anchored bottom-left. Best for products, tips, BTS content.</div>
+    </div>
+    <div style="background:white;border:1px solid var(--g200);border-radius:10px;padding:16px;">
+      <div style="aspect-ratio:1;background:var(--g100);border-radius:8px;margin-bottom:12px;position:relative;display:flex;overflow:hidden;">
+        <div style="flex:1;background:rgba(64,192,87,0.1);display:flex;align-items:center;justify-content:center;font-size:9px;color:#2B8A3E;font-weight:600;">IMAGE</div>
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:10px;">
+          <div style="background:rgba(99,102,241,0.15);padding:3px 10px;border-radius:3px;font-size:11px;font-weight:700;color:var(--indigo-600);margin-bottom:4px;">Headline</div>
+          <div style="background:rgba(168,85,247,0.15);padding:2px 8px;border-radius:3px;font-size:9px;color:var(--violet-600);margin-bottom:6px;">Body</div>
+          <div style="background:rgba(255,107,107,0.15);padding:3px 8px;border-radius:99px;font-size:9px;font-weight:600;color:var(--coral-600);display:inline-block;width:fit-content;">CTA</div>
+        </div>
+        <div style="position:absolute;top:6px;right:6px;width:16px;height:16px;background:rgba(250,176,5,0.2);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:6px;color:#E67700;font-weight:700;">L</div>
+      </div>
+      <div style="font-weight:600;font-size:14px;color:var(--g800);">Split-Screen</div>
+      <div style="font-size:12px;color:var(--g500);">Image + text side-by-side. Best for testimonials, comparisons, data.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SAMPLE TEMPLATES ===== -->
+<div class="section">
+  <div class="section-label">03 — Sample Templates</div>
+  <div class="section-title">Template Mockups by Platform</div>
+  <div class="section-desc">Visual mockups showing dynamic zone placement, brand application, and customization options per platform.</div>
+
+  <!-- Instagram -->
+  <div class="subsection">
+    <h3 class="subsection-title"><span class="platform-badge badge-ig" style="margin-right:8px;">Instagram</span> Post Templates (1080×1080)</h3>
+    <div class="mockup-grid">
+      <div class="mockup">
+        <div class="m-preview" style="aspect-ratio:1;background:linear-gradient(135deg,var(--indigo-600),var(--violet-600));">
+          <div class="m-inner" style="padding:20px;color:white;text-align:center;">
+            <div style="font-family:'Outfit',sans-serif;font-size:20px;font-weight:800;line-height:1.2;margin-bottom:8px;">"Innovation<br>distinguishes a<br>leader from a<br>follower."</div>
+            <div style="font-size:10px;opacity:0.7;margin-bottom:12px;">— Steve Jobs</div>
+            <div style="background:white;color:var(--indigo-700);padding:4px 12px;border-radius:99px;font-size:9px;font-weight:600;display:inline-block;">Follow for more</div>
+          </div>
+          <div style="position:absolute;bottom:10px;right:10px;font-family:'Outfit',sans-serif;font-size:9px;font-weight:800;color:rgba(255,255,255,0.4);">TrueTwist</div>
+        </div>
+        <div class="m-info"><div class="m-title">Quote — Centered</div><div class="m-dims">1080 × 1080px</div></div>
+      </div>
+      <div class="mockup">
+        <div class="m-preview" style="aspect-ratio:1;background:var(--g100);">
+          <div class="m-inner" style="padding:16px;">
+            <div style="width:100%;height:55%;background:var(--g200);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--g400);font-size:10px;">Product Image</div>
+            <div style="padding:8px 0;text-align:left;width:100%;">
+              <div style="font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;color:var(--g900);margin-bottom:2px;">Premium Wireless Headphones</div>
+              <div style="font-size:10px;color:var(--g500);margin-bottom:6px;">Noise-cancelling. 40hr battery. Studio quality.</div>
+              <div style="display:flex;gap:6px;align-items:center;">
+                <span style="font-family:'Outfit',sans-serif;font-size:16px;font-weight:800;color:var(--indigo-600);">$299</span>
+                <span style="background:var(--coral-500);color:white;padding:2px 8px;border-radius:99px;font-size:8px;font-weight:600;">Shop Now</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="m-info"><div class="m-title">Product — Left-aligned</div><div class="m-dims">1080 × 1080px</div></div>
+      </div>
+      <div class="mockup">
+        <div class="m-preview" style="aspect-ratio:1;background:linear-gradient(180deg,#FFF5F5,white);">
+          <div class="m-inner" style="padding:16px;text-align:center;">
+            <div style="font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;color:var(--indigo-600);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;">Pro Tip</div>
+            <div style="font-family:'Outfit',sans-serif;font-size:16px;font-weight:800;color:var(--g900);margin-bottom:6px;">Use the 80/20 Rule<br>for Content</div>
+            <div style="font-size:9px;color:var(--g600);line-height:1.5;padding:0 8px;margin-bottom:10px;">80% value-driven content that educates. 20% promotional content that converts.</div>
+            <div style="background:var(--indigo-600);color:white;padding:4px 12px;border-radius:99px;font-size:9px;font-weight:600;display:inline-block;">Save this post</div>
+          </div>
+        </div>
+        <div class="m-info"><div class="m-title">Tip — Centered</div><div class="m-dims">1080 × 1080px</div></div>
+      </div>
+      <div class="mockup">
+        <div class="m-preview" style="aspect-ratio:1;background:var(--g900);">
+          <div class="m-inner" style="padding:16px;display:flex;">
+            <div style="flex:1;display:flex;align-items:center;justify-content:center;">
+              <div style="width:50px;height:50px;background:var(--g700);border-radius:50%;"></div>
+            </div>
+            <div style="flex:1.5;display:flex;flex-direction:column;justify-content:center;">
+              <div style="font-size:10px;color:var(--g300);line-height:1.5;font-style:italic;margin-bottom:6px;">"TrueTwist saved me 20 hours a week on content creation."</div>
+              <div style="font-size:9px;color:var(--g500);">— Sarah M., Creator</div>
+              <div style="display:flex;gap:2px;margin-top:4px;">
+                <span style="color:var(--warning);font-size:10px;">★★★★★</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="m-info"><div class="m-title">Testimonial — Split</div><div class="m-dims">1080 × 1080px</div></div>
+      </div>
+      <div class="mockup">
+        <div class="m-preview" style="aspect-ratio:1;background:var(--g200);">
+          <div class="m-inner" style="padding:0;">
+            <div style="width:100%;height:100%;background:var(--g300);display:flex;align-items:center;justify-content:center;color:var(--g400);font-size:10px;position:relative;">
+              [Full-bleed BTS Photo]
+              <div style="position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);padding:6px 10px;border-radius:8px;">
+                <div style="font-size:11px;font-weight:600;color:white;">Behind the scenes</div>
+                <div style="font-size:8px;color:rgba(255,255,255,0.7);">A day at the TrueTwist office</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="m-info"><div class="m-title">BTS — Full Bleed</div><div class="m-dims">1080 × 1080px</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Twitter/X -->
+  <div class="subsection" style="margin-top:32px;">
+    <h3 class="subsection-title"><span class="platform-badge badge-tw" style="margin-right:8px;">Twitter/X</span> Tweet Image Templates (1600×900)</h3>
+    <div class="mockup-grid">
+      <div class="mockup">
+        <div class="m-preview" style="aspect-ratio:16/9;background:linear-gradient(135deg,#0F0D1A,var(--indigo-900));">
+          <div class="m-inner" style="padding:20px;text-align:center;color:white;">
+            <div style="font-family:'Outfit',sans-serif;font-size:18px;font-weight:800;line-height:1.2;margin-bottom:4px;">"The best time to<br>start was yesterday."</div>
+            <div style="font-size:9px;opacity:0.5;">@truetwist</div>
+          </div>
+        </div>
+        <div class="m-info"><div class="m-title">Quote — Dark</div><div class="m-dims">1600 × 900px</div></div>
+      </div>
+      <div class="mockup">
+        <div class="m-preview" style="aspect-ratio:16/9;background:white;border-bottom:1px solid var(--g200);">
+          <div class="m-inner" style="padding:16px;">
+            <div style="font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;color:var(--g900);margin-bottom:8px;">Social Media Growth in 2026</div>
+            <div style="display:flex;gap:8px;height:60%;">
+              <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;">
+                <div style="background:var(--indigo-400);height:70%;border-radius:4px 4px 0 0;"></div>
+                <div style="font-size:7px;text-align:center;color:var(--g500);margin-top:2px;">Q1</div>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;">
+                <div style="background:var(--indigo-500);height:85%;border-radius:4px 4px 0 0;"></div>
+                <div style="font-size:7px;text-align:center;color:var(--g500);margin-top:2px;">Q2</div>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;">
+                <div style="background:var(--indigo-600);height:95%;border-radius:4px 4px 0 0;"></div>
+                <div style="font-size:7px;text-align:center;color:var(--g500);margin-top:2px;">Q3</div>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;">
+                <div style="background:linear-gradient(to top,var(--indigo-600),var(--violet-500));height:100%;border-radius:4px 4px 0 0;"></div>
+                <div style="font-size:7px;text-align:center;color:var(--g500);margin-top:2px;">Q4</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="m-info"><div class="m-title">Data Viz — Chart</div><div class="m-dims">1600 × 900px</div></div>
+      </div>
+      <div class="mockup">
+        <div class="m-preview" style="aspect-ratio:16/9;background:var(--indigo-50);">
+          <div class="m-inner" style="padding:16px;text-align:center;">
+            <div style="background:var(--indigo-600);color:white;padding:3px 10px;border-radius:99px;font-size:8px;font-weight:700;display:inline-block;margin-bottom:6px;">NEW</div>
+            <div style="font-family:'Outfit',sans-serif;font-size:16px;font-weight:800;color:var(--g900);margin-bottom:4px;">Video Generation v2 is here</div>
+            <div style="font-size:9px;color:var(--g600);">Create AI videos in seconds. Now with lip-sync and custom avatars.</div>
+          </div>
+        </div>
+        <div class="m-info"><div class="m-title">Announcement — Badge</div><div class="m-dims">1600 × 900px</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LinkedIn -->
+  <div class="subsection" style="margin-top:32px;">
+    <h3 class="subsection-title"><span class="platform-badge badge-li" style="margin-right:8px;">LinkedIn</span> Post Templates (1200×627)</h3>
+    <div class="mockup-grid">
+      <div class="mockup">
+        <div class="m-preview" style="aspect-ratio:1200/627;background:white;border-bottom:1px solid var(--g200);">
+          <div class="m-inner" style="padding:16px;display:flex;">
+            <div style="flex:1;display:flex;flex-direction:column;justify-content:center;">
+              <div style="font-family:'Outfit',sans-serif;font-size:8px;font-weight:700;color:var(--indigo-600);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;">Industry Insight</div>
+              <div style="font-family:'Outfit',sans-serif;font-size:15px;font-weight:800;color:var(--g900);line-height:1.2;margin-bottom:4px;">AI Will Replace 40% of Social Media Jobs by 2028</div>
+              <div style="font-size:9px;color:var(--g600);line-height:1.4;">But it will create 60% more creative roles. Here's what that means for your career.</div>
+            </div>
+            <div style="flex:0.6;background:var(--g200);border-radius:8px;margin-left:12px;display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--g400);">Image</div>
+          </div>
+        </div>
+        <div class="m-info"><div class="m-title">Insight — Split</div><div class="m-dims">1200 × 627px</div></div>
+      </div>
+      <div class="mockup">
+        <div class="m-preview" style="aspect-ratio:1200/627;background:linear-gradient(135deg,var(--indigo-800),var(--indigo-900));">
+          <div class="m-inner" style="padding:16px;text-align:center;color:white;">
+            <div style="font-size:24px;margin-bottom:6px;">🏆</div>
+            <div style="font-family:'Outfit',sans-serif;font-size:14px;font-weight:800;margin-bottom:4px;">100,000 Users!</div>
+            <div style="font-size:9px;opacity:0.7;">Thank you to everyone who believed in TrueTwist from day one.</div>
+          </div>
+        </div>
+        <div class="m-info"><div class="m-title">Achievement — Centered</div><div class="m-dims">1200 × 627px</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- YouTube -->
+  <div class="subsection" style="margin-top:32px;">
+    <h3 class="subsection-title"><span class="platform-badge badge-yt" style="margin-right:8px;">YouTube</span> Thumbnail Templates (1280×720)</h3>
+    <div class="mockup-grid">
+      <div class="mockup">
+        <div class="m-preview" style="aspect-ratio:16/9;background:linear-gradient(135deg,var(--coral-500),var(--coral-600));">
+          <div class="m-inner" style="display:flex;padding:12px;">
+            <div style="flex:0.8;background:rgba(0,0,0,0.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:8px;color:rgba(255,255,255,0.5);">Face</div>
+            <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding-left:10px;color:white;">
+              <div style="font-family:'Outfit',sans-serif;font-size:16px;font-weight:900;line-height:1.1;text-shadow:0 2px 8px rgba(0,0,0,0.3);">I Tested 50 AI Tools<br>So You Don't Have To</div>
+            </div>
+          </div>
+        </div>
+        <div class="m-info"><div class="m-title">Face + Text</div><div class="m-dims">1280 × 720px</div></div>
+      </div>
+      <div class="mockup">
+        <div class="m-preview" style="aspect-ratio:16/9;background:var(--g900);">
+          <div class="m-inner" style="display:flex;">
+            <div style="flex:1;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--g600);">Before</div>
+            <div style="width:3px;background:var(--coral-500);"></div>
+            <div style="flex:1;background:rgba(99,102,241,0.1);display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--indigo-400);">After</div>
+          </div>
+          <div style="position:absolute;top:8px;left:50%;transform:translateX(-50%);font-family:'Outfit',sans-serif;font-size:11px;font-weight:800;color:white;text-shadow:0 2px 8px rgba(0,0,0,0.5);">TRANSFORMATION</div>
+        </div>
+        <div class="m-info"><div class="m-title">Before/After</div><div class="m-dims">1280 × 720px</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pinterest -->
+  <div class="subsection" style="margin-top:32px;">
+    <h3 class="subsection-title"><span class="platform-badge badge-pi" style="margin-right:8px;">Pinterest</span> Pin Templates (1000×1500)</h3>
+    <div class="mockup-grid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));">
+      <div class="mockup">
+        <div class="m-preview" style="aspect-ratio:2/3;background:linear-gradient(180deg,var(--indigo-50),white);">
+          <div class="m-inner" style="padding:12px;text-align:center;">
+            <div style="font-family:'Outfit',sans-serif;font-size:12px;font-weight:800;color:var(--g900);margin-bottom:6px;">10 AI Tools for Content Creators</div>
+            <div style="display:flex;flex-direction:column;gap:3px;text-align:left;padding:0 4px;">
+              <div style="background:white;padding:4px 8px;border-radius:4px;font-size:7px;color:var(--g700);border:1px solid var(--g200);">1. TrueTwist — AI Content</div>
+              <div style="background:white;padding:4px 8px;border-radius:4px;font-size:7px;color:var(--g700);border:1px solid var(--g200);">2. Midjourney — AI Images</div>
+              <div style="background:white;padding:4px 8px;border-radius:4px;font-size:7px;color:var(--g700);border:1px solid var(--g200);">3. Descript — AI Video</div>
+              <div style="background:var(--g100);padding:4px 8px;border-radius:4px;font-size:7px;color:var(--g400);">+ 7 more...</div>
+            </div>
+          </div>
+        </div>
+        <div class="m-info"><div class="m-title">Infographic — List</div><div class="m-dims">1000 × 1500px</div></div>
+      </div>
+      <div class="mockup">
+        <div class="m-preview" style="aspect-ratio:2/3;background:var(--g900);">
+          <div class="m-inner" style="padding:12px;text-align:center;color:white;">
+            <div style="font-size:20px;margin-bottom:4px;">✨</div>
+            <div style="font-family:'Outfit',sans-serif;font-size:12px;font-weight:800;line-height:1.3;margin-bottom:6px;">"Create once,<br>publish<br>everywhere."</div>
+            <div style="font-size:8px;opacity:0.5;">— TrueTwist</div>
+            <div style="position:absolute;bottom:10px;left:0;right:0;text-align:center;">
+              <div style="background:var(--indigo-600);color:white;padding:4px 10px;border-radius:99px;font-size:8px;font-weight:600;display:inline-block;">Pin this!</div>
+            </div>
+          </div>
+        </div>
+        <div class="m-info"><div class="m-title">Quote — Dark</div><div class="m-dims">1000 × 1500px</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== VIDEO TEMPLATES ===== -->
+<div class="section">
+  <div class="section-label">04 — Video Templates</div>
+  <div class="section-title">Video Storyboards</div>
+  <div class="section-desc">5 video template types with frame-by-frame storyboards. Each supports 15s, 30s, and 60s durations.</div>
+
+  <!-- Talking Head -->
+  <div class="video-type-card">
+    <h4>1. Talking Head</h4>
+    <div class="vtc-meta">AI avatar with branded lower third + background | 15s / 30s / 60s</div>
+    <div class="storyboard">
+      <div class="storyboard-frame">
+        <div class="sf-visual" style="background:var(--indigo-900);"><div style="width:40px;height:40px;background:var(--g600);border-radius:50%;"></div><div style="position:absolute;bottom:20px;left:10px;right:10px;background:rgba(0,0,0,0.5);height:16px;border-radius:4px;"></div><span class="sf-timecode">0:00</span></div>
+        <div class="sf-info"><div class="sf-label">Intro</div><div class="sf-desc">Avatar appears with wave. Brand lower third slides in. Hook text displays.</div></div>
+      </div>
+      <div class="storyboard-frame">
+        <div class="sf-visual" style="background:var(--indigo-900);"><div style="width:40px;height:40px;background:var(--g600);border-radius:50%;"></div><span class="sf-timecode">0:05</span></div>
+        <div class="sf-info"><div class="sf-label">Body — Point 1</div><div class="sf-desc">Avatar speaks. Key text appears as animated bullet. Icon accent.</div></div>
+      </div>
+      <div class="storyboard-frame">
+        <div class="sf-visual" style="background:var(--indigo-900);"><div style="width:40px;height:40px;background:var(--g600);border-radius:50%;"></div><span class="sf-timecode">0:15</span></div>
+        <div class="sf-info"><div class="sf-label">Body — Point 2</div><div class="sf-desc">Transition to next point. Background subtly shifts color.</div></div>
+      </div>
+      <div class="storyboard-frame">
+        <div class="sf-visual" style="background:var(--indigo-900);"><div style="width:40px;height:40px;background:var(--g600);border-radius:50%;"></div><span class="sf-timecode">0:25</span></div>
+        <div class="sf-info"><div class="sf-label">CTA</div><div class="sf-desc">Avatar gestures to CTA. Follow button animates in. Logo watermark.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Text Animation -->
+  <div class="video-type-card">
+    <h4>2. Text Animation (Kinetic Typography)</h4>
+    <div class="vtc-meta">Branded kinetic text: Hook → Body → CTA | 15s / 30s / 60s</div>
+    <div class="storyboard">
+      <div class="storyboard-frame">
+        <div class="sf-visual" style="background:var(--g900);color:white;font-family:'Outfit',sans-serif;font-size:14px;font-weight:800;">STOP</div>
+        <div class="sf-info"><div class="sf-label">Hook</div><div class="sf-desc">Single word zooms in with impact. Holds 1.5s. Brand color background flash.</div></div>
+      </div>
+      <div class="storyboard-frame">
+        <div class="sf-visual" style="background:var(--g900);color:white;font-size:9px;text-align:center;padding:8px;line-height:1.4;">Here's what most<br>people get wrong<br>about AI content</div>
+        <div class="sf-info"><div class="sf-label">Body — Reveal</div><div class="sf-desc">Text reveals word-by-word with typewriter effect. Music builds.</div></div>
+      </div>
+      <div class="storyboard-frame">
+        <div class="sf-visual" style="background:linear-gradient(135deg,var(--indigo-600),var(--violet-600));"><div style="background:white;padding:4px 10px;border-radius:99px;font-size:9px;font-weight:700;color:var(--indigo-700);">Try TrueTwist Free</div><span class="sf-timecode">0:28</span></div>
+        <div class="sf-info"><div class="sf-label">CTA</div><div class="sf-desc">Background transitions to brand gradient. CTA button scales up with bounce.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Product Showcase -->
+  <div class="video-type-card">
+    <h4>3. Product Showcase</h4>
+    <div class="vtc-meta">Product image with zoom/rotate animation + price overlay | 15s / 30s / 60s</div>
+    <div class="storyboard">
+      <div class="storyboard-frame">
+        <div class="sf-visual" style="background:var(--g100);"><div style="width:50px;height:50px;background:var(--g300);border-radius:8px;"></div><span class="sf-timecode">0:00</span></div>
+        <div class="sf-info"><div class="sf-label">Product Reveal</div><div class="sf-desc">Product fades in with slow zoom. Clean background. Subtle particles.</div></div>
+      </div>
+      <div class="storyboard-frame">
+        <div class="sf-visual" style="background:var(--g100);"><div style="width:50px;height:50px;background:var(--g300);border-radius:8px;transform:rotate(15deg);"></div><span class="sf-timecode">0:08</span></div>
+        <div class="sf-info"><div class="sf-label">360° Rotate</div><div class="sf-desc">Product slowly rotates. Feature callouts appear as floating labels.</div></div>
+      </div>
+      <div class="storyboard-frame">
+        <div class="sf-visual" style="background:var(--g100);"><div style="position:absolute;bottom:15px;left:10px;background:var(--coral-500);color:white;padding:3px 8px;border-radius:4px;font-size:9px;font-weight:700;">$299</div><span class="sf-timecode">0:20</span></div>
+        <div class="sf-info"><div class="sf-label">Price + CTA</div><div class="sf-desc">Price tag slides in. "Shop Now" button animates. Logo fade.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Before/After -->
+  <div class="video-type-card">
+    <h4>4. Before / After</h4>
+    <div class="vtc-meta">Split screen transition — swipe reveal or side-by-side | 15s / 30s / 60s</div>
+    <div class="storyboard">
+      <div class="storyboard-frame">
+        <div class="sf-visual" style="background:var(--g200);"><div style="font-size:10px;color:var(--g500);font-weight:600;">BEFORE</div><span class="sf-timecode">0:00</span></div>
+        <div class="sf-info"><div class="sf-label">Before State</div><div class="sf-desc">Full frame shows "before" image/state. Label fades in. Hold 3s.</div></div>
+      </div>
+      <div class="storyboard-frame">
+        <div class="sf-visual" style="background:linear-gradient(90deg,var(--g200) 50%,var(--indigo-100) 50%);"><div style="width:2px;height:60%;background:white;"></div><span class="sf-timecode">0:05</span></div>
+        <div class="sf-info"><div class="sf-label">Swipe Reveal</div><div class="sf-desc">Animated divider wipes from left to right, revealing "after" state.</div></div>
+      </div>
+      <div class="storyboard-frame">
+        <div class="sf-visual" style="background:var(--indigo-100);"><div style="font-size:10px;color:var(--indigo-600);font-weight:600;">AFTER</div><span class="sf-timecode">0:10</span></div>
+        <div class="sf-info"><div class="sf-label">After + CTA</div><div class="sf-desc">Full "after" frame. Stats overlay (e.g., "+200% growth"). CTA button.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slideshow -->
+  <div class="video-type-card">
+    <h4>5. Slideshow</h4>
+    <div class="vtc-meta">Image sequence with transitions, music bed, and text overlays | 15s / 30s / 60s</div>
+    <div class="storyboard">
+      <div class="storyboard-frame">
+        <div class="sf-visual" style="background:var(--g200);"><div style="font-size:8px;color:var(--g400);">Slide 1</div><span class="sf-timecode">0:00</span></div>
+        <div class="sf-info"><div class="sf-label">Title Slide</div><div class="sf-desc">Title text on branded background. Fade-in transition. Music starts.</div></div>
+      </div>
+      <div class="storyboard-frame">
+        <div class="sf-visual" style="background:var(--g200);"><div style="font-size:8px;color:var(--g400);">Slide 2-4</div><span class="sf-timecode">0:05</span></div>
+        <div class="sf-info"><div class="sf-label">Content Slides</div><div class="sf-desc">Image + text overlay per slide. Cross-dissolve transitions. 3-5s per slide.</div></div>
+      </div>
+      <div class="storyboard-frame">
+        <div class="sf-visual" style="background:linear-gradient(135deg,var(--indigo-600),var(--violet-600));"><div style="font-size:8px;color:rgba(255,255,255,0.6);">End Slide</div><span class="sf-timecode">0:25</span></div>
+        <div class="sf-info"><div class="sf-label">Closing CTA</div><div class="sf-desc">Brand gradient background. Logo + CTA + social handles. Music fades.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TEMPLATE API ===== -->
+<div class="section">
+  <div class="section-label">05 — Template API</div>
+  <div class="section-title">Customization API Specification</div>
+  <div class="section-desc">RESTful API for rendering templates with dynamic parameters. All text zones, images, and brand settings are configurable.</div>
+
+  <div class="subsection">
+    <h3 class="subsection-title">POST /api/templates/render</h3>
+    <div class="api-block">
+<span class="comment">// Request body</span>
+{
+  <span class="key">"templateId"</span>: <span class="str">"ig-post-quote-centered"</span>,
+  <span class="key">"platform"</span>: <span class="str">"instagram"</span>,
+  <span class="key">"format"</span>: <span class="str">"post"</span>,
+  <span class="key">"dimensions"</span>: { <span class="key">"width"</span>: <span class="num">1080</span>, <span class="key">"height"</span>: <span class="num">1080</span> },
+  <span class="key">"layout"</span>: <span class="str">"centered"</span>, <span class="comment">// "centered" | "left-aligned" | "split-screen"</span>
+  <span class="key">"zones"</span>: {
+    <span class="key">"headline"</span>: {
+      <span class="key">"text"</span>: <span class="str">"Innovation distinguishes a leader from a follower."</span>,
+      <span class="key">"fontSizeOverride"</span>: <span class="num">null</span>, <span class="comment">// null = auto-size</span>
+      <span class="key">"alignment"</span>: <span class="str">"center"</span>
+    },
+    <span class="key">"body"</span>: {
+      <span class="key">"text"</span>: <span class="str">"— Steve Jobs"</span>,
+      <span class="key">"fontSizeOverride"</span>: <span class="num">null</span>
+    },
+    <span class="key">"cta"</span>: {
+      <span class="key">"text"</span>: <span class="str">"Follow for more"</span>,
+      <span class="key">"style"</span>: <span class="str">"pill"</span> <span class="comment">// "pill" | "underline" | "none"</span>
+    },
+    <span class="key">"image"</span>: {
+      <span class="key">"source"</span>: <span class="str">"ai-generated"</span>, <span class="comment">// "ai-generated" | "upload" | "url"</span>
+      <span class="key">"prompt"</span>: <span class="str">"Abstract gradient with flowing shapes"</span>,
+      <span class="key">"uploadId"</span>: <span class="num">null</span>,
+      <span class="key">"fit"</span>: <span class="str">"cover"</span>,
+      <span class="key">"overlay"</span>: <span class="num">0.1</span> <span class="comment">// 0-1 brand color overlay opacity</span>
+    },
+    <span class="key">"logo"</span>: {
+      <span class="key">"position"</span>: <span class="str">"bottom-right"</span>, <span class="comment">// "top-left" | "top-right" | "bottom-left" | "bottom-right"</span>
+      <span class="key">"scale"</span>: <span class="num">0.08</span>,
+      <span class="key">"opacity"</span>: <span class="num">0.4</span>
+    }
+  },
+  <span class="key">"brand"</span>: {
+    <span class="key">"primaryColor"</span>: <span class="str">"#4F46E5"</span>,
+    <span class="key">"secondaryColor"</span>: <span class="str">"#FF6B6B"</span>,
+    <span class="key">"logoUrl"</span>: <span class="str">"https://..."</span>,
+    <span class="key">"fontHeading"</span>: <span class="str">"Outfit"</span>,
+    <span class="key">"fontBody"</span>: <span class="str">"DM Sans"</span>
+  },
+  <span class="key">"output"</span>: {
+    <span class="key">"format"</span>: <span class="str">"png"</span>, <span class="comment">// "png" | "jpg" | "webp" | "svg"</span>
+    <span class="key">"quality"</span>: <span class="num">90</span>,
+    <span class="key">"scale"</span>: <span class="num">1</span> <span class="comment">// 2 for @2x retina</span>
+  }
+}
+    </div>
+  </div>
+
+  <div class="subsection">
+    <h3 class="subsection-title">Response</h3>
+    <div class="api-block">
+{
+  <span class="key">"id"</span>: <span class="str">"render_abc123"</span>,
+  <span class="key">"status"</span>: <span class="str">"completed"</span>,
+  <span class="key">"imageUrl"</span>: <span class="str">"https://cdn.truetwist.com/renders/abc123.png"</span>,
+  <span class="key">"dimensions"</span>: { <span class="key">"width"</span>: <span class="num">1080</span>, <span class="key">"height"</span>: <span class="num">1080</span> },
+  <span class="key">"fileSize"</span>: <span class="num">245000</span>,
+  <span class="key">"zones"</span>: {
+    <span class="key">"headline"</span>: { <span class="key">"computedFontSize"</span>: <span class="num">54</span>, <span class="key">"truncated"</span>: <span class="num">false</span> },
+    <span class="key">"body"</span>: { <span class="key">"computedFontSize"</span>: <span class="num">20</span>, <span class="key">"truncated"</span>: <span class="num">false</span> }
+  },
+  <span class="key">"creditsUsed"</span>: <span class="num">1</span>
+}
+    </div>
+  </div>
+
+  <div class="subsection">
+    <h3 class="subsection-title">Video Render Endpoint</h3>
+    <div class="api-block">
+<span class="comment">// POST /api/templates/render-video</span>
+{
+  <span class="key">"templateId"</span>: <span class="str">"video-talking-head-30s"</span>,
+  <span class="key">"duration"</span>: <span class="num">30</span>, <span class="comment">// 15 | 30 | 60</span>
+  <span class="key">"script"</span>: <span class="str">"Here are 3 AI tools that will change your workflow..."</span>,
+  <span class="key">"avatar"</span>: {
+    <span class="key">"style"</span>: <span class="str">"professional"</span>,
+    <span class="key">"gender"</span>: <span class="str">"female"</span>,
+    <span class="key">"voice"</span>: <span class="str">"en-US-aria"</span>
+  },
+  <span class="key">"music"</span>: {
+    <span class="key">"track"</span>: <span class="str">"upbeat-corporate"</span>,
+    <span class="key">"volume"</span>: <span class="num">0.15</span>
+  },
+  <span class="key">"brand"</span>: { <span class="comment">/* same as image */</span> },
+  <span class="key">"output"</span>: {
+    <span class="key">"format"</span>: <span class="str">"mp4"</span>,
+    <span class="key">"resolution"</span>: <span class="str">"1080p"</span>,
+    <span class="key">"fps"</span>: <span class="num">30</span>
+  }
+}
+    </div>
+  </div>
+
+  <div class="subsection">
+    <h3 class="subsection-title">Template ID Convention</h3>
+    <table class="spec-table">
+      <thead><tr><th>Pattern</th><th>Example</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>{platform}-{format}-{type}-{layout}</code></td><td><code>ig-post-quote-centered</code></td><td>Instagram Post, Quote type, Centered layout</td></tr>
+        <tr><td><code>{platform}-{format}-{type}-{layout}</code></td><td><code>tw-tweet-data-split</code></td><td>Twitter Tweet, Data Viz, Split-screen</td></tr>
+        <tr><td><code>video-{type}-{duration}s</code></td><td><code>video-talking-head-30s</code></td><td>Talking Head video, 30-second version</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== BRAND APPLICATION ===== -->
+<div class="section">
+  <div class="section-label">06 — Brand Application</div>
+  <div class="section-title">Template Brand Guidelines</div>
+  <div class="section-desc">Rules for applying user brand assets consistently across all auto-generated templates.</div>
+
+  <table class="spec-table">
+    <thead><tr><th>Rule</th><th>Specification</th></tr></thead>
+    <tbody>
+      <tr><td style="font-weight:600;">Logo Placement</td><td>Always in a corner. Default: bottom-right. Minimum 5% margin from edges. Max 8% of shortest edge. Semi-transparent (40% opacity) when overlapping content.</td></tr>
+      <tr><td style="font-weight:600;">Primary Color Usage</td><td>Background fills, CTA buttons, headline accents. Must pass WCAG AA contrast (4.5:1) against text. Auto-lightens or darkens for dark/light themes.</td></tr>
+      <tr><td style="font-weight:600;">Secondary Color Usage</td><td>Accents only: CTA highlights, decorative elements, alert badges. Never as background for large areas. Max 20% of visual area.</td></tr>
+      <tr><td style="font-weight:600;">Font Application</td><td>Heading font for headlines and CTAs. Body font for descriptions. If custom fonts unavailable, fall back to Outfit → system sans-serif.</td></tr>
+      <tr><td style="font-weight:600;">Image Treatment</td><td>AI-generated backgrounds receive brand color overlay (10-20%). Product images: no overlay, clean cutout with shadow. Person images: subtle vignette.</td></tr>
+      <tr><td style="font-weight:600;">Dark vs Light</td><td>Templates auto-detect brand color luminance. Light brands → dark text. Dark brands → light text. Override available in API.</td></tr>
+      <tr><td style="font-weight:600;">Accessibility</td><td>All text must meet WCAG AA (4.5:1 normal, 3:1 large). Auto-adds text shadow/backdrop when contrast is insufficient over images.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<footer style="text-align:center;padding:48px 0;border-top:1px solid var(--g200);margin-top:48px;">
+  <p style="font-family:'Outfit',sans-serif;font-weight:800;font-size:20px;color:var(--g300);margin-bottom:8px;">TrueTwist</p>
+  <p style="font-size:13px;color:var(--g400);">Template System Specification v1.0 &middot; April 2026</p>
+</footer>
+
+</div>
+</body>
+</html>

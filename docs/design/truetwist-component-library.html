@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrueTwist — Component Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --indigo-50:#EEF2FF;--indigo-100:#E0E7FF;--indigo-200:#C7D2FE;--indigo-300:#A5B4FC;
+    --indigo-400:#818CF8;--indigo-500:#6366F1;--indigo-600:#4F46E5;--indigo-700:#4338CA;
+    --indigo-800:#3730A3;--indigo-900:#312E81;
+    --coral-50:#FFF5F5;--coral-100:#FFE3E3;--coral-400:#FF8787;--coral-500:#FF6B6B;--coral-600:#FA5252;
+    --violet-400:#C084FC;--violet-500:#A855F7;--violet-600:#9333EA;
+    --success:#40C057;--warning:#FAB005;--error:#FA5252;--info:#339AF0;
+    --g50:#F8F9FA;--g100:#F1F3F5;--g200:#E9ECEF;--g300:#DEE2E6;
+    --g400:#CED4DA;--g500:#ADB5BD;--g600:#868E96;--g700:#495057;--g800:#343A40;--g900:#212529;
+    --dark-bg:#0F0D1A;--dark-s1:#1A1726;--dark-s2:#252236;--dark-border:#3D3856;--dark-text:#E8E6F0;--dark-muted:#9B97B0;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--g900);-webkit-font-smoothing:antialiased;}
+  .container{max-width:1100px;margin:0 auto;padding:48px 32px;}
+
+  .page-header{margin-bottom:64px;padding-bottom:32px;border-bottom:1px solid var(--g200);}
+  .page-header h1{font-family:'Outfit',sans-serif;font-size:48px;font-weight:800;letter-spacing:-0.03em;margin-bottom:8px;}
+  .page-header p{font-size:16px;color:var(--g600);max-width:540px;line-height:1.6;}
+
+  .comp-section{margin-bottom:72px;}
+  .comp-section-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--indigo-500);margin-bottom:8px;}
+  .comp-section-title{font-family:'Outfit',sans-serif;font-size:28px;font-weight:700;letter-spacing:-0.01em;margin-bottom:8px;}
+  .comp-section-desc{font-size:14px;color:var(--g600);margin-bottom:24px;max-width:500px;}
+
+  .comp-row{margin-bottom:24px;}
+  .comp-row-label{font-size:12px;font-weight:600;color:var(--g500);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px;}
+
+  .showcase{background:white;border:1px solid var(--g200);border-radius:12px;padding:32px;margin-bottom:12px;}
+  .showcase.dark{background:var(--dark-bg);border-color:var(--dark-border);}
+  .showcase-items{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+  .showcase-grid{display:grid;gap:16px;}
+
+  .spec-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;}
+  .spec-table th{text-align:left;padding:8px 12px;font-weight:600;color:var(--g600);font-size:11px;text-transform:uppercase;letter-spacing:0.05em;border-bottom:2px solid var(--g200);background:var(--g50);}
+  .spec-table td{padding:8px 12px;border-bottom:1px solid var(--g100);color:var(--g700);}
+  .spec-table code{font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--indigo-50);color:var(--indigo-700);padding:2px 8px;border-radius:4px;}
+
+  /* === COMPONENT STYLES === */
+
+  /* Buttons */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:'DM Sans',sans-serif;font-weight:600;border:none;cursor:pointer;transition:all 0.15s;line-height:1;}
+  .btn-lg{padding:14px 28px;font-size:15px;border-radius:10px;}
+  .btn-md{padding:10px 20px;font-size:14px;border-radius:8px;}
+  .btn-sm{padding:7px 14px;font-size:12px;border-radius:6px;}
+  .btn-xs{padding:5px 10px;font-size:11px;border-radius:5px;}
+  .btn-primary{background:var(--indigo-600);color:white;}
+  .btn-primary:hover{background:var(--indigo-700);}
+  .btn-secondary{background:white;color:var(--g700);border:1px solid var(--g300);}
+  .btn-secondary:hover{background:var(--g50);border-color:var(--g400);}
+  .btn-ghost{background:transparent;color:var(--indigo-600);}
+  .btn-ghost:hover{background:var(--indigo-50);}
+  .btn-destructive{background:var(--error);color:white;}
+  .btn-destructive:hover{background:#E03131;}
+  .btn-gradient{background:linear-gradient(135deg,var(--indigo-600),var(--violet-600));color:white;}
+  .btn:disabled{opacity:0.5;cursor:not-allowed;}
+  .btn-icon{width:36px;height:36px;padding:0;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;}
+
+  /* Cards */
+  .card{background:white;border:1px solid var(--g200);border-radius:12px;overflow:hidden;}
+  .card-metric{padding:20px;}
+  .card-metric .cm-label{font-size:12px;color:var(--g500);margin-bottom:4px;}
+  .card-metric .cm-value{font-family:'Outfit',sans-serif;font-size:28px;font-weight:700;color:var(--g900);margin-bottom:4px;}
+  .card-metric .cm-change{font-size:11px;font-weight:600;}
+  .card-metric .cm-change.up{color:var(--success);}
+  .card-metric .cm-change.down{color:var(--error);}
+
+  .card-content{padding:0;}
+  .card-content .cc-image{height:140px;background:var(--g200);display:flex;align-items:center;justify-content:center;color:var(--g400);font-size:12px;}
+  .card-content .cc-body{padding:16px;}
+  .card-content .cc-title{font-weight:600;font-size:14px;color:var(--g900);margin-bottom:4px;}
+  .card-content .cc-desc{font-size:12px;color:var(--g500);line-height:1.5;}
+  .card-content .cc-meta{font-size:11px;color:var(--g400);margin-top:8px;}
+
+  .card-competitor{padding:16px;}
+  .card-competitor .cc-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .card-competitor .cc-avatar{width:40px;height:40px;background:var(--g200);border-radius:50%;}
+  .card-competitor .cc-name{font-weight:600;font-size:14px;color:var(--g900);}
+  .card-competitor .cc-handle{font-size:11px;color:var(--g500);}
+  .card-competitor .cc-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .card-competitor .cc-stat{background:var(--g50);padding:8px;border-radius:6px;}
+  .card-competitor .cc-stat-label{font-size:10px;color:var(--g500);}
+  .card-competitor .cc-stat-value{font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;color:var(--g800);}
+
+  .card-trend{padding:16px;display:flex;gap:14px;align-items:center;}
+  .card-trend .ct-score{width:48px;text-align:center;flex-shrink:0;}
+  .card-trend .ct-score-num{font-family:'Outfit',sans-serif;font-size:28px;font-weight:800;}
+  .card-trend .ct-score-label{font-size:9px;color:var(--g500);font-weight:500;}
+  .card-trend .ct-body{flex:1;}
+  .card-trend .ct-tags{display:flex;gap:4px;margin-bottom:4px;}
+  .card-trend .ct-title{font-weight:600;font-size:14px;color:var(--g900);margin-bottom:2px;}
+  .card-trend .ct-desc{font-size:12px;color:var(--g500);}
+
+  /* Forms */
+  .form-input{width:100%;background:var(--g50);border:1px solid var(--g200);border-radius:8px;padding:10px 14px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--g800);outline:none;transition:border-color 0.15s;}
+  .form-input:focus{border-color:var(--indigo-400);box-shadow:0 0 0 3px var(--indigo-100);}
+  .form-input::placeholder{color:var(--g400);}
+  .form-input.error{border-color:var(--error);box-shadow:0 0 0 3px rgba(250,82,82,0.1);}
+  .form-input.lg{padding:14px 18px;font-size:15px;border-radius:10px;}
+  .form-label{display:block;font-size:12px;font-weight:600;color:var(--g700);margin-bottom:6px;}
+  .form-hint{font-size:11px;color:var(--g500);margin-top:4px;}
+  .form-error{font-size:11px;color:var(--error);margin-top:4px;}
+
+  .form-select{appearance:none;background:var(--g50) url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23868E96' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 14px center;border:1px solid var(--g200);border-radius:8px;padding:10px 36px 10px 14px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--g800);cursor:pointer;width:100%;}
+
+  .form-toggle{position:relative;width:44px;height:24px;display:inline-block;}
+  .form-toggle input{opacity:0;width:0;height:0;}
+  .form-toggle .slider{position:absolute;inset:0;background:var(--g300);border-radius:12px;cursor:pointer;transition:0.2s;}
+  .form-toggle .slider::before{content:'';position:absolute;width:18px;height:18px;background:white;border-radius:50%;top:3px;left:3px;transition:0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.1);}
+  .form-toggle input:checked+.slider{background:var(--indigo-600);}
+  .form-toggle input:checked+.slider::before{transform:translateX(20px);}
+
+  .form-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.15s;border:1px solid var(--g200);color:var(--g600);background:white;}
+  .form-chip.active{background:var(--indigo-50);border-color:var(--indigo-300);color:var(--indigo-700);}
+
+  /* Tags */
+  .tag{display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;}
+  .tag-ig{background:#F3E8FF;color:#7C3AED;}
+  .tag-tw{background:#DBEAFE;color:#2563EB;}
+  .tag-tt{background:#FEE2E2;color:#DC2626;}
+  .tag-li{background:#DBEAFE;color:#1D4ED8;}
+  .tag-fb{background:#E0E7FF;color:#4338CA;}
+  .tag-success{background:#D3F9D8;color:#2B8A3E;}
+  .tag-warning{background:#FFF3BF;color:#E67700;}
+  .tag-error{background:#FFE3E3;color:#E03131;}
+
+  /* Modals */
+  .modal-demo{position:relative;background:rgba(0,0,0,0.5);border-radius:12px;padding:48px;display:flex;align-items:center;justify-content:center;min-height:320px;}
+  .modal{background:white;border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,0.2);width:100%;max-width:460px;overflow:hidden;}
+  .modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 0;}
+  .modal-header h3{font-family:'Outfit',sans-serif;font-size:18px;font-weight:700;color:var(--g900);}
+  .modal-header .modal-close{width:28px;height:28px;border:none;background:var(--g100);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--g500);font-size:14px;}
+  .modal-body{padding:16px 24px;}
+  .modal-footer{padding:16px 24px;border-top:1px solid var(--g200);display:flex;gap:8px;justify-content:flex-end;}
+
+  /* Navigation */
+  .nav-sidebar-demo{background:var(--g50);border:1px solid var(--g200);border-radius:12px;width:240px;padding:16px 0;}
+  .nav-sidebar-demo .nsd-item{display:flex;align-items:center;gap:10px;padding:9px 16px;font-size:13px;font-weight:500;color:var(--g600);cursor:pointer;}
+  .nav-sidebar-demo .nsd-item.active{background:var(--indigo-50);color:var(--indigo-600);font-weight:600;}
+  .nav-sidebar-demo .nsd-item:hover:not(.active){background:var(--g100);}
+
+  .nav-topbar-demo{background:white;border:1px solid var(--g200);border-radius:12px;padding:12px 24px;display:flex;align-items:center;gap:24px;}
+  .nav-topbar-demo .ntd-logo{font-family:'Outfit',sans-serif;font-weight:800;font-size:18px;color:var(--indigo-600);}
+  .nav-topbar-demo .ntd-links{display:flex;gap:20px;margin-left:24px;}
+  .nav-topbar-demo .ntd-link{font-size:13px;color:var(--g600);font-weight:500;text-decoration:none;}
+  .nav-topbar-demo .ntd-link.active{color:var(--indigo-600);font-weight:600;}
+  .nav-topbar-demo .ntd-right{margin-left:auto;display:flex;align-items:center;gap:12px;}
+
+  .nav-mobile-demo{background:white;border:1px solid var(--g200);border-radius:12px;padding:8px 0;display:flex;justify-content:space-around;width:320px;}
+  .nav-mobile-demo .nmd-item{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;color:var(--g500);cursor:pointer;padding:4px 8px;}
+  .nav-mobile-demo .nmd-item.active{color:var(--indigo-600);}
+  .nav-mobile-demo .nmd-item svg{width:20px;height:20px;}
+
+  /* Charts (placeholder specs) */
+  .chart-demo{background:var(--g50);border:1px solid var(--g200);border-radius:10px;padding:20px;}
+  .chart-demo .cd-title{font-size:13px;font-weight:600;color:var(--g700);margin-bottom:16px;}
+  .chart-bars{display:flex;align-items:flex-end;gap:8px;height:120px;}
+  .chart-bars .bar{flex:1;border-radius:4px 4px 0 0;min-height:8px;}
+  .chart-donut{width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+  .chart-donut .inner{width:50px;height:50px;background:white;border-radius:50%;}
+
+  /* Responsive spec */
+  .responsive-spec{background:white;border:1px solid var(--g200);border-radius:12px;overflow:hidden;}
+  .responsive-spec .rs-row{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--g100);gap:16px;}
+  .responsive-spec .rs-row:last-child{border-bottom:none;}
+  .responsive-spec .rs-bp{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--indigo-600);width:80px;flex-shrink:0;}
+  .responsive-spec .rs-range{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--g500);width:120px;flex-shrink:0;}
+  .responsive-spec .rs-desc{font-size:12px;color:var(--g600);flex:1;}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="page-header">
+  <h1>Component Library</h1>
+  <p>Reusable UI components for the TrueTwist application. All components follow the 8px grid, use the brand type scale, and support both light and dark modes.</p>
+</div>
+
+<!-- ===== BUTTONS ===== -->
+<div class="comp-section">
+  <div class="comp-section-label">01 — Buttons</div>
+  <div class="comp-section-title">Button System</div>
+  <div class="comp-section-desc">Four variants (primary, secondary, ghost, destructive) across four sizes. Gradient variant for hero CTAs.</div>
+
+  <div class="comp-row">
+    <div class="comp-row-label">Variants</div>
+    <div class="showcase">
+      <div class="showcase-items">
+        <button class="btn btn-md btn-primary">Primary</button>
+        <button class="btn btn-md btn-secondary">Secondary</button>
+        <button class="btn btn-md btn-ghost">Ghost</button>
+        <button class="btn btn-md btn-destructive">Destructive</button>
+        <button class="btn btn-md btn-gradient">Gradient CTA</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="comp-row">
+    <div class="comp-row-label">Sizes</div>
+    <div class="showcase">
+      <div class="showcase-items">
+        <button class="btn btn-xs btn-primary">Extra Small</button>
+        <button class="btn btn-sm btn-primary">Small</button>
+        <button class="btn btn-md btn-primary">Medium</button>
+        <button class="btn btn-lg btn-primary">Large</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="comp-row">
+    <div class="comp-row-label">States</div>
+    <div class="showcase">
+      <div class="showcase-items">
+        <button class="btn btn-md btn-primary">Default</button>
+        <button class="btn btn-md btn-primary" style="background:var(--indigo-700);">Hover</button>
+        <button class="btn btn-md btn-primary" style="background:var(--indigo-800);box-shadow:0 0 0 3px var(--indigo-200);">Focus</button>
+        <button class="btn btn-md btn-primary" disabled>Disabled</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="comp-row">
+    <div class="comp-row-label">With Icons</div>
+    <div class="showcase">
+      <div class="showcase-items">
+        <button class="btn btn-md btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Create Post
+        </button>
+        <button class="btn btn-md btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Download
+        </button>
+        <button class="btn btn-icon btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <table class="spec-table">
+    <thead><tr><th>Size</th><th>Padding</th><th>Font Size</th><th>Radius</th><th>Min Height</th></tr></thead>
+    <tbody>
+      <tr><td>XS</td><td><code>5px 10px</code></td><td><code>11px</code></td><td><code>5px</code></td><td><code>28px</code></td></tr>
+      <tr><td>SM</td><td><code>7px 14px</code></td><td><code>12px</code></td><td><code>6px</code></td><td><code>32px</code></td></tr>
+      <tr><td>MD (default)</td><td><code>10px 20px</code></td><td><code>14px</code></td><td><code>8px</code></td><td><code>40px</code></td></tr>
+      <tr><td>LG</td><td><code>14px 28px</code></td><td><code>15px</code></td><td><code>10px</code></td><td><code>48px</code></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ===== CARDS ===== -->
+<div class="comp-section">
+  <div class="comp-section-label">02 — Cards</div>
+  <div class="comp-section-title">Card Components</div>
+  <div class="comp-section-desc">Four card types covering all dashboard, content, competitor, and trend use cases.</div>
+
+  <div class="comp-row">
+    <div class="comp-row-label">Metric Card</div>
+    <div class="showcase">
+      <div class="showcase-items" style="gap:16px;">
+        <div class="card card-metric" style="width:200px;">
+          <div class="cm-label">Posts Scheduled</div>
+          <div class="cm-value">47</div>
+          <div class="cm-change up">+12 this week</div>
+        </div>
+        <div class="card card-metric" style="width:200px;">
+          <div class="cm-label">Engagement Rate</div>
+          <div class="cm-value">4.8%</div>
+          <div class="cm-change up">+0.6%</div>
+        </div>
+        <div class="card card-metric" style="width:200px;">
+          <div class="cm-label">AI Credits</div>
+          <div class="cm-value">153</div>
+          <div class="cm-change down">Low balance</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="comp-row">
+    <div class="comp-row-label">Content Preview Card</div>
+    <div class="showcase">
+      <div class="showcase-items" style="gap:16px;">
+        <div class="card card-content" style="width:240px;">
+          <div class="cc-image">[Image Preview]</div>
+          <div class="cc-body">
+            <div style="margin-bottom:6px;"><span class="tag tag-tw">Twitter</span></div>
+            <div class="cc-title">5 AI Tools for Productivity</div>
+            <div class="cc-desc">A thread about the best AI tools transforming how we work in 2026.</div>
+            <div class="cc-meta">Scheduled: Apr 5, 9:00 AM</div>
+          </div>
+        </div>
+        <div class="card card-content" style="width:240px;">
+          <div class="cc-image" style="background:var(--indigo-100);">[Image Preview]</div>
+          <div class="cc-body">
+            <div style="margin-bottom:6px;"><span class="tag tag-ig">Instagram</span></div>
+            <div class="cc-title">Behind the Scenes Reel</div>
+            <div class="cc-desc">Quick look at our office workflow with AI tools.</div>
+            <div class="cc-meta">Published: Apr 3, 12:00 PM</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="comp-row">
+    <div class="comp-row-label">Competitor Card</div>
+    <div class="showcase">
+      <div class="showcase-items" style="gap:16px;">
+        <div class="card card-competitor" style="width:260px;">
+          <div class="cc-header">
+            <div class="cc-avatar"></div>
+            <div><div class="cc-name">@competitor_a</div><div class="cc-handle">124K followers</div></div>
+          </div>
+          <div class="cc-stats">
+            <div class="cc-stat"><div class="cc-stat-label">Engagement</div><div class="cc-stat-value">3.8%</div></div>
+            <div class="cc-stat"><div class="cc-stat-label">Posts/wk</div><div class="cc-stat-value">12</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="comp-row">
+    <div class="comp-row-label">Trend Card</div>
+    <div class="showcase">
+      <div class="card card-trend" style="max-width:560px;">
+        <div class="ct-score"><div class="ct-score-num" style="color:var(--coral-500);">98</div><div class="ct-score-label">VIRAL SCORE</div></div>
+        <div class="ct-body">
+          <div class="ct-tags"><span class="tag tag-tw">Twitter</span><span class="tag tag-tt">TikTok</span></div>
+          <div class="ct-title">#AIProductivity Challenge</div>
+          <div class="ct-desc">Show your AI workflow in 60s. 2.4M posts in 24h.</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+          <button class="btn btn-sm btn-primary">Create</button>
+          <button class="btn btn-sm btn-secondary">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FORMS ===== -->
+<div class="comp-section">
+  <div class="comp-section-label">03 — Forms</div>
+  <div class="comp-section-title">Form Components</div>
+  <div class="comp-section-desc">Text inputs, selects, textareas, toggles, sliders, and chips for all form contexts.</div>
+
+  <div class="comp-row">
+    <div class="comp-row-label">Text Input</div>
+    <div class="showcase">
+      <div style="display:flex;flex-direction:column;gap:16px;max-width:360px;">
+        <div><label class="form-label">Default</label><input class="form-input" placeholder="Enter text..."><div class="form-hint">Helper text goes here.</div></div>
+        <div><label class="form-label">Focused</label><input class="form-input" style="border-color:var(--indigo-400);box-shadow:0 0 0 3px var(--indigo-100);" value="Focused input"></div>
+        <div><label class="form-label">Error</label><input class="form-input error" value="Invalid value"><div class="form-error">This field is required.</div></div>
+        <div><label class="form-label">Large</label><input class="form-input lg" placeholder="AI prompt goes here..."></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="comp-row">
+    <div class="comp-row-label">Select, Toggle & Chips</div>
+    <div class="showcase">
+      <div style="display:flex;gap:32px;align-items:flex-start;">
+        <div style="width:220px;">
+          <label class="form-label">Select</label>
+          <select class="form-select"><option>Professional & Friendly</option><option>Casual</option><option>Formal</option></select>
+        </div>
+        <div>
+          <label class="form-label">Toggle</label>
+          <div style="display:flex;gap:16px;align-items:center;">
+            <label class="form-toggle"><input type="checkbox" checked><span class="slider"></span></label>
+            <label class="form-toggle"><input type="checkbox"><span class="slider"></span></label>
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Chips</label>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <span class="form-chip active">Twitter/X</span>
+            <span class="form-chip">Instagram</span>
+            <span class="form-chip active">LinkedIn</span>
+            <span class="form-chip">TikTok</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="comp-row">
+    <div class="comp-row-label">Textarea</div>
+    <div class="showcase">
+      <div style="max-width:480px;">
+        <label class="form-label">AI Prompt</label>
+        <textarea class="form-input" style="height:80px;resize:vertical;" placeholder="Describe the content you want to create..."></textarea>
+        <div class="form-hint">Be specific about tone, audience, and platform for best results.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAGS ===== -->
+<div class="comp-section">
+  <div class="comp-section-label">04 — Tags & Badges</div>
+  <div class="comp-section-title">Platform & Status Tags</div>
+
+  <div class="showcase">
+    <div class="showcase-items" style="gap:8px;">
+      <span class="tag tag-tw">Twitter</span>
+      <span class="tag tag-ig">Instagram</span>
+      <span class="tag tag-tt">TikTok</span>
+      <span class="tag tag-li">LinkedIn</span>
+      <span class="tag tag-fb">Facebook</span>
+      <span style="width:16px;"></span>
+      <span class="tag tag-success">Published</span>
+      <span class="tag tag-warning">Scheduled</span>
+      <span class="tag tag-error">Failed</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODALS ===== -->
+<div class="comp-section">
+  <div class="comp-section-label">05 — Modals</div>
+  <div class="comp-section-title">Dialog Components</div>
+  <div class="comp-section-desc">Confirm actions, create posts, and preview content. Always with backdrop overlay and focus trap.</div>
+
+  <div class="comp-row">
+    <div class="comp-row-label">Confirm Modal</div>
+    <div class="modal-demo">
+      <div class="modal">
+        <div class="modal-header"><h3>Delete Post?</h3><button class="modal-close">&times;</button></div>
+        <div class="modal-body"><p style="font-size:14px;color:var(--g600);line-height:1.6;">This will permanently delete "10 AI Tools You Need" from your scheduled posts. This action cannot be undone.</p></div>
+        <div class="modal-footer">
+          <button class="btn btn-md btn-secondary">Cancel</button>
+          <button class="btn btn-md btn-destructive">Delete Post</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="comp-row">
+    <div class="comp-row-label">Create Post Modal</div>
+    <div class="modal-demo">
+      <div class="modal" style="max-width:520px;">
+        <div class="modal-header"><h3>Quick Post</h3><button class="modal-close">&times;</button></div>
+        <div class="modal-body">
+          <div style="margin-bottom:12px;"><label class="form-label">Content</label><textarea class="form-input" style="height:80px;resize:none;" placeholder="What's on your mind?"></textarea></div>
+          <div style="margin-bottom:12px;"><label class="form-label">Platforms</label><div style="display:flex;gap:6px;"><span class="form-chip active">Twitter/X</span><span class="form-chip">Instagram</span><span class="form-chip active">LinkedIn</span></div></div>
+          <div><label class="form-label">Schedule</label><input class="form-input" type="text" placeholder="Now, or pick date/time"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-md btn-secondary">Save Draft</button>
+          <button class="btn btn-md btn-primary">Publish</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== NAVIGATION ===== -->
+<div class="comp-section">
+  <div class="comp-section-label">06 — Navigation</div>
+  <div class="comp-section-title">Navigation Components</div>
+  <div class="comp-section-desc">Sidebar (desktop), topbar (marketing), and bottom nav (mobile) patterns.</div>
+
+  <div class="comp-row">
+    <div class="comp-row-label">App Sidebar</div>
+    <div class="showcase">
+      <div class="nav-sidebar-demo">
+        <div style="padding:0 16px 12px;font-family:'Outfit',sans-serif;font-weight:800;font-size:16px;color:var(--indigo-600);border-bottom:1px solid var(--g200);margin-bottom:8px;">TrueTwist</div>
+        <div class="nsd-item active">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard
+        </div>
+        <div class="nsd-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Content Studio</div>
+        <div class="nsd-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>Calendar</div>
+        <div class="nsd-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Analytics</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="comp-row">
+    <div class="comp-row-label">Marketing Topbar</div>
+    <div class="showcase">
+      <div class="nav-topbar-demo" style="width:100%;">
+        <span class="ntd-logo">TrueTwist</span>
+        <div class="ntd-links">
+          <a class="ntd-link active">Features</a>
+          <a class="ntd-link">Pricing</a>
+          <a class="ntd-link">About</a>
+          <a class="ntd-link">Blog</a>
+        </div>
+        <div class="ntd-right">
+          <a style="font-size:13px;color:var(--g600);text-decoration:none;">Log In</a>
+          <button class="btn btn-sm btn-primary">Start Free Trial</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="comp-row">
+    <div class="comp-row-label">Mobile Bottom Nav</div>
+    <div class="showcase">
+      <div class="nav-mobile-demo">
+        <div class="nmd-item active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Home
+        </div>
+        <div class="nmd-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Create
+        </div>
+        <div class="nmd-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>Calendar
+        </div>
+        <div class="nmd-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Analytics
+        </div>
+        <div class="nmd-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06"/></svg>More
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CHARTS ===== -->
+<div class="comp-section">
+  <div class="comp-section-label">07 — Charts</div>
+  <div class="comp-section-title">Data Visualization</div>
+  <div class="comp-section-desc">Chart specs for integration with a charting library (Recharts, Chart.js, or Nivo). These show structure and color usage.</div>
+
+  <div class="showcase">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="chart-demo">
+        <div class="cd-title">Line / Bar Chart</div>
+        <div class="chart-bars">
+          <div class="bar" style="height:30%;background:var(--indigo-200);"></div>
+          <div class="bar" style="height:50%;background:var(--indigo-300);"></div>
+          <div class="bar" style="height:45%;background:var(--indigo-300);"></div>
+          <div class="bar" style="height:70%;background:var(--indigo-400);"></div>
+          <div class="bar" style="height:60%;background:var(--indigo-400);"></div>
+          <div class="bar" style="height:85%;background:var(--indigo-500);"></div>
+          <div class="bar" style="height:80%;background:var(--indigo-500);"></div>
+          <div class="bar" style="height:90%;background:var(--indigo-600);"></div>
+        </div>
+      </div>
+      <div class="chart-demo">
+        <div class="cd-title">Donut Chart</div>
+        <div style="display:flex;justify-content:center;padding:8px 0;">
+          <div class="chart-donut" style="background:conic-gradient(var(--indigo-500) 0% 40%,var(--coral-400) 40% 60%,var(--violet-400) 60% 80%,var(--g300) 80% 100%);">
+            <div class="inner"></div>
+          </div>
+        </div>
+      </div>
+      <div class="chart-demo">
+        <div class="cd-title">Heatmap (Posting Schedule)</div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;">
+          <div style="height:20px;background:var(--indigo-50);border-radius:3px;"></div>
+          <div style="height:20px;background:var(--indigo-200);border-radius:3px;"></div>
+          <div style="height:20px;background:var(--indigo-100);border-radius:3px;"></div>
+          <div style="height:20px;background:var(--indigo-400);border-radius:3px;"></div>
+          <div style="height:20px;background:var(--indigo-300);border-radius:3px;"></div>
+          <div style="height:20px;background:var(--indigo-50);border-radius:3px;"></div>
+          <div style="height:20px;background:var(--g100);border-radius:3px;"></div>
+          <div style="height:20px;background:var(--indigo-200);border-radius:3px;"></div>
+          <div style="height:20px;background:var(--indigo-500);border-radius:3px;"></div>
+          <div style="height:20px;background:var(--indigo-300);border-radius:3px;"></div>
+          <div style="height:20px;background:var(--indigo-100);border-radius:3px;"></div>
+          <div style="height:20px;background:var(--indigo-400);border-radius:3px;"></div>
+          <div style="height:20px;background:var(--indigo-100);border-radius:3px;"></div>
+          <div style="height:20px;background:var(--g100);border-radius:3px;"></div>
+          <div style="height:20px;background:var(--indigo-100);border-radius:3px;"></div>
+          <div style="height:20px;background:var(--indigo-300);border-radius:3px;"></div>
+          <div style="height:20px;background:var(--indigo-600);border-radius:3px;"></div>
+          <div style="height:20px;background:var(--indigo-200);border-radius:3px;"></div>
+          <div style="height:20px;background:var(--indigo-500);border-radius:3px;"></div>
+          <div style="height:20px;background:var(--indigo-50);border-radius:3px;"></div>
+          <div style="height:20px;background:var(--g100);border-radius:3px;"></div>
+        </div>
+      </div>
+      <div class="chart-demo">
+        <div class="cd-title">Stacked Bar (Platform Breakdown)</div>
+        <div style="display:flex;flex-direction:column;gap:8px;padding:8px 0;">
+          <div style="display:flex;height:24px;border-radius:4px;overflow:hidden;">
+            <div style="width:40%;background:#2563EB;"></div>
+            <div style="width:25%;background:#7C3AED;"></div>
+            <div style="width:20%;background:#DC2626;"></div>
+            <div style="width:15%;background:#1D4ED8;"></div>
+          </div>
+          <div style="display:flex;height:24px;border-radius:4px;overflow:hidden;">
+            <div style="width:30%;background:#2563EB;"></div>
+            <div style="width:35%;background:#7C3AED;"></div>
+            <div style="width:15%;background:#DC2626;"></div>
+            <div style="width:20%;background:#1D4ED8;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <table class="spec-table" style="margin-top:16px;">
+    <thead><tr><th>Chart Type</th><th>Primary Color</th><th>Grid Color</th><th>Use Case</th></tr></thead>
+    <tbody>
+      <tr><td>Line</td><td><code>indigo-500</code></td><td><code>gray-200</code></td><td>Engagement over time, growth trends</td></tr>
+      <tr><td>Bar</td><td><code>indigo-200→600</code></td><td><code>gray-200</code></td><td>Posting frequency, comparison</td></tr>
+      <tr><td>Donut</td><td><code>indigo/coral/violet/gray</code></td><td>N/A</td><td>Demographics, platform breakdown</td></tr>
+      <tr><td>Heatmap</td><td><code>indigo-50→600</code></td><td>N/A</td><td>Best posting times, activity density</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ===== RESPONSIVE ===== -->
+<div class="comp-section">
+  <div class="comp-section-label">08 — Responsive</div>
+  <div class="comp-section-title">Responsive Breakpoints</div>
+  <div class="comp-section-desc">Layout adaptation rules for desktop, tablet, and mobile viewports.</div>
+
+  <div class="responsive-spec">
+    <div class="rs-row" style="background:var(--g50);font-weight:600;font-size:12px;color:var(--g600);">
+      <span class="rs-bp">Breakpoint</span><span class="rs-range">Range</span><span class="rs-desc">Layout Behavior</span>
+    </div>
+    <div class="rs-row">
+      <span class="rs-bp">Desktop</span><span class="rs-range">≥ 1024px</span>
+      <span class="rs-desc">Full sidebar nav (240px). Multi-column grids (2-4 cols). Topbar nav for marketing. Side-by-side content layouts.</span>
+    </div>
+    <div class="rs-row">
+      <span class="rs-bp">Tablet</span><span class="rs-range">768–1023px</span>
+      <span class="rs-desc">Sidebar collapses to icons-only (64px). Grids reduce to 2 cols. Calendar shows week view. Marketing nav stays visible.</span>
+    </div>
+    <div class="rs-row">
+      <span class="rs-bp">Mobile</span><span class="rs-range">< 768px</span>
+      <span class="rs-desc">No sidebar — bottom nav bar. Single column layout. Calendar shows day view. Horizontal scroll for metric cards. Hamburger menu for marketing topbar. Modals go full-screen.</span>
+    </div>
+  </div>
+
+  <table class="spec-table" style="margin-top:24px;">
+    <thead><tr><th>Component</th><th>Desktop</th><th>Tablet</th><th>Mobile</th></tr></thead>
+    <tbody>
+      <tr><td>Navigation</td><td>Sidebar (240px)</td><td>Icon sidebar (64px)</td><td>Bottom tab bar</td></tr>
+      <tr><td>Metric Cards</td><td>4-column grid</td><td>2-column grid</td><td>Horizontal scroll</td></tr>
+      <tr><td>Content Calendar</td><td>Week/Month view</td><td>Week view</td><td>Day/List view</td></tr>
+      <tr><td>Content Studio</td><td>Side-by-side (input + output)</td><td>Side-by-side (narrower)</td><td>Stacked (input above output)</td></tr>
+      <tr><td>Charts</td><td>Full width with hover tooltips</td><td>Full width</td><td>Simplified, touch-friendly</td></tr>
+      <tr><td>Tables</td><td>Full columns visible</td><td>Horizontal scroll</td><td>Card-based list view</td></tr>
+      <tr><td>Modals</td><td>Centered overlay (max-width)</td><td>Centered overlay</td><td>Full-screen sheet (slide up)</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ===== DARK MODE ===== -->
+<div class="comp-section">
+  <div class="comp-section-label">09 — Dark Mode</div>
+  <div class="comp-section-title">Dark Mode Mapping</div>
+  <div class="comp-section-desc">Complete token mapping for dark mode. Switch via CSS custom properties or class toggle on root element.</div>
+
+  <table class="spec-table">
+    <thead><tr><th>Light Token</th><th>Light Value</th><th>Dark Token</th><th>Dark Value</th><th>Usage</th></tr></thead>
+    <tbody>
+      <tr><td><code>--bg</code></td><td><code>#F8F9FA</code></td><td><code>--bg</code></td><td><code>#0F0D1A</code></td><td>Page background</td></tr>
+      <tr><td><code>--surface</code></td><td><code>#FFFFFF</code></td><td><code>--surface</code></td><td><code>#1A1726</code></td><td>Cards, sidebar</td></tr>
+      <tr><td><code>--surface-2</code></td><td><code>#F1F3F5</code></td><td><code>--surface-2</code></td><td><code>#252236</code></td><td>Hover, inputs</td></tr>
+      <tr><td><code>--border</code></td><td><code>#E9ECEF</code></td><td><code>--border</code></td><td><code>#3D3856</code></td><td>Dividers, outlines</td></tr>
+      <tr><td><code>--text-primary</code></td><td><code>#212529</code></td><td><code>--text-primary</code></td><td><code>#E8E6F0</code></td><td>Headings, body</td></tr>
+      <tr><td><code>--text-secondary</code></td><td><code>#868E96</code></td><td><code>--text-secondary</code></td><td><code>#9B97B0</code></td><td>Muted text</td></tr>
+      <tr><td><code>--primary</code></td><td><code>#4F46E5</code></td><td><code>--primary</code></td><td><code>#818CF8</code></td><td>Buttons, links (lightened for contrast)</td></tr>
+      <tr><td><code>--primary-bg</code></td><td><code>#EEF2FF</code></td><td><code>--primary-bg</code></td><td><code>rgba(99,102,241,0.15)</code></td><td>Active nav, tags</td></tr>
+    </tbody>
+  </table>
+
+  <div class="comp-row" style="margin-top:24px;">
+    <div class="comp-row-label">Dark Mode Preview</div>
+    <div class="showcase dark">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <button class="btn btn-md" style="background:var(--indigo-400);color:white;">Primary</button>
+        <button class="btn btn-md" style="background:var(--dark-s2);color:var(--dark-text);border:1px solid var(--dark-border);">Secondary</button>
+        <div style="background:var(--dark-s1);border:1px solid var(--dark-border);border-radius:10px;padding:16px;width:180px;">
+          <div style="font-size:12px;color:var(--dark-muted);margin-bottom:4px;">Followers</div>
+          <div style="font-family:'Outfit',sans-serif;font-size:24px;font-weight:700;color:var(--dark-text);">24.8K</div>
+          <div style="font-size:11px;color:var(--success);">+12%</div>
+        </div>
+        <input style="background:var(--dark-s2);border:1px solid var(--dark-border);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--dark-text);outline:none;width:200px;" placeholder="Search..." value="Dark mode input">
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer style="text-align:center;padding:48px 0;border-top:1px solid var(--g200);margin-top:48px;">
+  <p style="font-family:'Outfit',sans-serif;font-weight:800;font-size:20px;color:var(--g300);margin-bottom:8px;">TrueTwist</p>
+  <p style="font-size:13px;color:var(--g400);">Component Library v1.0 &middot; April 2026</p>
+</footer>
+
+</div>
+</body>
+</html>
