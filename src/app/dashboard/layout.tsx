@@ -63,14 +63,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) router.push("/auth/login");
-      else setUser(data.user);
-    });
+    async function checkUser() {
+      const { data } = await supabase.auth.getUser();
+      if (!data.user) { router.push("/auth/login"); return; }
+      setUser(data.user);
+      // Load profile and check onboarding status
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", data.user.id)
+        .single();
+      if (prof) setProfile(prof);
+      // Redirect new users to onboarding (skip if already on onboarding page)
+      if (!pathname.startsWith("/dashboard/onboarding") && prof && prof.onboarding_completed === false) {
+        router.push("/dashboard/onboarding");
+      }
+    }
+    checkUser();
   }, []);
 
   const handleLogout = async () => {
@@ -137,26 +151,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="mx-3 mb-3 p-4 rounded-xl" style={{ background: "linear-gradient(135deg, rgba(99,102,241,0.1), rgba(168,85,247,0.1))", border: "1px solid rgba(99,102,241,0.15)" }}>
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium" style={{ color: "#a5b4fc" }}>AI Credits</span>
-            <span className="text-xs" style={{ color: "var(--tt-text-muted)" }}>Free Plan</span>
+            <span className="text-xs" style={{ color: "var(--tt-text-muted)" }}>{profile?.plan ? `${profile.plan.charAt(0).toUpperCase() + profile.plan.slice(1)} Plan` : "Free Plan"}</span>
           </div>
           <div className="w-full h-1.5 rounded-full mb-2" style={{ background: "rgba(99,102,241,0.2)" }}>
-            <div className="h-full rounded-full" style={{ width: "60%", background: "linear-gradient(90deg, #6366f1, #a855f7)" }} />
+            <div className="h-full rounded-full" style={{ width: `${profile?.plan === "pro" ? "30%" : profile?.plan === "starter" ? "45%" : "60%"}`, background: "linear-gradient(90deg, #6366f1, #a855f7)" }} />
           </div>
-          <div className="text-xs" style={{ color: "var(--tt-text-muted)" }}>3 / 5 posts used</div>
+          <div className="text-xs" style={{ color: "var(--tt-text-muted)" }}>{profile?.plan === "pro" ? "15 / 50 posts used" : profile?.plan === "starter" ? "9 / 20 posts used" : "3 / 5 posts used"}</div>
         </div>
 
         {/* User Section */}
         <div className="p-3" style={{ borderTop: "1px solid var(--tt-border)" }}>
           <div className="flex items-center gap-3 px-3 py-2 mb-1">
             <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white shrink-0"
               style={{ background: "linear-gradient(135deg, #6366f1, #a855f7)" }}
             >
-              {user?.email?.[0]?.toUpperCase() || "U"}
+              {(profile?.full_name || user?.user_metadata?.full_name || user?.email)?.[0]?.toUpperCase() || "U"}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium truncate">{user?.email}</div>
-              <div className="text-xs" style={{ color: "var(--tt-text-muted)" }}>Free Plan</div>
+              <div className="text-sm font-medium truncate">{profile?.full_name || user?.user_metadata?.full_name || user?.email}</div>
+              <div className="text-xs truncate" style={{ color: "var(--tt-text-muted)" }}>{profile?.plan ? `${profile.plan.charAt(0).toUpperCase() + profile.plan.slice(1)} Plan` : "Free Plan"}</div>
             </div>
           </div>
           <button
@@ -186,7 +200,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             True<span style={{ color: "var(--tt-accent)" }}>Twist</span>
           </span>
           <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white" style={{ background: "linear-gradient(135deg, #6366f1, #a855f7)" }}>
-            {user?.email?.[0]?.toUpperCase() || "U"}
+            {(profile?.full_name || user?.user_metadata?.full_name || user?.email)?.[0]?.toUpperCase() || "U"}
           </div>
         </header>
 

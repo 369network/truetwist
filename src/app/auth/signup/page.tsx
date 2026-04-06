@@ -24,7 +24,7 @@ export default function SignupPage() {
     });
     if (error) { setError(error.message); setLoading(false); return; }
     setSuccess(true);
-    setTimeout(() => router.push("/dashboard"), 1500);
+    setTimeout(() => router.push("/dashboard/onboarding"), 1500);
   };
 
   return (

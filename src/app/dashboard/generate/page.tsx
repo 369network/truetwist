@@ -419,6 +419,57 @@ function SocialPreviewCard({ post, onSave, onCopy, saving }: { post: any; onSave
           ))}
         </div>
       </div>
+
+      {/* Viral Score + AI Insights */}
+      {post.viralScore && (
+        <div className="px-4 py-3" style={{ borderTop: "1px solid var(--tt-border)" }}>
+          <div className="flex items-center gap-3 mb-3">
+            <span className="text-xs font-medium" style={{ color: "var(--tt-text-muted)" }}>Viral Score</span>
+            <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "var(--tt-surface-2)" }}>
+              <div className="h-full rounded-full transition-all" style={{
+                width: `${post.viralScore}%`,
+                background: post.viralScore >= 80 ? "linear-gradient(90deg, #10b981, #34d399)" : post.viralScore >= 60 ? "linear-gradient(90deg, #f59e0b, #fbbf24)" : "linear-gradient(90deg, #ef4444, #f87171)",
+              }} />
+            </div>
+            <span className="text-sm font-bold" style={{
+              color: post.viralScore >= 80 ? "#10b981" : post.viralScore >= 60 ? "#f59e0b" : "#ef4444",
+            }}>{post.viralScore}/100</span>
+          </div>
+
+          {/* Viral Factors */}
+          {post.viralFactors?.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {post.viralFactors.map((f: string, i: number) => (
+                <span key={i} className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(16,185,129,0.1)", color: "#10b981" }}>
+                  {f}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Improvements */}
+          {post.improvements?.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {post.improvements.map((imp: string, i: number) => (
+                <span key={i} className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>
+                  {imp}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* A/B Variant Hook */}
+          {post.alternativeHook && (
+            <div className="mt-3 p-3 rounded-xl" style={{ background: "rgba(99,102,241,0.05)", border: "1px solid rgba(99,102,241,0.15)" }}>
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="text-xs font-semibold px-2 py-0.5 rounded" style={{ background: "rgba(99,102,241,0.2)", color: "#a5b4fc" }}>A/B Variant</span>
+                <span className="text-xs" style={{ color: "var(--tt-text-muted)" }}>Alternative hook for testing</span>
+              </div>
+              <p className="text-xs leading-relaxed" style={{ color: "var(--tt-text)" }}>{post.alternativeHook}</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
