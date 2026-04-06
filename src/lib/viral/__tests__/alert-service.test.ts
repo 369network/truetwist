@@ -15,6 +15,7 @@ vi.mock('@/lib/prisma', () => ({
       findFirst: vi.fn(),
       findMany: vi.fn(),
       create: vi.fn(),
+      createMany: vi.fn().mockResolvedValue({ count: 1 }),
       count: vi.fn(),
       updateMany: vi.fn(),
     },
@@ -62,18 +63,20 @@ describe('Alert Service', () => {
         },
       ] as any);
 
-      vi.mocked(prisma.trendAlert.findFirst).mockResolvedValue(null); // no existing alert
+      vi.mocked(prisma.trendAlert.findMany).mockResolvedValue([]); // no existing alerts
 
       const count = await evaluateAndCreateAlerts();
 
       expect(count).toBe(1);
-      expect(prisma.trendAlert.create).toHaveBeenCalledWith(
+      expect(prisma.trendAlert.createMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({
-            userId: 'user-1',
-            trendId: 'trend-1',
-            alertType: 'niche_match',
-          }),
+          data: expect.arrayContaining([
+            expect.objectContaining({
+              userId: 'user-1',
+              trendId: 'trend-1',
+              alertType: 'niche_match',
+            }),
+          ]),
         })
       );
     });
@@ -97,11 +100,13 @@ describe('Alert Service', () => {
         { id: 'trend-1', title: 'Fitness tips', viralScore: 50, lifecycle: 'rising', velocity: 100, platform: 'youtube', category: null },
       ] as any);
 
-      vi.mocked(prisma.trendAlert.findFirst).mockResolvedValue({ id: 'existing' } as any);
+      vi.mocked(prisma.trendAlert.findMany).mockResolvedValue([
+        { userId: 'user-1', trendId: 'trend-1' },
+      ] as any);
 
       const count = await evaluateAndCreateAlerts();
       expect(count).toBe(0);
-      expect(prisma.trendAlert.create).not.toHaveBeenCalled();
+      expect(prisma.trendAlert.createMany).not.toHaveBeenCalled();
     });
   });
 

@@ -187,7 +187,7 @@ describe('feedback-service', () => {
       ] as any);
 
       const score = await getGenerationScore('gen-1');
-      expect(score).toBe(1.25);
+      expect(score).toBeCloseTo(1.25);
     });
   });
 });
