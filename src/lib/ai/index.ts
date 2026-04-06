@@ -10,6 +10,15 @@ export {
   getMonthlySpend,
 } from './credit-service';
 export { moderateContent } from './content-moderation';
+export { scoreContent } from './content-quality-scoring';
+export type { QualityDimensions, ContentQualityResult } from './content-quality-scoring';
+export {
+  recordFeedback,
+  getUserFeedbackStats,
+  getUserPreferences,
+  getGenerationScore,
+} from './feedback-service';
+export type { FeedbackAction, ContentFeedbackInput, FeedbackStats } from './feedback-service';
 
 // Video Pipeline (Phase 3)
 export {

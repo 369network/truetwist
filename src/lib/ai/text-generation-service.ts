@@ -96,9 +96,9 @@ Generate one variant per platform per variation. Total variants: ${variantCount 
   return prompt;
 }
 
-// Cost estimates in cents (per 1M tokens)
-const GPT4O_INPUT_COST_PER_M = 250; // $2.50 per 1M input tokens
-const GPT4O_OUTPUT_COST_PER_M = 1000; // $10.00 per 1M output tokens
+// Cost estimates in cents (per 1M tokens) — gpt-4o-mini pricing
+const GPT4O_INPUT_COST_PER_M = 15; // $0.15 per 1M input tokens
+const GPT4O_OUTPUT_COST_PER_M = 60; // $0.60 per 1M output tokens
 
 function estimateCost(inputTokens: number, outputTokens: number): number {
   const inputCost = (inputTokens / 1_000_000) * GPT4O_INPUT_COST_PER_M;
@@ -116,7 +116,7 @@ export async function generateText(
   const userPrompt = buildUserPrompt(request, brand);
 
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    model: 'gpt-4o-mini',
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt },
@@ -152,7 +152,7 @@ export async function generateText(
 
   return {
     variants,
-    model: 'gpt-4o',
+    model: 'gpt-4o-mini',
     tokensInput,
     tokensOutput,
     costCents: estimateCost(tokensInput, tokensOutput),
@@ -168,7 +168,7 @@ export async function generateHashtags(
   const constraints = PLATFORM_CONSTRAINTS[platform];
 
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    model: 'gpt-4o-mini',
     messages: [
       {
         role: 'system',
