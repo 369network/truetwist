@@ -1,5 +1,6 @@
 import { openai } from './openai-client';
 import { PLATFORM_CONSTRAINTS, type Platform } from '@/lib/social/types';
+import { VERTICAL_IMAGE_STYLES } from './vertical-prompts';
 import type {
   BrandContext,
   ImageGenerationRequest,
@@ -60,6 +61,13 @@ function buildImagePrompt(
 
   if (request.style) {
     prompt += `. Style: ${STYLE_MODIFIERS[request.style]}`;
+  }
+
+  // Inject vertical image style when industry matches a known vertical
+  if (request.verticalTemplate && VERTICAL_IMAGE_STYLES[request.verticalTemplate]) {
+    prompt += `. Industry visual style: ${VERTICAL_IMAGE_STYLES[request.verticalTemplate]}`;
+  } else if (brand.industry && VERTICAL_IMAGE_STYLES[brand.industry]) {
+    prompt += `. Industry visual style: ${VERTICAL_IMAGE_STYLES[brand.industry]}`;
   }
 
   // Brand-aware prompting

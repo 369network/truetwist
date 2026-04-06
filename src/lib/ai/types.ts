@@ -81,8 +81,15 @@ export interface TextVariant {
   characterCount: number;
 }
 
+export interface VerticalScore {
+  score: number;          // 0-100 overall vertical fit
+  strengths: string[];    // what the content does well for this vertical
+  suggestions: string[];  // how to improve vertical fit
+}
+
 export interface TextGenerationResult {
   variants: TextVariant[];
+  verticalScore?: VerticalScore;
   model: string;
   tokensInput: number;
   tokensOutput: number;
@@ -101,6 +108,7 @@ export interface ImageGenerationRequest {
   platform: Platform;
   template?: ImageTemplate;
   style?: ImageStylePreset;
+  verticalTemplate?: string; // industry vertical for image style (e.g., 'real-estate', 'ecommerce', 'local-services')
   size?: '1024x1024' | '1792x1024' | '1024x1792';
   count?: number; // default 1, max 4
 }
