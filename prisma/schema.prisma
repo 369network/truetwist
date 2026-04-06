@@ -226,9 +226,11 @@ model Business {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  competitors Competitor[]
-  posts       Post[]
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  competitors        Competitor[]
+  posts              Post[]
+  shopifyConnections ShopifyConnection[]
+  mlsConnections     MlsConnection[]
 
   @@index([userId])
   @@index([teamId])
@@ -1004,4 +1006,102 @@ model WebhookDelivery {
   @@index([nextRetryAt])
   @@index([createdAt])
   @@map("webhook_deliveries")
+}
+
+// ============================================
+// SHOPIFY INTEGRATION
+// ============================================
+
+model ShopifyConnection {
+  id          String    @id @default(uuid())
+  businessId  String    @map("business_id")
+  shopDomain  String    @map("shop_domain")
+  accessToken String    @map("access_token") // encrypted
+  scopes      String
+  syncStatus  String    @default("idle") // idle, syncing, error
+  lastSyncAt  DateTime? @map("last_sync_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  business Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  products ShopifyProduct[]
+
+  @@unique([businessId, shopDomain])
+  @@index([businessId])
+  @@map("shopify_connections")
+}
+
+model ShopifyProduct {
+  id               String   @id @default(uuid())
+  connectionId     String   @map("connection_id")
+  shopifyProductId String   @map("shopify_product_id")
+  title            String
+  description      String?
+  price            String?
+  images           Json     @default("[]")
+  variants         Json     @default("[]")
+  productType      String?  @map("product_type")
+  tags             String?
+  status           String   @default("active") // active, draft, archived
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  connection ShopifyConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, shopifyProductId])
+  @@index([connectionId])
+  @@index([status])
+  @@map("shopify_products")
+}
+
+// ============================================
+// MLS/RESO INTEGRATION
+// ============================================
+
+model MlsConnection {
+  id           String    @id @default(uuid())
+  businessId   String    @map("business_id")
+  feedUrl      String    @map("feed_url")
+  credentials  String    // encrypted JSON
+  syncSchedule String    @default("0 */6 * * *") @map("sync_schedule") // cron expression, default every 6 hours
+  syncStatus   String    @default("idle") // idle, syncing, error
+  lastSyncAt   DateTime? @map("last_sync_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  business Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  listings MlsListing[]
+
+  @@unique([businessId, feedUrl])
+  @@index([businessId])
+  @@map("mls_connections")
+}
+
+model MlsListing {
+  id            String   @id @default(uuid())
+  connectionId  String   @map("connection_id")
+  mlsListingId  String   @map("mls_listing_id")
+  address       String
+  city          String
+  state         String
+  zipCode       String   @map("zip_code")
+  price         Float
+  bedrooms      Int?
+  bathrooms     Float?
+  squareFeet    Int?     @map("square_feet")
+  description   String?
+  photos        Json     @default("[]")
+  listingStatus String   @default("active") @map("listing_status") // active, pending, sold, expired
+  agentName     String?  @map("agent_name")
+  agentPhone    String?  @map("agent_phone")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  connection MlsConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, mlsListingId])
+  @@index([connectionId])
+  @@index([listingStatus])
+  @@index([city, state])
+  @@map("mls_listings")
 }
