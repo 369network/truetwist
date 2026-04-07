@@ -86,18 +86,29 @@ export default function OnboardingPage() {
     );
   };
 
+  const [finishError, setFinishError] = useState("");
+
   const handleFinish = async () => {
     setSaving(true);
+    setFinishError("");
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.from("profiles").update({
-          full_name: businessName,
-          onboarding_completed: true,
-        }).eq("id", user.id);
+      if (!user) { router.push("/auth/login"); return; }
+      const { error } = await supabase.from("profiles").upsert({
+        id: user.id,
+        full_name: businessName,
+        onboarding_completed: true,
+      });
+      if (error) {
+        setFinishError("Failed to save your profile. Please try again.");
+        setSaving(false);
+        return;
       }
-    } catch (e) { /* continue anyway */ }
-    router.push("/dashboard");
+      router.push("/dashboard");
+    } catch (e) {
+      setFinishError("Something went wrong. Please try again.");
+      setSaving(false);
+    }
   };
 
   return (
@@ -409,6 +420,10 @@ export default function OnboardingPage() {
                   Full access to all Pro features. No credit card required.
                 </p>
               </div>
+
+              {finishError && (
+                <div className="p-3 rounded-lg text-sm text-red-400 mb-4" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)" }}>{finishError}</div>
+              )}
 
               <div className="flex justify-between">
                 <button onClick={() => setStep(5)} className="px-6 py-2.5 rounded-xl text-sm" style={{ color: "var(--tt-text-muted)" }}>Back</button>

@@ -70,6 +70,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const supabase = createClient();
 
@@ -85,10 +86,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         .eq("id", data.user.id)
         .single();
       if (prof) setProfile(prof);
-      // Redirect new users to onboarding (skip if already on onboarding page)
-      if (!pathname.startsWith("/dashboard/onboarding") && prof && prof.onboarding_completed === false) {
+      // Redirect new users to onboarding: no profile row OR onboarding not completed
+      if (!pathname.startsWith("/dashboard/onboarding") && (!prof || prof.onboarding_completed !== true)) {
         router.push("/dashboard/onboarding");
+        return;
       }
+      setLoading(false);
     }
     checkUser();
   }, []);
@@ -102,6 +105,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (href === "/dashboard") return pathname === "/dashboard";
     return pathname.startsWith(href);
   };
+
+  // Show nothing while checking auth/onboarding — prevents content flash
+  if (loading && !pathname.startsWith("/dashboard/onboarding")) {
+    return <div className="min-h-screen" style={{ background: "var(--tt-bg)" }} />;
+  }
 
   return (
     <div className="min-h-screen flex" style={{ background: "var(--tt-bg)" }}>
