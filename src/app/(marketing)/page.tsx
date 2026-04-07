@@ -852,10 +852,15 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold text-sm mb-4">Product</h4>
               <ul className="space-y-2">
-                {["Features", "Pricing", "Integrations", "Changelog"].map((item) => (
-                  <li key={item}>
-                    <a href="#" className="text-sm text-gray-500 dark:text-dark-muted hover:text-brand-500 transition-colors">
-                      {item}
+                {[
+                  { label: "Features", href: "#features" },
+                  { label: "Pricing", href: "#pricing" },
+                  { label: "FAQ", href: "#faq" },
+                  { label: "Waitlist", href: "#waitlist" },
+                ].map((item) => (
+                  <li key={item.label}>
+                    <a href={item.href} className="text-sm text-gray-500 dark:text-dark-muted hover:text-brand-500 transition-colors">
+                      {item.label}
                     </a>
                   </li>
                 ))}
@@ -864,10 +869,15 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold text-sm mb-4">Company</h4>
               <ul className="space-y-2">
-                {["About", "Blog", "Careers", "Press"].map((item) => (
-                  <li key={item}>
-                    <a href="#" className="text-sm text-gray-500 dark:text-dark-muted hover:text-brand-500 transition-colors">
-                      {item}
+                {[
+                  { label: "About", href: "/about" },
+                  { label: "Blog", href: "/blog" },
+                  { label: "Careers", href: "/careers" },
+                  { label: "Contact", href: "mailto:hello@truetwist.com" },
+                ].map((item) => (
+                  <li key={item.label}>
+                    <a href={item.href} className="text-sm text-gray-500 dark:text-dark-muted hover:text-brand-500 transition-colors">
+                      {item.label}
                     </a>
                   </li>
                 ))}
@@ -876,10 +886,15 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold text-sm mb-4">Legal</h4>
               <ul className="space-y-2">
-                {["Privacy Policy", "Terms of Service", "Cookie Policy", "GDPR"].map((item) => (
-                  <li key={item}>
-                    <a href="#" className="text-sm text-gray-500 dark:text-dark-muted hover:text-brand-500 transition-colors">
-                      {item}
+                {[
+                  { label: "Privacy Policy", href: "/privacy" },
+                  { label: "Terms of Service", href: "/terms" },
+                  { label: "Cookie Policy", href: "/cookies" },
+                  { label: "GDPR", href: "/gdpr" },
+                ].map((item) => (
+                  <li key={item.label}>
+                    <a href={item.href} className="text-sm text-gray-500 dark:text-dark-muted hover:text-brand-500 transition-colors">
+                      {item.label}
                     </a>
                   </li>
                 ))}
@@ -892,13 +907,13 @@ export default function LandingPage() {
               &copy; {new Date().getFullYear()} TrueTwist. All rights reserved.
             </p>
             <div className="flex items-center gap-4">
-              <a href="#" className="text-gray-400 hover:text-brand-500 transition-colors" aria-label="Twitter">
+              <a href="https://x.com/truetwist" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-brand-500 transition-colors" aria-label="Twitter">
                 <Hash className="w-5 h-5" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-brand-500 transition-colors" aria-label="LinkedIn">
+              <a href="https://linkedin.com/company/truetwist" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-brand-500 transition-colors" aria-label="LinkedIn">
                 <Globe className="w-5 h-5" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-brand-500 transition-colors" aria-label="Instagram">
+              <a href="https://instagram.com/truetwist" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-brand-500 transition-colors" aria-label="Instagram">
                 <AtSign className="w-5 h-5" />
               </a>
             </div>
