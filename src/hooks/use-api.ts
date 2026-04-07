@@ -11,6 +11,7 @@ import {
   abTestApi,
   aiSuggestionsApi,
   videoAbTestApi,
+  adsDashboardApi,
 } from "@/lib/api-client";
 
 // ── AI Generation ──
@@ -356,5 +357,40 @@ export function useGenerateWeek() {
       qc.invalidateQueries({ queryKey: ["calendar"] });
       qc.invalidateQueries({ queryKey: ["posts"] });
     },
+  });
+}
+
+// ── Ad Performance Dashboard ──
+
+export function useAdDashboardOverview(range: string) {
+  return useQuery({
+    queryKey: ["adDashboard", "overview", range],
+    queryFn: () => adsDashboardApi.getOverview(range),
+    refetchInterval: 30000, // 30s real-time polling for active campaigns
+  });
+}
+
+export function useAdCampaigns(params?: Parameters<typeof adsDashboardApi.getCampaigns>[0]) {
+  return useQuery({
+    queryKey: ["adDashboard", "campaigns", params],
+    queryFn: () => adsDashboardApi.getCampaigns(params),
+    refetchInterval: 30000,
+  });
+}
+
+export function useAdCampaignMetrics(campaignId: string, range?: string) {
+  return useQuery({
+    queryKey: ["adDashboard", "campaign", campaignId, range],
+    queryFn: () => adsDashboardApi.getCampaignMetrics(campaignId, range),
+    enabled: !!campaignId,
+    refetchInterval: 30000,
+  });
+}
+
+export function useAdInsights() {
+  return useQuery({
+    queryKey: ["adDashboard", "insights"],
+    queryFn: () => adsDashboardApi.getInsights(),
+    staleTime: 5 * 60 * 1000, // 5 min stale time for AI insights
   });
 }
