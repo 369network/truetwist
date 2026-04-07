@@ -30,17 +30,34 @@ function WaitlistForm({ variant = "hero" }: { variant?: "hero" | "bottom" }) {
   const [referralLink, setReferralLink] = useState("");
   const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError("Please enter a valid email address.");
       return;
     }
-    // Simulate waitlist signup — generate a referral link
-    const refCode = btoa(email).slice(0, 12).replace(/[^a-zA-Z0-9]/g, "x");
-    setReferralLink(`https://truetwist.com?ref=${refCode}`);
-    setSubmitted(true);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Failed to join waitlist. Please try again.");
+        return;
+      }
+      setReferralLink(`https://truetwist.com?ref=${data.referralCode}`);
+      setSubmitted(true);
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (submitted) {
@@ -112,9 +129,10 @@ function WaitlistForm({ variant = "hero" }: { variant?: "hero" | "bottom" }) {
         />
         <button
           type="submit"
-          className="px-6 py-3.5 bg-coral-500 hover:bg-coral-600 text-white text-sm font-semibold rounded-full m-1 transition-colors whitespace-nowrap"
+          disabled={loading}
+          className="px-6 py-3.5 bg-coral-500 hover:bg-coral-600 text-white text-sm font-semibold rounded-full m-1 transition-colors whitespace-nowrap disabled:opacity-50"
         >
-          Join Waitlist
+          {loading ? "Joining..." : "Join Waitlist"}
         </button>
       </div>
       {error && <p className="text-coral-400 text-xs mt-2 ml-4">{error}</p>}

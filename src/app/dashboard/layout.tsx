@@ -111,6 +111,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return <div className="min-h-screen" style={{ background: "var(--tt-bg)" }} />;
   }
 
+  // Onboarding renders full-screen without sidebar
+  if (pathname.startsWith("/dashboard/onboarding")) {
+    return <>{children}</>;
+  }
+
   return (
     <div className="min-h-screen flex" style={{ background: "var(--tt-bg)" }}>
       {/* Mobile overlay */}
