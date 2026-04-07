@@ -852,37 +852,41 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold text-sm mb-4">Product</h4>
               <ul className="space-y-2">
-                {["Features", "Pricing", "Integrations", "Changelog"].map((item) => (
-                  <li key={item}>
-                    <a href="#" className="text-sm text-gray-500 dark:text-dark-muted hover:text-brand-500 transition-colors">
-                      {item}
-                    </a>
-                  </li>
-                ))}
+                <li>
+                  <a href="#features" className="text-sm text-gray-500 dark:text-dark-muted hover:text-brand-500 transition-colors">
+                    Features
+                  </a>
+                </li>
+                <li>
+                  <a href="#pricing" className="text-sm text-gray-500 dark:text-dark-muted hover:text-brand-500 transition-colors">
+                    Pricing
+                  </a>
+                </li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold text-sm mb-4">Company</h4>
               <ul className="space-y-2">
-                {["About", "Blog", "Careers", "Press"].map((item) => (
-                  <li key={item}>
-                    <a href="#" className="text-sm text-gray-500 dark:text-dark-muted hover:text-brand-500 transition-colors">
-                      {item}
-                    </a>
-                  </li>
-                ))}
+                <li>
+                  <a href="mailto:hello@truetwist.com" className="text-sm text-gray-500 dark:text-dark-muted hover:text-brand-500 transition-colors">
+                    Contact
+                  </a>
+                </li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold text-sm mb-4">Legal</h4>
               <ul className="space-y-2">
-                {["Privacy Policy", "Terms of Service", "Cookie Policy", "GDPR"].map((item) => (
-                  <li key={item}>
-                    <a href="#" className="text-sm text-gray-500 dark:text-dark-muted hover:text-brand-500 transition-colors">
-                      {item}
-                    </a>
-                  </li>
-                ))}
+                <li>
+                  <span className="text-sm text-gray-500 dark:text-dark-muted cursor-not-allowed opacity-50">
+                    Privacy Policy
+                  </span>
+                </li>
+                <li>
+                  <span className="text-sm text-gray-500 dark:text-dark-muted cursor-not-allowed opacity-50">
+                    Terms of Service
+                  </span>
+                </li>
               </ul>
             </div>
           </div>
@@ -891,17 +895,6 @@ export default function LandingPage() {
             <p className="text-sm text-gray-400 dark:text-dark-muted">
               &copy; {new Date().getFullYear()} TrueTwist. All rights reserved.
             </p>
-            <div className="flex items-center gap-4">
-              <a href="#" className="text-gray-400 hover:text-brand-500 transition-colors" aria-label="Twitter">
-                <Hash className="w-5 h-5" />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-brand-500 transition-colors" aria-label="LinkedIn">
-                <Globe className="w-5 h-5" />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-brand-500 transition-colors" aria-label="Instagram">
-                <AtSign className="w-5 h-5" />
-              </a>
-            </div>
           </div>
         </div>
       </footer>
