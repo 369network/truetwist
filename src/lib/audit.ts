@@ -1,7 +1,7 @@
-import { prisma } from '@/lib/prisma';
-import { NextRequest } from 'next/server';
+import { prisma } from "@/lib/prisma";
+import { NextRequest } from "next/server";
 
-type AuditSeverity = 'info' | 'warning' | 'critical';
+type AuditSeverity = "info" | "warning" | "critical";
 
 interface AuditEntry {
   userId?: string | null;
@@ -22,10 +22,10 @@ export function extractRequestMeta(request: NextRequest): {
   userAgent: string;
 } {
   const ipAddress =
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    request.headers.get('x-real-ip') ||
-    'unknown';
-  const userAgent = request.headers.get('user-agent') || 'unknown';
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    "unknown";
+  const userAgent = request.headers.get("user-agent") || "unknown";
   return { ipAddress, userAgent };
 }
 
@@ -42,13 +42,13 @@ export function auditLog(entry: AuditEntry): void {
         resourceId: entry.resourceId ?? null,
         ipAddress: entry.ipAddress ?? null,
         userAgent: entry.userAgent ?? null,
-        metadata: entry.metadata ?? {},
-        severity: entry.severity ?? 'info',
+        metadata: (entry.metadata ?? {}) as any, // Cast to Prisma.JsonValue
+        severity: entry.severity ?? "info",
       },
     })
     .catch((err: unknown) => {
       // Never let audit failures break the application
-      console.error('[audit] Failed to write audit log:', err);
+      console.error("[audit] Failed to write audit log:", err);
     });
 }
 
@@ -57,7 +57,7 @@ export function auditLog(entry: AuditEntry): void {
  */
 export function auditFromRequest(
   request: NextRequest,
-  entry: Omit<AuditEntry, 'ipAddress' | 'userAgent'>
+  entry: Omit<AuditEntry, "ipAddress" | "userAgent">,
 ): void {
   const { ipAddress, userAgent } = extractRequestMeta(request);
   auditLog({ ...entry, ipAddress, userAgent });
@@ -66,36 +66,36 @@ export function auditFromRequest(
 // Common audit actions
 export const AuditActions = {
   // Auth
-  LOGIN_SUCCESS: 'auth.login',
-  LOGIN_FAILED: 'auth.login_failed',
-  LOGOUT: 'auth.logout',
-  REGISTER: 'auth.register',
-  PASSWORD_RESET_REQUEST: 'auth.password_reset_request',
-  PASSWORD_RESET_COMPLETE: 'auth.password_reset_complete',
-  PASSWORD_CHANGED: 'auth.password_changed',
-  TOKEN_REFRESH: 'auth.token_refresh',
+  LOGIN_SUCCESS: "auth.login",
+  LOGIN_FAILED: "auth.login_failed",
+  LOGOUT: "auth.logout",
+  REGISTER: "auth.register",
+  PASSWORD_RESET_REQUEST: "auth.password_reset_request",
+  PASSWORD_RESET_COMPLETE: "auth.password_reset_complete",
+  PASSWORD_CHANGED: "auth.password_changed",
+  TOKEN_REFRESH: "auth.token_refresh",
 
   // User
-  USER_UPDATED: 'user.update',
-  USER_DELETED: 'user.delete',
+  USER_UPDATED: "user.update",
+  USER_DELETED: "user.delete",
 
   // API Keys
-  APIKEY_CREATED: 'apikey.create',
-  APIKEY_REVOKED: 'apikey.revoke',
-  APIKEY_ROTATED: 'apikey.rotate',
+  APIKEY_CREATED: "apikey.create",
+  APIKEY_REVOKED: "apikey.revoke",
+  APIKEY_ROTATED: "apikey.rotate",
 
   // Team
-  TEAM_CREATED: 'team.create',
-  MEMBER_INVITED: 'team.member_invited',
-  MEMBER_REMOVED: 'team.member_removed',
-  ROLE_CHANGED: 'team.role_changed',
+  TEAM_CREATED: "team.create",
+  MEMBER_INVITED: "team.member_invited",
+  MEMBER_REMOVED: "team.member_removed",
+  ROLE_CHANGED: "team.role_changed",
 
   // Business / Data
-  BUSINESS_CREATED: 'business.create',
-  BUSINESS_DELETED: 'business.delete',
-  DATA_EXPORTED: 'data.export',
+  BUSINESS_CREATED: "business.create",
+  BUSINESS_DELETED: "business.delete",
+  DATA_EXPORTED: "data.export",
 
   // Admin
-  ADMIN_ROLE_CHANGE: 'admin.role_change',
-  SETTINGS_CHANGED: 'settings.change',
+  ADMIN_ROLE_CHANGE: "admin.role_change",
+  SETTINGS_CHANGED: "settings.change",
 } as const;

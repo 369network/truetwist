@@ -29,9 +29,7 @@ function WaitlistForm({ variant = "hero" }: { variant?: "hero" | "bottom" }) {
   const [submitted, setSubmitted] = useState(false);
   const [referralLink, setReferralLink] = useState("");
   const [error, setError] = useState("");
-
   const [loading, setLoading] = useState(false);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -39,22 +37,29 @@ function WaitlistForm({ variant = "hero" }: { variant?: "hero" | "bottom" }) {
       setError("Please enter a valid email address.");
       return;
     }
+
     setLoading(true);
     try {
-      const res = await fetch("/api/waitlist", {
+      const response = await fetch("/api/waitlist", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ email }),
       });
-      const data = await res.json();
-      if (!res.ok) {
+
+      const data = await response.json();
+
+      if (!response.ok) {
         setError(data.error || "Failed to join waitlist. Please try again.");
         return;
       }
-      setReferralLink(`https://truetwist.com?ref=${data.referralCode}`);
+
+      setReferralLink(data.referralLink);
       setSubmitted(true);
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (err) {
+      console.error("Waitlist submission error:", err);
+      setError("Network error. Please check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -77,12 +82,18 @@ function WaitlistForm({ variant = "hero" }: { variant?: "hero" | "bottom" }) {
           </div>
           <p className="font-semibold">You&apos;re on the list!</p>
         </div>
-        <p className={`text-sm mb-4 ${variant === "hero" ? "text-white/70" : "text-gray-600 dark:text-gray-400"}`}>
+        <p
+          className={`text-sm mb-4 ${variant === "hero" ? "text-white/70" : "text-gray-600 dark:text-gray-400"}`}
+        >
           Share your unique link to move up the waitlist:
         </p>
-        <div className={`flex items-center gap-2 rounded-lg p-2 ${
-          variant === "hero" ? "bg-white/10" : "bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border"
-        }`}>
+        <div
+          className={`flex items-center gap-2 rounded-lg p-2 ${
+            variant === "hero"
+              ? "bg-white/10"
+              : "bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border"
+          }`}
+        >
           <code className="text-xs flex-1 truncate">{referralLink}</code>
           <button
             onClick={() => navigator.clipboard?.writeText(referralLink)}
@@ -92,14 +103,27 @@ function WaitlistForm({ variant = "hero" }: { variant?: "hero" | "bottom" }) {
           </button>
         </div>
         <div className="flex items-center gap-3 mt-4">
-          <span className={`text-xs ${variant === "hero" ? "text-white/50" : "text-gray-400"}`}>Share:</span>
-          <button className="p-1.5 rounded-full hover:bg-white/10 transition-colors" aria-label="Share on Twitter">
+          <span
+            className={`text-xs ${variant === "hero" ? "text-white/50" : "text-gray-400"}`}
+          >
+            Share:
+          </span>
+          <button
+            className="p-1.5 rounded-full hover:bg-white/10 transition-colors"
+            aria-label="Share on Twitter"
+          >
             <Hash className="w-4 h-4" />
           </button>
-          <button className="p-1.5 rounded-full hover:bg-white/10 transition-colors" aria-label="Share on LinkedIn">
+          <button
+            className="p-1.5 rounded-full hover:bg-white/10 transition-colors"
+            aria-label="Share on LinkedIn"
+          >
             <ExternalLink className="w-4 h-4" />
           </button>
-          <button className="p-1.5 rounded-full hover:bg-white/10 transition-colors" aria-label="Share via email">
+          <button
+            className="p-1.5 rounded-full hover:bg-white/10 transition-colors"
+            aria-label="Share via email"
+          >
             <Mail className="w-4 h-4" />
           </button>
         </div>
@@ -130,9 +154,16 @@ function WaitlistForm({ variant = "hero" }: { variant?: "hero" | "bottom" }) {
         <button
           type="submit"
           disabled={loading}
-          className="px-6 py-3.5 bg-coral-500 hover:bg-coral-600 text-white text-sm font-semibold rounded-full m-1 transition-colors whitespace-nowrap disabled:opacity-50"
+          className="px-6 py-3.5 bg-coral-500 hover:bg-coral-600 disabled:bg-coral-400 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-full m-1 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
         >
-          {loading ? "Joining..." : "Join Waitlist"}
+          {loading ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              Joining...
+            </>
+          ) : (
+            "Join Waitlist"
+          )}
         </button>
       </div>
       {error && <p className="text-coral-400 text-xs mt-2 ml-4">{error}</p>}
@@ -171,7 +202,9 @@ function FAQItem({ q, a }: { q: string; a: string }) {
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between py-5 text-left"
       >
-        <span className="font-medium text-gray-900 dark:text-white pr-4">{q}</span>
+        <span className="font-medium text-gray-900 dark:text-white pr-4">
+          {q}
+        </span>
         <ChevronDown
           className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${
             open ? "rotate-180" : ""
@@ -379,13 +412,22 @@ function Navbar() {
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
-          <a href="#features" className="text-sm text-gray-600 dark:text-dark-muted hover:text-brand-500 transition-colors">
+          <a
+            href="#features"
+            className="text-sm text-gray-600 dark:text-dark-muted hover:text-brand-500 transition-colors"
+          >
             Features
           </a>
-          <a href="#pricing" className="text-sm text-gray-600 dark:text-dark-muted hover:text-brand-500 transition-colors">
+          <a
+            href="#pricing"
+            className="text-sm text-gray-600 dark:text-dark-muted hover:text-brand-500 transition-colors"
+          >
             Pricing
           </a>
-          <a href="#faq" className="text-sm text-gray-600 dark:text-dark-muted hover:text-brand-500 transition-colors">
+          <a
+            href="#faq"
+            className="text-sm text-gray-600 dark:text-dark-muted hover:text-brand-500 transition-colors"
+          >
             FAQ
           </a>
         </div>
@@ -410,11 +452,26 @@ function Navbar() {
           className="md:hidden p-2 text-gray-600 dark:text-dark-muted"
           aria-label="Toggle menu"
         >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
             {mobileOpen ? (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
             )}
           </svg>
         </button>
@@ -429,12 +486,39 @@ function Navbar() {
             className="md:hidden overflow-hidden bg-white dark:bg-dark-surface border-b border-gray-200 dark:border-dark-border"
           >
             <div className="px-4 py-4 space-y-3">
-              <a href="#features" onClick={() => setMobileOpen(false)} className="block text-sm text-gray-600 dark:text-dark-muted py-2">Features</a>
-              <a href="#pricing" onClick={() => setMobileOpen(false)} className="block text-sm text-gray-600 dark:text-dark-muted py-2">Pricing</a>
-              <a href="#faq" onClick={() => setMobileOpen(false)} className="block text-sm text-gray-600 dark:text-dark-muted py-2">FAQ</a>
+              <a
+                href="#features"
+                onClick={() => setMobileOpen(false)}
+                className="block text-sm text-gray-600 dark:text-dark-muted py-2"
+              >
+                Features
+              </a>
+              <a
+                href="#pricing"
+                onClick={() => setMobileOpen(false)}
+                className="block text-sm text-gray-600 dark:text-dark-muted py-2"
+              >
+                Pricing
+              </a>
+              <a
+                href="#faq"
+                onClick={() => setMobileOpen(false)}
+                className="block text-sm text-gray-600 dark:text-dark-muted py-2"
+              >
+                FAQ
+              </a>
               <hr className="border-gray-200 dark:border-dark-border" />
-              <Link href="/dashboard" className="block text-sm text-gray-600 dark:text-dark-muted py-2">Log in</Link>
-              <a href="#waitlist" onClick={() => setMobileOpen(false)} className="block w-full text-center px-4 py-2.5 bg-brand-500 text-white text-sm font-medium rounded-full">
+              <Link
+                href="/dashboard"
+                className="block text-sm text-gray-600 dark:text-dark-muted py-2"
+              >
+                Log in
+              </Link>
+              <a
+                href="#waitlist"
+                onClick={() => setMobileOpen(false)}
+                className="block w-full text-center px-4 py-2.5 bg-brand-500 text-white text-sm font-medium rounded-full"
+              >
                 Join Waitlist
               </a>
             </div>
@@ -474,8 +558,7 @@ export default function LandingPage() {
             </div>
 
             <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold text-white leading-tight mb-6 tracking-tight">
-              Content that stops{" "}
-              <br />
+              Content that stops <br />
               the scroll.{" "}
               <span className="bg-gradient-to-r from-coral-400 to-coral-500 bg-clip-text text-transparent">
                 Automatically.
@@ -483,8 +566,9 @@ export default function LandingPage() {
             </h1>
 
             <p className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto mb-10 leading-relaxed">
-              Generate, schedule, and publish scroll-stopping content across 7+ platforms.
-              Powered by AI that understands what makes content go viral.
+              Generate, schedule, and publish scroll-stopping content across 7+
+              platforms. Powered by AI that understands what makes content go
+              viral.
             </p>
 
             <div id="waitlist" className="flex justify-center mb-8">
@@ -528,7 +612,10 @@ export default function LandingPage() {
                   <div className="flex-1 space-y-4">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       {[1, 2, 3, 4].map((i) => (
-                        <div key={i} className="h-20 bg-dark-surface-3 rounded-lg p-3">
+                        <div
+                          key={i}
+                          className="h-20 bg-dark-surface-3 rounded-lg p-3"
+                        >
                           <div className="h-3 bg-dark-border rounded w-2/3 mb-2" />
                           <div className="h-5 bg-brand-500/30 rounded w-1/2" />
                         </div>
@@ -541,7 +628,10 @@ export default function LandingPage() {
                           <div key={i} className="flex-1">
                             <div
                               className="bg-brand-500/40 rounded-sm"
-                              style={{ height: `${30 + Math.random() * 70}%`, minHeight: 20 }}
+                              style={{
+                                height: `${30 + Math.random() * 70}%`,
+                                minHeight: 20,
+                              }}
                             />
                           </div>
                         ))}
@@ -560,11 +650,16 @@ export default function LandingPage() {
       {/* ── Trust badges ── */}
       <Section className="py-12 border-b border-gray-100 dark:border-dark-border">
         <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16 opacity-50">
-          {["ProductHunt", "TechCrunch", "Forbes", "Wired", "TheVerge"].map((name) => (
-            <span key={name} className="text-sm font-semibold tracking-wider uppercase text-gray-400 dark:text-dark-muted">
-              {name}
-            </span>
-          ))}
+          {["ProductHunt", "TechCrunch", "Forbes", "Wired", "TheVerge"].map(
+            (name) => (
+              <span
+                key={name}
+                className="text-sm font-semibold tracking-wider uppercase text-gray-400 dark:text-dark-muted"
+              >
+                {name}
+              </span>
+            ),
+          )}
         </div>
       </Section>
 
@@ -581,7 +676,8 @@ export default function LandingPage() {
             </span>
           </h2>
           <p className="text-gray-600 dark:text-dark-muted max-w-xl mx-auto">
-            One platform. Every tool. From AI content creation to deep analytics, TrueTwist has it all.
+            One platform. Every tool. From AI content creation to deep
+            analytics, TrueTwist has it all.
           </p>
         </div>
 
@@ -599,7 +695,9 @@ export default function LandingPage() {
                 <f.icon className="w-6 h-6 text-brand-500" />
               </div>
               <h3 className="font-semibold text-lg mb-2">{f.title}</h3>
-              <p className="text-sm text-gray-600 dark:text-dark-muted leading-relaxed">{f.desc}</p>
+              <p className="text-sm text-gray-600 dark:text-dark-muted leading-relaxed">
+                {f.desc}
+              </p>
             </motion.div>
           ))}
         </div>
@@ -618,9 +716,21 @@ export default function LandingPage() {
             </h2>
             <div className="space-y-6">
               {[
-                { step: "1", title: "Describe your idea", desc: "Tell the AI what you want to say — or let it suggest trending topics in your niche." },
-                { step: "2", title: "AI generates & optimizes", desc: "Get platform-specific variations with optimized hashtags, formatting, and timing." },
-                { step: "3", title: "Review & schedule", desc: "Edit, approve, and schedule across all your platforms with a single click." },
+                {
+                  step: "1",
+                  title: "Describe your idea",
+                  desc: "Tell the AI what you want to say — or let it suggest trending topics in your niche.",
+                },
+                {
+                  step: "2",
+                  title: "AI generates & optimizes",
+                  desc: "Get platform-specific variations with optimized hashtags, formatting, and timing.",
+                },
+                {
+                  step: "3",
+                  title: "Review & schedule",
+                  desc: "Edit, approve, and schedule across all your platforms with a single click.",
+                },
               ].map((item) => (
                 <div key={item.step} className="flex gap-4">
                   <div className="w-10 h-10 rounded-full gradient-brand flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
@@ -628,7 +738,9 @@ export default function LandingPage() {
                   </div>
                   <div>
                     <h4 className="font-semibold mb-1">{item.title}</h4>
-                    <p className="text-sm text-gray-600 dark:text-dark-muted">{item.desc}</p>
+                    <p className="text-sm text-gray-600 dark:text-dark-muted">
+                      {item.desc}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -643,7 +755,9 @@ export default function LandingPage() {
                   <Bot className="w-4 h-4 text-white" />
                 </div>
                 <span className="text-sm font-medium">TrueTwist AI</span>
-                <span className="text-xs text-green-500 bg-green-50 dark:bg-green-950/30 px-2 py-0.5 rounded-full">Generating</span>
+                <span className="text-xs text-green-500 bg-green-50 dark:bg-green-950/30 px-2 py-0.5 rounded-full">
+                  Generating
+                </span>
               </div>
               <div className="space-y-3 mb-4">
                 <div className="bg-gray-50 dark:bg-dark-surface-3 rounded-lg p-4">
@@ -652,9 +766,12 @@ export default function LandingPage() {
                     <span className="text-xs font-medium">Instagram</span>
                   </div>
                   <p className="text-sm text-gray-700 dark:text-dark-text">
-                    Stop scrolling. Start creating. Our AI just built this post in 3 seconds flat.
+                    Stop scrolling. Start creating. Our AI just built this post
+                    in 3 seconds flat.
                   </p>
-                  <p className="text-xs text-brand-500 mt-1">#AIContent #SocialMedia #ContentCreator</p>
+                  <p className="text-xs text-brand-500 mt-1">
+                    #AIContent #SocialMedia #ContentCreator
+                  </p>
                 </div>
                 <div className="bg-gray-50 dark:bg-dark-surface-3 rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-2">
@@ -662,7 +779,8 @@ export default function LandingPage() {
                     <span className="text-xs font-medium">Twitter/X</span>
                   </div>
                   <p className="text-sm text-gray-700 dark:text-dark-text">
-                    What if your social media content created itself? That&apos;s not the future — it&apos;s TrueTwist.
+                    What if your social media content created itself?
+                    That&apos;s not the future — it&apos;s TrueTwist.
                   </p>
                 </div>
               </div>
@@ -687,10 +805,15 @@ export default function LandingPage() {
           </h2>
           <div className="flex items-center justify-center gap-1 mb-2">
             {[1, 2, 3, 4, 5].map((i) => (
-              <Star key={i} className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+              <Star
+                key={i}
+                className="w-5 h-5 text-yellow-400 fill-yellow-400"
+              />
             ))}
           </div>
-          <p className="text-sm text-gray-500 dark:text-dark-muted">4.9/5 from 2,000+ beta users</p>
+          <p className="text-sm text-gray-500 dark:text-dark-muted">
+            4.9/5 from 2,000+ beta users
+          </p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-6">
@@ -705,7 +828,10 @@ export default function LandingPage() {
             >
               <div className="flex items-center gap-1 mb-4">
                 {[1, 2, 3, 4, 5].map((s) => (
-                  <Star key={s} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                  <Star
+                    key={s}
+                    className="w-4 h-4 text-yellow-400 fill-yellow-400"
+                  />
                 ))}
               </div>
               <p className="text-sm text-gray-700 dark:text-dark-text mb-6 leading-relaxed">
@@ -717,7 +843,9 @@ export default function LandingPage() {
                 </div>
                 <div>
                   <p className="text-sm font-medium">{t.name}</p>
-                  <p className="text-xs text-gray-500 dark:text-dark-muted">{t.role}</p>
+                  <p className="text-xs text-gray-500 dark:text-dark-muted">
+                    {t.role}
+                  </p>
                 </div>
               </div>
             </motion.div>
@@ -733,15 +861,22 @@ export default function LandingPage() {
             { value: "4.9/5", label: "Average rating" },
           ].map((stat) => (
             <div key={stat.label} className="text-center">
-              <p className="text-2xl md:text-3xl font-bold text-brand-500">{stat.value}</p>
-              <p className="text-sm text-gray-500 dark:text-dark-muted mt-1">{stat.label}</p>
+              <p className="text-2xl md:text-3xl font-bold text-brand-500">
+                {stat.value}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-dark-muted mt-1">
+                {stat.label}
+              </p>
             </div>
           ))}
         </div>
       </Section>
 
       {/* ── Pricing ── */}
-      <Section id="pricing" className="py-20 md:py-32 bg-gray-50 dark:bg-dark-surface">
+      <Section
+        id="pricing"
+        className="py-20 md:py-32 bg-gray-50 dark:bg-dark-surface"
+      >
         <div className="text-center mb-16">
           <span className="inline-block px-3 py-1 rounded-full bg-brand-50 dark:bg-brand-950/30 text-brand-600 dark:text-brand-400 text-xs font-semibold uppercase tracking-wide mb-4">
             Pricing
@@ -776,16 +911,22 @@ export default function LandingPage() {
                 </div>
               )}
               <h3 className="font-semibold text-lg mb-1">{tier.name}</h3>
-              <p className="text-xs text-gray-500 dark:text-dark-muted mb-4">{tier.desc}</p>
+              <p className="text-xs text-gray-500 dark:text-dark-muted mb-4">
+                {tier.desc}
+              </p>
               <div className="mb-6">
                 <span className="text-3xl font-bold">{tier.price}</span>
-                <span className="text-gray-500 dark:text-dark-muted text-sm">{tier.period}</span>
+                <span className="text-gray-500 dark:text-dark-muted text-sm">
+                  {tier.period}
+                </span>
               </div>
               <ul className="space-y-3 mb-6">
                 {tier.features.map((f) => (
                   <li key={f} className="flex items-start gap-2 text-sm">
                     <Check className="w-4 h-4 text-brand-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-700 dark:text-dark-text">{f}</span>
+                    <span className="text-gray-700 dark:text-dark-text">
+                      {f}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -834,7 +975,8 @@ export default function LandingPage() {
               Ready to go viral?
             </h2>
             <p className="text-white/70 max-w-lg mx-auto mb-8">
-              Join 12,400+ creators and brands already on the waitlist. Be first to experience AI-powered social media management.
+              Join 12,400+ creators and brands already on the waitlist. Be first
+              to experience AI-powered social media management.
             </p>
             <div className="flex justify-center">
               <WaitlistForm variant="hero" />
@@ -870,7 +1012,10 @@ export default function LandingPage() {
                   { label: "Waitlist", href: "#waitlist" },
                 ].map((item) => (
                   <li key={item.label}>
-                    <a href={item.href} className="text-sm text-gray-500 dark:text-dark-muted hover:text-brand-500 transition-colors">
+                    <a
+                      href={item.href}
+                      className="text-sm text-gray-500 dark:text-dark-muted hover:text-brand-500 transition-colors"
+                    >
                       {item.label}
                     </a>
                   </li>
@@ -887,7 +1032,10 @@ export default function LandingPage() {
                   { label: "Contact", href: "mailto:hello@truetwist.com" },
                 ].map((item) => (
                   <li key={item.label}>
-                    <a href={item.href} className="text-sm text-gray-500 dark:text-dark-muted hover:text-brand-500 transition-colors">
+                    <a
+                      href={item.href}
+                      className="text-sm text-gray-500 dark:text-dark-muted hover:text-brand-500 transition-colors"
+                    >
                       {item.label}
                     </a>
                   </li>
@@ -904,7 +1052,10 @@ export default function LandingPage() {
                   { label: "GDPR", href: "/gdpr" },
                 ].map((item) => (
                   <li key={item.label}>
-                    <a href={item.href} className="text-sm text-gray-500 dark:text-dark-muted hover:text-brand-500 transition-colors">
+                    <a
+                      href={item.href}
+                      className="text-sm text-gray-500 dark:text-dark-muted hover:text-brand-500 transition-colors"
+                    >
                       {item.label}
                     </a>
                   </li>
@@ -918,13 +1069,31 @@ export default function LandingPage() {
               &copy; {new Date().getFullYear()} TrueTwist. All rights reserved.
             </p>
             <div className="flex items-center gap-4">
-              <a href="https://x.com/truetwist" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-brand-500 transition-colors" aria-label="Twitter">
+              <a
+                href="https://x.com/truetwist"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-brand-500 transition-colors"
+                aria-label="Twitter"
+              >
                 <Hash className="w-5 h-5" />
               </a>
-              <a href="https://linkedin.com/company/truetwist" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-brand-500 transition-colors" aria-label="LinkedIn">
+              <a
+                href="https://linkedin.com/company/truetwist"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-brand-500 transition-colors"
+                aria-label="LinkedIn"
+              >
                 <Globe className="w-5 h-5" />
               </a>
-              <a href="https://instagram.com/truetwist" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-brand-500 transition-colors" aria-label="Instagram">
+              <a
+                href="https://instagram.com/truetwist"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-brand-500 transition-colors"
+                aria-label="Instagram"
+              >
                 <AtSign className="w-5 h-5" />
               </a>
             </div>

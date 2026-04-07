@@ -1,6 +1,6 @@
-import { openai } from './openai-client';
-import { PLATFORM_CONSTRAINTS, type Platform } from '@/lib/social/types';
-import { VERTICAL_IMAGE_STYLES } from './vertical-prompts';
+import { openai } from "./openai-client";
+import { PLATFORM_CONSTRAINTS, type Platform } from "@/lib/social/types";
+import { VERTICAL_IMAGE_STYLES } from "./vertical-prompts";
 import type {
   BrandContext,
   ImageGenerationRequest,
@@ -8,50 +8,50 @@ import type {
   GeneratedImage,
   ImageStylePreset,
   ImageTemplate,
-} from './types';
+} from "./types";
 
 const STYLE_MODIFIERS: Record<ImageStylePreset, string> = {
   minimalist:
-    'Clean, minimal design with plenty of white space. Simple shapes, muted colors, modern sans-serif typography.',
-  bold: 'Bold, vibrant colors with high contrast. Strong typography, eye-catching geometric shapes, dynamic composition.',
+    "Clean, minimal design with plenty of white space. Simple shapes, muted colors, modern sans-serif typography.",
+  bold: "Bold, vibrant colors with high contrast. Strong typography, eye-catching geometric shapes, dynamic composition.",
   elegant:
-    'Sophisticated and refined aesthetic. Muted earth tones or jewel tones, serif typography, subtle textures.',
+    "Sophisticated and refined aesthetic. Muted earth tones or jewel tones, serif typography, subtle textures.",
   playful:
-    'Fun, energetic design with bright colors. Rounded shapes, casual typography, playful illustrations.',
+    "Fun, energetic design with bright colors. Rounded shapes, casual typography, playful illustrations.",
   corporate:
-    'Professional, trustworthy aesthetic. Clean layout, corporate blue tones, structured grid, business-appropriate imagery.',
+    "Professional, trustworthy aesthetic. Clean layout, corporate blue tones, structured grid, business-appropriate imagery.",
 };
 
 const TEMPLATE_PROMPTS: Record<ImageTemplate, string> = {
-  'quote-graphic':
-    'A visually appealing quote graphic with beautiful typography. The quote text should be the focal point with a complementary background.',
-  'product-showcase':
-    'A product showcase image with professional photography style. Clean background, good lighting, product as hero element.',
+  "quote-graphic":
+    "A visually appealing quote graphic with beautiful typography. The quote text should be the focal point with a complementary background.",
+  "product-showcase":
+    "A product showcase image with professional photography style. Clean background, good lighting, product as hero element.",
   infographic:
-    'An informative infographic-style image with data visualization, icons, and clear hierarchy of information.',
-  'carousel-slide':
-    'A clean, branded carousel slide suitable for a multi-image post. Consistent style with space for text overlay.',
-  'social-post':
-    'A general social media post image that is visually engaging and scroll-stopping. Optimized for the feed.',
+    "An informative infographic-style image with data visualization, icons, and clear hierarchy of information.",
+  "carousel-slide":
+    "A clean, branded carousel slide suitable for a multi-image post. Consistent style with space for text overlay.",
+  "social-post":
+    "A general social media post image that is visually engaging and scroll-stopping. Optimized for the feed.",
 };
 
 function getPlatformSizeHint(platform: Platform): string {
   const sizeMap: Record<string, string> = {
-    instagram: '1080x1080 (square feed) or 1080x1350 (portrait)',
-    facebook: '1200x630 (feed) or 1080x1080 (square)',
-    twitter: '1200x675 (landscape)',
-    linkedin: '1200x627 (landscape)',
-    tiktok: '1080x1920 (vertical)',
-    youtube: '1280x720 (thumbnail)',
-    pinterest: '1000x1500 (vertical pin)',
-    threads: '1080x1080 (square)',
+    instagram: "1080x1080 (square feed) or 1080x1350 (portrait)",
+    facebook: "1200x630 (feed) or 1080x1080 (square)",
+    twitter: "1200x675 (landscape)",
+    linkedin: "1200x627 (landscape)",
+    tiktok: "1080x1920 (vertical)",
+    youtube: "1280x720 (thumbnail)",
+    pinterest: "1000x1500 (vertical pin)",
+    threads: "1080x1080 (square)",
   };
-  return sizeMap[platform] || '1080x1080';
+  return sizeMap[platform] || "1080x1080";
 }
 
 function buildImagePrompt(
   request: ImageGenerationRequest,
-  brand: BrandContext
+  brand: BrandContext,
 ): string {
   let prompt = request.prompt;
 
@@ -64,7 +64,10 @@ function buildImagePrompt(
   }
 
   // Inject vertical image style when industry matches a known vertical
-  if (request.verticalTemplate && VERTICAL_IMAGE_STYLES[request.verticalTemplate]) {
+  if (
+    request.verticalTemplate &&
+    VERTICAL_IMAGE_STYLES[request.verticalTemplate]
+  ) {
     prompt += `. Industry visual style: ${VERTICAL_IMAGE_STYLES[request.verticalTemplate]}`;
   } else if (brand.industry && VERTICAL_IMAGE_STYLES[brand.industry]) {
     prompt += `. Industry visual style: ${VERTICAL_IMAGE_STYLES[brand.industry]}`;
@@ -84,36 +87,36 @@ function buildImagePrompt(
 }
 
 function selectDallESize(
-  request: ImageGenerationRequest
-): '1024x1024' | '1792x1024' | '1024x1792' {
+  request: ImageGenerationRequest,
+): "1024x1024" | "1792x1024" | "1024x1792" {
   if (request.size) return request.size;
 
   // Auto-select based on platform
-  const verticalPlatforms: Platform[] = ['tiktok', 'pinterest'];
+  const verticalPlatforms: Platform[] = ["tiktok", "pinterest"];
   const landscapePlatforms: Platform[] = [
-    'twitter',
-    'linkedin',
-    'facebook',
-    'youtube',
+    "twitter",
+    "linkedin",
+    "facebook",
+    "youtube",
   ];
 
-  if (verticalPlatforms.includes(request.platform)) return '1024x1792';
-  if (landscapePlatforms.includes(request.platform)) return '1792x1024';
-  return '1024x1024';
+  if (verticalPlatforms.includes(request.platform)) return "1024x1792";
+  if (landscapePlatforms.includes(request.platform)) return "1792x1024";
+  return "1024x1024";
 }
 
 // DALL-E 3 pricing: $0.040 per image (1024x1024), $0.080 (1024x1792 / 1792x1024)
 function estimateImageCost(
-  size: '1024x1024' | '1792x1024' | '1024x1792',
-  count: number
+  size: "1024x1024" | "1792x1024" | "1024x1792",
+  count: number,
 ): number {
-  const costPerImage = size === '1024x1024' ? 4 : 8; // cents
+  const costPerImage = size === "1024x1024" ? 4 : 8; // cents
   return costPerImage * count;
 }
 
 export async function generateImage(
   request: ImageGenerationRequest,
-  brand: BrandContext
+  brand: BrandContext,
 ): Promise<ImageGenerationResult> {
   const startTime = Date.now();
   const count = Math.min(request.count ?? 1, 4);
@@ -125,15 +128,15 @@ export async function generateImage(
   // DALL-E 3 only supports n=1, so we loop for multiple images
   for (let i = 0; i < count; i++) {
     const response = await openai.images.generate({
-      model: 'dall-e-3',
+      model: "dall-e-3",
       prompt,
       n: 1,
       size,
-      quality: 'standard',
-      response_format: 'url',
+      quality: "standard",
+      response_format: "url",
     });
 
-    const data = response.data[0];
+    const data = response.data?.[0];
     if (data?.url) {
       images.push({
         url: data.url,
@@ -145,7 +148,7 @@ export async function generateImage(
 
   return {
     images,
-    model: 'dall-e-3',
+    model: "dall-e-3",
     costCents: estimateImageCost(size, images.length),
     durationMs: Date.now() - startTime,
   };
@@ -153,7 +156,7 @@ export async function generateImage(
 
 export async function generateImageVariations(
   imageUrl: string,
-  count: number = 3
+  count: number = 3,
 ): Promise<GeneratedImage[]> {
   // Note: DALL-E 3 does not support variations natively.
   // This uses DALL-E 2 for variations from an existing image.

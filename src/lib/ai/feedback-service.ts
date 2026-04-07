@@ -5,15 +5,15 @@
  * and computes recency-weighted generation scores to improve recommendations.
  */
 
-import { prisma } from '@/lib/prisma';
+import { prisma } from "@/lib/prisma";
 
 export type FeedbackAction =
-  | 'used'         // published as-is
-  | 'edited'       // published with edits
-  | 'discarded'    // generated but not used
-  | 'favorited'    // saved for later
-  | 'regenerated'  // asked for new variants
-  | 'shared';      // shared externally
+  | "used" // published as-is
+  | "edited" // published with edits
+  | "discarded" // generated but not used
+  | "favorited" // saved for later
+  | "regenerated" // asked for new variants
+  | "shared"; // shared externally
 
 // Signal weights: higher = stronger positive signal
 const SIGNAL_WEIGHTS: Record<FeedbackAction, number> = {
@@ -36,9 +36,9 @@ export interface FeedbackInput {
 }
 
 export interface GenerationScore {
-  score: number;        // -1 to 1 weighted score
+  score: number; // -1 to 1 weighted score
   totalFeedback: number;
-  recentBias: number;   // how much recency affected the score
+  recentBias: number; // how much recency affected the score
 }
 
 export async function recordFeedback(input: FeedbackInput): Promise<void> {
@@ -47,7 +47,7 @@ export async function recordFeedback(input: FeedbackInput): Promise<void> {
       userId: input.userId,
       generationId: input.generationId,
       action: input.action,
-      metadata: input.metadata ?? {},
+      metadata: (input.metadata ?? {}) as any, // Cast to Prisma.JsonValue
     },
   });
 }
@@ -56,10 +56,12 @@ export async function recordFeedback(input: FeedbackInput): Promise<void> {
  * Computes a recency-weighted score for a specific generation.
  * Uses exponential decay so newer feedback weighs more than stale signals.
  */
-export async function getGenerationScore(generationId: string): Promise<GenerationScore> {
+export async function getGenerationScore(
+  generationId: string,
+): Promise<GenerationScore> {
   const feedbacks = await prisma.contentFeedback.findMany({
     where: { generationId },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: "desc" },
   });
 
   if (feedbacks.length === 0) {
@@ -72,7 +74,7 @@ export async function getGenerationScore(generationId: string): Promise<Generati
 
   for (const fb of feedbacks) {
     const ageDays = (now - fb.createdAt.getTime()) / (1000 * 60 * 60 * 24);
-    const decayFactor = Math.exp(-Math.LN2 * ageDays / DECAY_HALF_LIFE_DAYS);
+    const decayFactor = Math.exp((-Math.LN2 * ageDays) / DECAY_HALF_LIFE_DAYS);
     const signal = SIGNAL_WEIGHTS[fb.action as FeedbackAction] ?? 0;
 
     weightedSum += signal * decayFactor;
@@ -80,7 +82,11 @@ export async function getGenerationScore(generationId: string): Promise<Generati
   }
 
   const score = totalWeight > 0 ? weightedSum / totalWeight : 0;
-  const rawAvg = feedbacks.reduce((sum, fb) => sum + (SIGNAL_WEIGHTS[fb.action as FeedbackAction] ?? 0), 0) / feedbacks.length;
+  const rawAvg =
+    feedbacks.reduce(
+      (sum, fb) => sum + (SIGNAL_WEIGHTS[fb.action as FeedbackAction] ?? 0),
+      0,
+    ) / feedbacks.length;
   const recentBias = Math.abs(score - rawAvg);
 
   return {

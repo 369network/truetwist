@@ -1,7 +1,11 @@
-import { prisma } from '@/lib/prisma';
-import type { NormalizedTrend, TrendSource, TrendCollectionResult } from './types';
-import { collectTrends } from './collectors';
-import { computeSimpleViralScore } from './viral-score';
+import { prisma } from "@/lib/prisma";
+import type {
+  NormalizedTrend,
+  TrendSource,
+  TrendCollectionResult,
+} from "./types";
+import { collectTrends } from "./collectors";
+import { computeSimpleViralScore } from "./viral-score";
 
 /**
  * Runs a full trend collection cycle for a given source and region.
@@ -14,7 +18,7 @@ import { computeSimpleViralScore } from './viral-score';
 export async function runCollectionPipeline(
   source: TrendSource,
   region: string,
-  jobDbId: string
+  jobDbId: string,
 ): Promise<TrendCollectionResult> {
   const result: TrendCollectionResult = {
     source,
@@ -27,7 +31,7 @@ export async function runCollectionPipeline(
   // Mark job as running
   await prisma.trendCollectionJob.update({
     where: { id: jobDbId },
-    data: { status: 'running', startedAt: new Date() },
+    data: { status: "running", startedAt: new Date() },
   });
 
   try {
@@ -39,7 +43,9 @@ export async function runCollectionPipeline(
         await upsertTrend(trend);
         result.trendsUpdated++;
       } catch (err) {
-        result.errors.push(`Failed to upsert "${trend.title}": ${(err as Error).message}`);
+        result.errors.push(
+          `Failed to upsert "${trend.title}": ${(err as Error).message}`,
+        );
       }
     }
 
@@ -47,11 +53,12 @@ export async function runCollectionPipeline(
     await prisma.trendCollectionJob.update({
       where: { id: jobDbId },
       data: {
-        status: 'completed',
+        status: "completed",
         trendsFound: result.trendsFound,
         trendsUpdated: result.trendsUpdated,
         completedAt: new Date(),
-        errorMessage: result.errors.length > 0 ? result.errors.join('; ') : null,
+        errorMessage:
+          result.errors.length > 0 ? result.errors.join("; ") : null,
       },
     });
   } catch (err) {
@@ -61,7 +68,7 @@ export async function runCollectionPipeline(
     await prisma.trendCollectionJob.update({
       where: { id: jobDbId },
       data: {
-        status: 'failed',
+        status: "failed",
         errorMessage,
         completedAt: new Date(),
       },
@@ -73,7 +80,11 @@ export async function runCollectionPipeline(
 
 async function upsertTrend(trend: NormalizedTrend): Promise<void> {
   const volume = Object.values(trend.engagementMetrics)[0] ?? 0;
-  const viralScore = computeSimpleViralScore(volume, trend.velocity, trend.platform);
+  const viralScore = computeSimpleViralScore(
+    volume,
+    trend.velocity,
+    trend.platform,
+  );
 
   // Upsert the trend record
   const dbTrend = await prisma.viralTrend.upsert({
@@ -92,7 +103,7 @@ async function upsertTrend(trend: NormalizedTrend): Promise<void> {
       viralScore,
       velocity: trend.velocity,
       sentiment: trend.sentiment,
-      rawPayload: trend.rawPayload,
+      rawPayload: trend.rawPayload as any, // Cast to Prisma.JsonValue
       lastUpdatedAt: new Date(),
     },
     create: {
@@ -107,7 +118,7 @@ async function upsertTrend(trend: NormalizedTrend): Promise<void> {
       velocity: trend.velocity,
       sentiment: trend.sentiment,
       region: trend.region,
-      rawPayload: trend.rawPayload,
+      rawPayload: trend.rawPayload as any, // Cast to Prisma.JsonValue
     },
   });
 
@@ -131,7 +142,9 @@ async function upsertTrend(trend: NormalizedTrend): Promise<void> {
     });
 
     await prisma.trendHashtag.upsert({
-      where: { trendId_hashtagId: { trendId: dbTrend.id, hashtagId: hashtag.id } },
+      where: {
+        trendId_hashtagId: { trendId: dbTrend.id, hashtagId: hashtag.id },
+      },
       update: { relevance: 0.5 },
       create: { trendId: dbTrend.id, hashtagId: hashtag.id, relevance: 0.5 },
     });
@@ -147,7 +160,7 @@ async function upsertTrend(trend: NormalizedTrend): Promise<void> {
 async function updateTrendLifecycle(trendId: string): Promise<void> {
   const snapshots = await prisma.trendSnapshot.findMany({
     where: { trendId },
-    orderBy: { snapshotAt: 'desc' },
+    orderBy: { snapshotAt: "desc" },
     take: 10,
   });
 
@@ -163,13 +176,13 @@ async function updateTrendLifecycle(trendId: string): Promise<void> {
   let peakedAt = trend.peakedAt;
 
   if (latest.viralScore < 5) {
-    lifecycle = 'expired';
+    lifecycle = "expired";
   } else if (acceleration > 0.5) {
-    lifecycle = snapshots.length < 3 ? 'emerging' : 'rising';
+    lifecycle = snapshots.length < 3 ? "emerging" : "rising";
   } else if (acceleration < -0.3) {
-    lifecycle = 'declining';
+    lifecycle = "declining";
   } else if (latest.viralScore > 60 && Math.abs(acceleration) <= 0.5) {
-    lifecycle = 'peaking';
+    lifecycle = "peaking";
     if (!peakedAt) peakedAt = new Date();
   }
 

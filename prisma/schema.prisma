@@ -1400,3 +1400,17 @@ model VideoAbTestVariant {
   @@index([videoJobId])
   @@map("video_ab_test_variants")
 }
+
+// ============================================
+// WAITLIST
+// ============================================
+
+model Waitlist {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  referralCode String  @unique @map("referral_code")
+  referredBy  String?  @map("referred_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("waitlist")
+}

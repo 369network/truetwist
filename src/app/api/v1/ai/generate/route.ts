@@ -1,12 +1,12 @@
 export const dynamic = "force-dynamic";
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { getAuthUser } from '@/middleware/auth';
-import { errorResponse, Errors } from '@/lib/errors';
-import { z } from 'zod';
-import { openai } from '@/lib/ai/openai-client';
-import { scoreContent } from '@/lib/ai/content-quality-scoring';
-import type { Platform } from '@/lib/social/types';
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/middleware/auth";
+import { errorResponse, Errors } from "@/lib/errors";
+import { z } from "zod";
+import { openai } from "@/lib/ai/openai-client";
+import { scoreContent } from "@/lib/ai/content-quality-scoring";
+import type { Platform } from "@/lib/social/types";
 
 const generateTextSchema = z.object({
   prompt: z.string().min(1).max(2000),
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { type } = body;
 
-    if (type === 'text') {
+    if (type === "text") {
       const result = generateTextSchema.safeParse(body);
       if (!result.success) {
         throw Errors.validation(result.error.flatten().fieldErrors);
@@ -40,17 +40,22 @@ export async function POST(request: NextRequest) {
       const startTime = Date.now();
 
       const platformConstraints: Record<string, number> = {
-        instagram: 2200, twitter: 280, linkedin: 3000,
-        tiktok: 2200, facebook: 63206, youtube: 5000,
-        pinterest: 500, threads: 500,
+        instagram: 2200,
+        twitter: 280,
+        linkedin: 3000,
+        tiktok: 2200,
+        facebook: 63206,
+        youtube: 5000,
+        pinterest: 500,
+        threads: 500,
       };
 
       // Use OpenAI for real content generation with unified prompt
       const completion = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: "gpt-4o-mini",
         messages: [
           {
-            role: 'system',
+            role: "system",
             content: `You are TrueTwist AI — an expert social media content creator. Generate authentic, engaging, platform-optimized content.
 
 Rules:
@@ -58,7 +63,7 @@ Rules:
 - Each variation should take a genuinely different angle/approach.
 - Respect platform character limits.
 - Do NOT include hashtags in the post text.
-${tone ? `- Tone: ${tone}` : ''}
+${tone ? `- Tone: ${tone}` : ""}
 
 Respond in JSON:
 {
@@ -74,21 +79,21 @@ Respond in JSON:
 }`,
           },
           {
-            role: 'user',
+            role: "user",
             content: `Create ${variations} unique social media post variations about: "${prompt}"
 
-Target platforms: ${platforms.join(', ')}
-Platform limits: ${platforms.map(p => `${p}: ${platformConstraints[p] || 2000} chars`).join(', ')}
+Target platforms: ${platforms.join(", ")}
+Platform limits: ${platforms.map((p) => `${p}: ${platformConstraints[p] || 2000} chars`).join(", ")}
 
 Generate ${variations} variations, each with text, 5-8 hashtags, and platform metadata.`,
           },
         ],
-        response_format: { type: 'json_object' },
+        response_format: { type: "json_object" },
         temperature: 0.9,
         max_tokens: 2000,
       });
 
-      const rawContent = completion.choices[0]?.message?.content || '{}';
+      const rawContent = completion.choices[0]?.message?.content || "{}";
       const tokensInput = completion.usage?.prompt_tokens ?? 0;
       const tokensOutput = completion.usage?.completion_tokens ?? 0;
       const durationMs = Date.now() - startTime;
@@ -97,7 +102,12 @@ Generate ${variations} variations, each with text, 5-8 hashtags, and platform me
         id: string;
         text: string;
         hashtags: string[];
-        platforms: Array<{ platform: string; charCount: number; maxChars: number; withinLimit: boolean }>;
+        platforms: Array<{
+          platform: string;
+          charCount: number;
+          maxChars: number;
+          withinLimit: boolean;
+        }>;
         qualityScore?: ReturnType<typeof scoreContent>;
       }>;
 
@@ -106,66 +116,75 @@ Generate ${variations} variations, each with text, 5-8 hashtags, and platform me
           variations: Array<{
             text: string;
             hashtags: string[];
-            platforms: Array<{ platform: string; charCount: number; maxChars: number; withinLimit: boolean }>;
+            platforms: Array<{
+              platform: string;
+              charCount: number;
+              maxChars: number;
+              withinLimit: boolean;
+            }>;
           }>;
         };
 
         generatedVariations = parsed.variations.map((v, i) => ({
           id: `gen-${Date.now()}-${i}`,
           text: v.text,
-          hashtags: (v.hashtags || []).map(h => h.startsWith('#') ? h.slice(1) : h),
-          platforms: platforms.map(p => ({
+          hashtags: (v.hashtags || []).map((h) =>
+            h.startsWith("#") ? h.slice(1) : h,
+          ),
+          platforms: platforms.map((p) => ({
             platform: p,
             charCount: v.text.length,
             maxChars: platformConstraints[p] || 2000,
             withinLimit: v.text.length <= (platformConstraints[p] || 2000),
           })),
-          qualityScore: scoreContent(
-            v.text,
-            platforms[0] as Platform,
-            (v.hashtags || []).map(h => h.startsWith('#') ? h.slice(1) : h)
-          ),
+          qualityScore: scoreContent(v.text, platforms[0] as Platform),
         }));
       } catch {
         // Fallback if parsing fails
-        generatedVariations = [{
-          id: `gen-${Date.now()}-0`,
-          text: rawContent,
-          hashtags: [],
-          platforms: platforms.map(p => ({
-            platform: p,
-            charCount: rawContent.length,
-            maxChars: platformConstraints[p] || 2000,
-            withinLimit: rawContent.length <= (platformConstraints[p] || 2000),
-          })),
-        }];
+        generatedVariations = [
+          {
+            id: `gen-${Date.now()}-0`,
+            text: rawContent,
+            hashtags: [],
+            platforms: platforms.map((p) => ({
+              platform: p,
+              charCount: rawContent.length,
+              maxChars: platformConstraints[p] || 2000,
+              withinLimit:
+                rawContent.length <= (platformConstraints[p] || 2000),
+            })),
+          },
+        ];
       }
 
       // Log the generation
       await prisma.aiGeneration.create({
         data: {
           userId: user.sub,
-          generationType: 'text',
+          generationType: "text",
           prompt,
-          modelUsed: 'gpt-4o-mini',
-          outputText: JSON.stringify(generatedVariations.map(v => v.text)),
+          modelUsed: "gpt-4o-mini",
+          outputText: JSON.stringify(generatedVariations.map((v) => v.text)),
           tokensInput,
           tokensOutput,
-          costCents: Math.ceil((tokensInput / 1_000_000) * 15 + (tokensOutput / 1_000_000) * 60),
+          costCents: Math.ceil(
+            (tokensInput / 1_000_000) * 15 + (tokensOutput / 1_000_000) * 60,
+          ),
           durationMs,
         },
       });
 
       return NextResponse.json({
         data: {
-          type: 'text',
+          type: "text",
           variations: generatedVariations,
-          suggestedHashtags: generatedVariations[0]?.hashtags?.map(h => `#${h}`) ?? [],
+          suggestedHashtags:
+            generatedVariations[0]?.hashtags?.map((h) => `#${h}`) ?? [],
         },
       });
     }
 
-    if (type === 'image') {
+    if (type === "image") {
       const result = generateImageSchema.safeParse(body);
       if (!result.success) {
         throw Errors.validation(result.error.flatten().fieldErrors);
@@ -181,7 +200,7 @@ Generate ${variations} variations, each with text, 5-8 hashtags, and platform me
         thumbnailUrl: `/api/v1/ai/placeholder?w=256&h=256&text=${encodeURIComponent(prompt.slice(0, 30))}&i=${i}`,
         width: 1024,
         height: 1024,
-        style: style || 'default',
+        style: style || "default",
       }));
 
       const durationMs = Date.now() - startTime;
@@ -189,10 +208,10 @@ Generate ${variations} variations, each with text, 5-8 hashtags, and platform me
       await prisma.aiGeneration.create({
         data: {
           userId: user.sub,
-          generationType: 'image',
+          generationType: "image",
           prompt,
-          modelUsed: 'truetwist-image-v1',
-          outputMediaUrl: JSON.stringify(images.map(img => img.url)),
+          modelUsed: "truetwist-image-v1",
+          outputMediaUrl: JSON.stringify(images.map((img) => img.url)),
           tokensInput: prompt.length,
           tokensOutput: 0,
           costCents: count * 2,
@@ -201,7 +220,7 @@ Generate ${variations} variations, each with text, 5-8 hashtags, and platform me
       });
 
       return NextResponse.json({
-        data: { type: 'image', images },
+        data: { type: "image", images },
       });
     }
 

@@ -6,15 +6,15 @@
  * Should be run periodically (e.g., daily) for posts with 24h+ of analytics data.
  */
 
-import { prisma } from '@/lib/prisma';
-import { computeViralScore } from './viral-score';
-import type { ViralScoreInput } from './types';
+import { prisma } from "@/lib/prisma";
+import { computeViralScore } from "./viral-score";
+import type { ViralScoreInput } from "./types";
 
 export interface CalibrationResult {
   postsAnalyzed: number;
-  meanAbsoluteError: number;       // average |predicted - actual| on 0-100 scale
-  meanBias: number;                // positive = model over-predicts
-  calibrationFactor: number;       // multiply predictions by this to recalibrate
+  meanAbsoluteError: number; // average |predicted - actual| on 0-100 scale
+  meanBias: number; // positive = model over-predicts
+  calibrationFactor: number; // multiply predictions by this to recalibrate
   topPredictionErrors: PredictionError[];
 }
 
@@ -33,7 +33,7 @@ export interface PredictionError {
 export async function runCalibrationLoop(
   userId: string,
   lookbackDays = 30,
-  minPostAge24h = true
+  minPostAge24h = true,
 ): Promise<CalibrationResult> {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - lookbackDays);
@@ -46,20 +46,20 @@ export async function runCalibrationLoop(
   const schedules = await prisma.postSchedule.findMany({
     where: {
       post: { userId },
-      status: 'posted',
+      status: "posted",
       postedAt: { gte: cutoff, lte: minPostDate },
     },
     include: {
       post: true,
       analytics: {
-        orderBy: { fetchedAt: 'desc' },
+        orderBy: { fetchedAt: "desc" },
         take: 1,
       },
       socialAccount: {
         select: { platform: true, followerCount: true },
       },
     },
-    orderBy: { postedAt: 'desc' },
+    orderBy: { postedAt: "desc" },
     take: 200,
   });
 
@@ -70,29 +70,33 @@ export async function runCalibrationLoop(
     if (!a || !schedule.postedAt) continue;
 
     const followers = schedule.socialAccount?.followerCount ?? 1000;
-    const ageHours = (Date.now() - schedule.postedAt.getTime()) / (1000 * 60 * 60);
+    const ageHours =
+      (Date.now() - schedule.postedAt.getTime()) / (1000 * 60 * 60);
+
+    // Compute engagements as sum of likes, comments, shares, saves, clicks
+    const engagements = a.likes + a.comments + a.shares + a.saves + a.clicks;
 
     // Compute what the model would predict given actual engagement data
     const input: ViralScoreInput = {
-      engagements: a.engagements,
+      engagements,
       followers,
       hours: Math.min(ageHours, 48), // cap at 48h for fair comparison
       acceleration: 0, // we don't have multi-snapshot data per post
-      shareRatio: a.engagements > 0 ? a.shares / a.engagements : 0,
+      shareRatio: engagements > 0 ? a.shares / engagements : 0,
       nonFollowerReach: Math.max(0, a.reach - followers),
       reachHours: Math.min(ageHours, 48),
       platform: schedule.platform,
-      contentFormat: 'post',
+      contentFormat: "post",
       sentimentScore: 0,
       ageHours: Math.min(ageHours, 48),
-      currentVelocity: a.engagements / Math.max(ageHours, 1),
-      peakVelocity: a.engagements / Math.max(ageHours, 1),
+      currentVelocity: engagements / Math.max(ageHours, 1),
+      peakVelocity: engagements / Math.max(ageHours, 1),
     };
 
     const predicted = computeViralScore(input);
 
     // Actual performance score: normalized engagement rate * 100
-    const engagementRate = followers > 0 ? (a.engagements / followers) * 100 : 0;
+    const engagementRate = followers > 0 ? (engagements / followers) * 100 : 0;
     // Scale to 0-100: 1% ER = ~50 score, 5% ER = ~90 score (logarithmic)
     const actualScore = Math.min(100, Math.log1p(engagementRate) * 30);
 
@@ -117,15 +121,17 @@ export async function runCalibrationLoop(
 
   const meanAbsoluteError =
     errors.reduce((sum, e) => sum + Math.abs(e.error), 0) / errors.length;
-  const meanBias =
-    errors.reduce((sum, e) => sum + e.error, 0) / errors.length;
+  const meanBias = errors.reduce((sum, e) => sum + e.error, 0) / errors.length;
 
   // Calibration factor: ratio of actual to predicted means
-  const avgPredicted = errors.reduce((s, e) => s + e.predictedScore, 0) / errors.length;
-  const avgActual = errors.reduce((s, e) => s + e.actualScore, 0) / errors.length;
-  const calibrationFactor = avgPredicted > 0
-    ? Math.round((avgActual / avgPredicted) * 1000) / 1000
-    : 1.0;
+  const avgPredicted =
+    errors.reduce((s, e) => s + e.predictedScore, 0) / errors.length;
+  const avgActual =
+    errors.reduce((s, e) => s + e.actualScore, 0) / errors.length;
+  const calibrationFactor =
+    avgPredicted > 0
+      ? Math.round((avgActual / avgPredicted) * 1000) / 1000
+      : 1.0;
 
   // Top 5 worst prediction errors
   const topErrors = [...errors]
@@ -145,6 +151,12 @@ export async function runCalibrationLoop(
  * Applies a calibration factor to a raw viral score.
  * Use the calibrationFactor from runCalibrationLoop to adjust predictions.
  */
-export function applyCalibration(rawScore: number, calibrationFactor: number): number {
-  return Math.max(0, Math.min(100, Math.round(rawScore * calibrationFactor * 100) / 100));
+export function applyCalibration(
+  rawScore: number,
+  calibrationFactor: number,
+): number {
+  return Math.max(
+    0,
+    Math.min(100, Math.round(rawScore * calibrationFactor * 100) / 100),
+  );
 }
