@@ -1214,6 +1214,136 @@ model MlsListing {
 }
 
 // ============================================
+// ADVANCED AD INTEGRATION
+// ============================================
+
+model AdWaterfallConfig {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  businessId      String   @map("business_id")
+  name            String
+  enabled         Boolean  @default(true)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  tiers AdWaterfallTier[]
+
+  @@index([userId])
+  @@index([businessId])
+  @@map("ad_waterfall_configs")
+}
+
+model AdWaterfallTier {
+  id              String   @id @default(uuid())
+  waterfallId     String   @map("waterfall_id")
+  network         String   // meta, google, tiktok, adsense, custom
+  priority        Int      // lower = higher priority (1 = primary)
+  floorCpm        Float    @default(0) @map("floor_cpm") // minimum CPM to accept
+  timeoutMs       Int      @default(3000) @map("timeout_ms")
+  enabled         Boolean  @default(true)
+  config          Json     @default("{}") // network-specific config (ad unit ID, slot, etc.)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  waterfall AdWaterfallConfig @relation(fields: [waterfallId], references: [id], onDelete: Cascade)
+
+  @@unique([waterfallId, priority])
+  @@index([waterfallId])
+  @@map("ad_waterfall_tiers")
+}
+
+model AdPositionTest {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  businessId      String    @map("business_id")
+  name            String
+  description     String?
+  status          String    @default("draft") // draft, running, completed, cancelled
+  targetMetric    String    @default("ctr") @map("target_metric") // ctr, viewability, revenue_per_session
+  minSampleSize   Int       @default(200) @map("min_sample_size")
+  winnerId        String?   @map("winner_id")
+  winnerReason    String?   @map("winner_reason")
+  startAt         DateTime? @map("start_at")
+  endAt           DateTime? @map("end_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  variants AdPositionVariant[]
+
+  @@index([userId])
+  @@index([businessId])
+  @@index([status])
+  @@map("ad_position_tests")
+}
+
+model AdPositionVariant {
+  id              String   @id @default(uuid())
+  testId          String   @map("test_id")
+  label           String   // "A", "B", "C"
+  position        String   // above_gallery, between_images, below_gallery, sidebar
+  frequency       Int      @default(1) // show ad every N images (for between_images)
+  impressions     Int      @default(0)
+  clicks          Int      @default(0)
+  viewableImpressions Int  @default(0) @map("viewable_impressions")
+  revenueCents    Int      @default(0) @map("revenue_cents")
+  sessions        Int      @default(0)
+  ctr             Float    @default(0) // click-through rate
+  viewability     Float    @default(0) // viewable impression rate
+  revenuePerSession Float  @default(0) @map("revenue_per_session")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  test AdPositionTest @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  @@index([testId])
+  @@map("ad_position_variants")
+}
+
+model AdFrequencyConfig {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  businessId      String   @map("business_id")
+  galleryType     String   @default("default") @map("gallery_type") // default, mosaic, slider, etc.
+  adEveryN        Int      @default(5) @map("ad_every_n") // show ad every N images
+  maxAdsPerPage   Int      @default(3) @map("max_ads_per_page")
+  firstAdAfter    Int      @default(3) @map("first_ad_after") // first ad after N images
+  adFreeForPremium Boolean @default(true) @map("ad_free_for_premium")
+  adFreePlans     Json     @default("[\"pro\", \"enterprise\"]") @map("ad_free_plans") // plans that get ad-free
+  enabled         Boolean  @default(true)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, businessId, galleryType])
+  @@index([userId])
+  @@index([businessId])
+  @@map("ad_frequency_configs")
+}
+
+model AdRevenueEvent {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  businessId      String   @map("business_id")
+  network         String   // meta, google, tiktok, adsense, custom
+  eventType       String   @map("event_type") // impression, click, viewable_impression, conversion
+  revenueCents    Int      @default(0) @map("revenue_cents")
+  cpm             Float    @default(0) // effective CPM
+  position        String?  // ad position if tracked
+  waterfallTier   Int?     @map("waterfall_tier") // which tier filled this slot
+  positionTestId  String?  @map("position_test_id") // linked A/B test if active
+  variantId       String?  @map("variant_id") // linked variant if active
+  metadata        Json     @default("{}")
+  occurredAt      DateTime @default(now()) @map("occurred_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([businessId])
+  @@index([network])
+  @@index([occurredAt])
+  @@index([positionTestId])
+  @@map("ad_revenue_events")
+}
+
+// ============================================
 // VIDEO A/B TESTING
 // ============================================
 
