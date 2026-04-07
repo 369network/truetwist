@@ -10,6 +10,7 @@ import {
   trendsApi,
   abTestApi,
   aiSuggestionsApi,
+  videoAbTestApi,
 } from "@/lib/api-client";
 
 // ── AI Generation ──
@@ -244,6 +245,93 @@ export function useStopAbTest() {
     mutationFn: (id: string) => abTestApi.stop(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["abTests"] });
+    },
+  });
+}
+
+// ── Video A/B Testing ──
+
+export function useVideoAbTests(params?: Parameters<typeof videoAbTestApi.list>[0]) {
+  return useQuery({
+    queryKey: ["videoAbTests", params],
+    queryFn: () => videoAbTestApi.list(params),
+  });
+}
+
+export function useVideoAbTest(id: string) {
+  return useQuery({
+    queryKey: ["videoAbTests", id],
+    queryFn: () => videoAbTestApi.get(id),
+    enabled: !!id,
+    refetchInterval: (query) => {
+      const status = query.state.data?.data?.status;
+      // Poll more frequently during generation, less during running
+      if (status === 'generating') return 5000;
+      if (status === 'running') return 15000;
+      return false;
+    },
+  });
+}
+
+export function useCreateVideoAbTest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Parameters<typeof videoAbTestApi.create>[0]) =>
+      videoAbTestApi.create(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["videoAbTests"] });
+    },
+  });
+}
+
+export function useVideoAbTestAction() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      action,
+      winnerId,
+    }: {
+      id: string;
+      action: 'generate' | 'complete' | 'cancel';
+      winnerId?: string;
+    }) => videoAbTestApi.action(id, action, winnerId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["videoAbTests"] });
+    },
+  });
+}
+
+export function useUpdateVideoVariantMetrics() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      testId,
+      variantId,
+      ...metrics
+    }: {
+      testId: string;
+      variantId: string;
+      impressions?: number;
+      clicks?: number;
+      watchTimeSeconds?: number;
+      completionRate?: number;
+      conversions?: number;
+      engagements?: number;
+    }) => videoAbTestApi.updateMetrics(testId, variantId, metrics),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["videoAbTests"] });
+    },
+  });
+}
+
+export function useSelectVideoAbTestWinner() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ testId, winnerId }: { testId: string; winnerId?: string }) =>
+      videoAbTestApi.selectWinner(testId, winnerId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["videoAbTests"] });
     },
   });
 }

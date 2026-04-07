@@ -36,6 +36,8 @@ export const contentGenerationQueue = lazyQueue('content-generation-queue');
 export const analyticsQueue = lazyQueue('analytics-queue');
 export const deadLetterQueue = lazyQueue('dead-letter-queue');
 export const preflightQueue = lazyQueue('preflight-queue');
+export const shopifySyncQueue = lazyQueue('shopify-sync-queue');
+export const mlsSyncQueue = lazyQueue('mls-sync-queue');
 
 // Flow producer for multi-step workflows (preflight -> post -> analytics)
 let _flowProducer: FlowProducer | undefined;
@@ -85,6 +87,16 @@ export interface AnalyticsJobData {
   postScheduleId: string;
   platform: string;
   platformPostId: string;
+}
+
+export interface ShopifySyncJobData {
+  connectionId: string;
+  businessId: string;
+}
+
+export interface MlsSyncJobData {
+  connectionId: string;
+  businessId: string;
 }
 
 export interface DeadLetterJobData {
@@ -166,6 +178,26 @@ export async function addContentGenerationJob(data: ContentGenerationJobData) {
     backoff: { type: 'exponential', delay: 60000 },
     removeOnComplete: { count: 1000 },
     removeOnFail: { count: 5000 },
+  });
+}
+
+export async function addShopifySyncJob(data: ShopifySyncJobData) {
+  return shopifySyncQueue.add('shopify-sync', data, {
+    attempts: 3,
+    backoff: { type: 'exponential', delay: 30000 },
+    removeOnComplete: { count: 500 },
+    removeOnFail: { count: 1000 },
+    jobId: `shopify-sync-${data.connectionId}`,
+  });
+}
+
+export async function addMlsSyncJob(data: MlsSyncJobData) {
+  return mlsSyncQueue.add('mls-sync', data, {
+    attempts: 3,
+    backoff: { type: 'exponential', delay: 30000 },
+    removeOnComplete: { count: 500 },
+    removeOnFail: { count: 1000 },
+    jobId: `mls-sync-${data.connectionId}`,
   });
 }
 
@@ -257,6 +289,24 @@ export function createAnalyticsWorker(
   });
 }
 
+export function createShopifySyncWorker(
+  processor: (job: Job<ShopifySyncJobData>) => Promise<void>
+) {
+  return new Worker<ShopifySyncJobData>('shopify-sync-queue', processor, {
+    connection: getConnection(),
+    concurrency: 2,
+  });
+}
+
+export function createMlsSyncWorker(
+  processor: (job: Job<MlsSyncJobData>) => Promise<void>
+) {
+  return new Worker<MlsSyncJobData>('mls-sync-queue', processor, {
+    connection: getConnection(),
+    concurrency: 2,
+  });
+}
+
 // ============================================
 // Queue Stats
 // ============================================
@@ -273,12 +323,14 @@ export async function getQueueStats(queue: Queue) {
 }
 
 export async function getAllQueueStats() {
-  const [posting, preflight, analytics, deadLetter, contentGen] = await Promise.all([
+  const [posting, preflight, analytics, deadLetter, contentGen, shopifySync, mlsSync] = await Promise.all([
     getQueueStats(postingQueue),
     getQueueStats(preflightQueue),
     getQueueStats(analyticsQueue),
     getQueueStats(deadLetterQueue),
     getQueueStats(contentGenerationQueue),
+    getQueueStats(shopifySyncQueue),
+    getQueueStats(mlsSyncQueue),
   ]);
-  return { posting, preflight, analytics, deadLetter, contentGen };
+  return { posting, preflight, analytics, deadLetter, contentGen, shopifySync, mlsSync };
 }
