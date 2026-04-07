@@ -242,8 +242,8 @@ const features = [
 const pricingTiers = [
   {
     name: "Starter",
-    price: "$0",
-    period: "/mo",
+    price: "Free",
+    period: "",
     desc: "For individuals getting started",
     highlight: false,
     features: [
@@ -481,7 +481,7 @@ export default function LandingPage() {
             </div>
 
             <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold text-white leading-tight mb-6 tracking-tight">
-              Content that stops
+              Content that stops{" "}
               <br />
               the scroll.{" "}
               <span className="bg-gradient-to-r from-coral-400 to-coral-500 bg-clip-text text-transparent">
