@@ -14,6 +14,10 @@ import {
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
+// The request() function checks `typeof window !== 'undefined'` before reading
+// localStorage. In vitest's node environment `window` is undefined, so we must
+// define both `window` and `localStorage` for the token-path tests.
+Object.defineProperty(global, 'window', { value: {}, writable: true, configurable: true });
 Object.defineProperty(global, 'localStorage', {
   value: { getItem: vi.fn().mockReturnValue('test-token') },
   writable: true,

@@ -6,18 +6,27 @@ import type { PostJob, PostContent, Platform } from '@/lib/social/types';
 // Module mocks
 // ---------------------------------------------------------------------------
 
-// Capture mock function references so tests can assert on them.
-const mockAdd = vi.fn().mockResolvedValue({ id: 'job-1' });
-const mockGetJob = vi.fn();
-const mockClose = vi.fn().mockResolvedValue(undefined);
-const mockGetWaitingCount = vi.fn().mockResolvedValue(5);
-const mockGetActiveCount = vi.fn().mockResolvedValue(2);
-const mockGetDelayedCount = vi.fn().mockResolvedValue(3);
-const mockGetFailedCount = vi.fn().mockResolvedValue(1);
-const mockGetCompletedCount = vi.fn().mockResolvedValue(100);
-
-const mockWorkerOn = vi.fn();
-const mockWorkerClose = vi.fn().mockResolvedValue(undefined);
+// vi.hoisted ensures these are available when vi.mock factories execute (hoisted).
+const {
+  mockAdd, mockGetJob, mockClose,
+  mockGetWaitingCount, mockGetActiveCount, mockGetDelayedCount,
+  mockGetFailedCount, mockGetCompletedCount,
+  mockWorkerOn, mockWorkerClose,
+  mockValidateContent, mockPublish,
+} = vi.hoisted(() => ({
+  mockAdd: vi.fn().mockResolvedValue({ id: 'job-1' }),
+  mockGetJob: vi.fn(),
+  mockClose: vi.fn().mockResolvedValue(undefined),
+  mockGetWaitingCount: vi.fn().mockResolvedValue(5),
+  mockGetActiveCount: vi.fn().mockResolvedValue(2),
+  mockGetDelayedCount: vi.fn().mockResolvedValue(3),
+  mockGetFailedCount: vi.fn().mockResolvedValue(1),
+  mockGetCompletedCount: vi.fn().mockResolvedValue(100),
+  mockWorkerOn: vi.fn(),
+  mockWorkerClose: vi.fn().mockResolvedValue(undefined),
+  mockValidateContent: vi.fn().mockReturnValue([]),
+  mockPublish: vi.fn().mockResolvedValue({ success: true, platformPostId: 'post-123' }),
+}));
 
 vi.mock('bullmq', () => ({
   Queue: vi.fn().mockImplementation(() => ({
@@ -36,9 +45,6 @@ vi.mock('bullmq', () => ({
   })),
   Job: vi.fn(),
 }));
-
-const mockValidateContent = vi.fn().mockReturnValue([]);
-const mockPublish = vi.fn().mockResolvedValue({ success: true, platformPostId: 'post-123' });
 
 vi.mock('../platforms', () => ({
   getPlatformAdapter: vi.fn().mockReturnValue({
