@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { errorResponse, Errors } from '@/lib/errors';
 import { prisma } from '@/lib/prisma';
 import { AdAccountManager } from '@/lib/ads/ad-account-manager';
+import { verifyOAuthState } from '@/lib/ads/oauth-state';
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,11 +19,9 @@ export async function GET(request: NextRequest) {
       throw Errors.badRequest('Missing code or state parameter');
     }
 
-    let stateData: { userId: string };
-    try {
-      stateData = JSON.parse(Buffer.from(state, 'base64url').toString());
-    } catch {
-      throw Errors.badRequest('Invalid state parameter');
+    const stateData = verifyOAuthState(state);
+    if (!stateData) {
+      throw Errors.badRequest('Invalid or expired OAuth state');
     }
 
     const credentials = await AdAccountManager.exchangeAndEncrypt('meta', '', code);
