@@ -51,6 +51,9 @@ model User {
   dataDeletionRequests DataDeletionRequest[]
   contentFeedbacks     ContentFeedback[]
   videoAbTests         VideoAbTest[]
+  adAccounts           AdAccount[]
+  adCampaignSets       AdCampaignSet[]
+  adAuditLogs          AdAuditLog[]
 
   @@map("users")
 }
@@ -1413,4 +1416,137 @@ model Waitlist {
   createdAt   DateTime @default(now()) @map("created_at")
 
   @@map("waitlist")
+}
+
+// ============================================
+// AD ACCOUNTS & OPTIMIZATION
+// ============================================
+
+model AdAccount {
+  id                    String    @id @default(uuid())
+  userId                String    @map("user_id")
+  businessId            String?   @map("business_id")
+  platform              String    // meta, google, tiktok
+  platformAccountId     String    @map("platform_account_id")
+  accountName           String    @map("account_name")
+  encryptedAccessToken  String?   @map("encrypted_access_token")
+  encryptedRefreshToken String?   @map("encrypted_refresh_token")
+  tokenExpiresAt        DateTime? @map("token_expires_at")
+  currency              String    @default("USD")
+  timezone              String    @default("UTC")
+  status                String    @default("active") // active, paused, disconnected, error
+  lastSyncedAt          DateTime? @map("last_synced_at")
+  metadata              Json      @default("{}")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaigns  AdCampaign[]
+  metrics    AdMetricSnapshot[]
+  auditLogs  AdAuditLog[]
+
+  @@unique([platform, platformAccountId, userId])
+  @@index([userId])
+  @@index([businessId])
+  @@index([platform])
+  @@map("ad_accounts")
+}
+
+model AdCampaign {
+  id                 String    @id @default(uuid())
+  adAccountId        String    @map("ad_account_id")
+  platformCampaignId String    @map("platform_campaign_id")
+  name               String
+  status             String    @default("active") // active, paused, archived, deleted
+  objective          String?
+  dailyBudgetCents   Int?      @map("daily_budget_cents")
+  lifetimeBudgetCents Int?     @map("lifetime_budget_cents")
+  startDate          DateTime? @map("start_date")
+  endDate            DateTime? @map("end_date")
+  targeting          Json      @default("{}")
+  metadata           Json      @default("{}")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  adAccount  AdAccount              @relation(fields: [adAccountId], references: [id], onDelete: Cascade)
+  metrics    AdMetricSnapshot[]
+  setMembers AdCampaignSetMember[]
+
+  @@unique([adAccountId, platformCampaignId])
+  @@index([adAccountId])
+  @@index([status])
+  @@map("ad_campaigns")
+}
+
+model AdCampaignSet {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  name        String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user    User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  members AdCampaignSetMember[]
+
+  @@map("ad_campaign_sets")
+}
+
+model AdCampaignSetMember {
+  id         String   @id @default(uuid())
+  setId      String   @map("set_id")
+  campaignId String   @map("campaign_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  set      AdCampaignSet @relation(fields: [setId], references: [id], onDelete: Cascade)
+  campaign AdCampaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([setId, campaignId])
+  @@map("ad_campaign_set_members")
+}
+
+model AdMetricSnapshot {
+  id           String   @id @default(uuid())
+  adAccountId  String   @map("ad_account_id")
+  campaignId   String?  @map("campaign_id")
+  date         DateTime @db.Date
+  impressions  Int      @default(0)
+  clicks       Int      @default(0)
+  spendCents   Int      @default(0) @map("spend_cents")
+  conversions  Int      @default(0)
+  revenueCents Int      @default(0) @map("revenue_cents")
+  ctr          Decimal  @default(0) @db.Decimal(8, 6)
+  cpcCents     Int      @default(0) @map("cpc_cents")
+  cpmCents     Int      @default(0) @map("cpm_cents")
+  roas         Decimal  @default(0) @db.Decimal(10, 4)
+  platformData Json     @default("{}") @map("platform_data")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  adAccount AdAccount   @relation(fields: [adAccountId], references: [id], onDelete: Cascade)
+  campaign  AdCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+
+  @@unique([adAccountId, campaignId, date])
+  @@index([adAccountId, date])
+  @@index([campaignId, date])
+  @@map("ad_metric_snapshots")
+}
+
+model AdAuditLog {
+  id          String   @id @default(uuid())
+  userId      String?  @map("user_id")
+  adAccountId String?  @map("ad_account_id")
+  action      String
+  entityType  String   @map("entity_type")
+  entityId    String?  @map("entity_id")
+  details     Json     @default("{}")
+  ipAddress   String?  @map("ip_address")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user      User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  adAccount AdAccount? @relation(fields: [adAccountId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([adAccountId])
+  @@index([createdAt])
+  @@map("ad_audit_logs")
 }
