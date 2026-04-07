@@ -27,19 +27,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   // Published posts (publicly shared content)
-  const posts = await prisma.post.findMany({
-    where: { status: "posted" },
-    select: { id: true, updatedAt: true },
-    orderBy: { updatedAt: "desc" },
-    take: 5000,
-  });
+  let postPages: MetadataRoute.Sitemap = [];
+  try {
+    const posts = await prisma.post.findMany({
+      where: { status: "posted" },
+      select: { id: true, updatedAt: true },
+      orderBy: { updatedAt: "desc" },
+      take: 5000,
+    });
 
-  const postPages: MetadataRoute.Sitemap = posts.map((post) => ({
-    url: `${SITE_URL}/posts/${post.id}`,
-    lastModified: post.updatedAt,
-    changeFrequency: "monthly" as const,
-    priority: 0.6,
-  }));
+    postPages = posts.map((post) => ({
+      url: `${SITE_URL}/posts/${post.id}`,
+      lastModified: post.updatedAt,
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    }));
+  } catch {
+    // Prisma may not be available during build (no DATABASE_URL)
+  }
 
   return [...staticPages, ...postPages];
 }
