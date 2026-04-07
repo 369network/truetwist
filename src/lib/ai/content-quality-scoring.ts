@@ -1,255 +1,240 @@
+/**
+ * Content Quality Scoring Module
+ *
+ * Scores generated content across 5 heuristic dimensions without API calls (zero cost).
+ * Runs locally for instant feedback on content quality.
+ */
+
 import type { Platform } from '@/lib/social/types';
+import { PLATFORM_CONSTRAINTS } from '@/lib/social/types';
 
-export interface QualityDimensions {
-  readability: number;    // 0-100: sentence length, vocabulary complexity
-  hookStrength: number;   // 0-100: opening line engagement potential
-  ctaClarity: number;     // 0-100: call-to-action presence and clarity
-  platformFit: number;    // 0-100: adherence to platform best practices
-  authenticity: number;   // 0-100: how natural/non-generic the content feels
-}
-
-export interface ContentQualityResult {
-  overallScore: number;       // 0-100 weighted composite
-  dimensions: QualityDimensions;
+export interface QualityScore {
+  overall: number;        // 0-100 weighted composite
+  readability: number;    // 0-100
+  hookStrength: number;   // 0-100
+  ctaClarity: number;     // 0-100
+  platformFit: number;    // 0-100
+  authenticity: number;   // 0-100
   suggestions: string[];
 }
 
-// Platform-specific character limits for fitness scoring
-const PLATFORM_IDEAL_LENGTH: Record<string, { min: number; max: number }> = {
-  instagram: { min: 50, max: 150 },
-  twitter: { min: 20, max: 280 },
-  facebook: { min: 200, max: 500 },
-  linkedin: { min: 300, max: 2000 },
-  tiktok: { min: 30, max: 200 },
-  youtube: { min: 100, max: 5000 },
-  pinterest: { min: 50, max: 500 },
-  threads: { min: 20, max: 500 },
-};
-
-// Weights for composite score
-const DIMENSION_WEIGHTS = {
+// Dimension weights (must sum to 1)
+const WEIGHTS = {
   readability: 0.20,
-  hookStrength: 0.30,
-  ctaClarity: 0.15,
+  hookStrength: 0.25,
+  ctaClarity: 0.20,
   platformFit: 0.20,
   authenticity: 0.15,
 };
 
-/**
- * Computes a deterministic content quality score using text analysis heuristics.
- * This runs locally (no API call) to provide instant quality feedback.
- */
-export function scoreContent(
-  text: string,
-  platform: Platform,
-  hashtags: string[] = []
-): ContentQualityResult {
+// CTA signal words/phrases
+const CTA_PATTERNS = [
+  /\blink in bio\b/i, /\bswipe\b/i, /\bfollow\b/i, /\bshare\b/i,
+  /\bcomment\b/i, /\bsubscribe\b/i, /\bclick\b/i, /\bsave this\b/i,
+  /\bcheck out\b/i, /\btag\b/i, /\bdm\b/i, /\bsign up\b/i,
+  /\blearn more\b/i, /\bget started\b/i, /\btry\b/i, /\bjoin\b/i,
+  /\bdownload\b/i, /\bshop\b/i, /\bgrab\b/i, /\bclaim\b/i,
+  /\?$/, /\?\s/,  // questions drive engagement
+];
+
+// Hook patterns that indicate strong openings
+const HOOK_PATTERNS = [
+  /^(stop|wait|here'?s|this|the|i |my |you |we |if |what |how |why |most |nobody |everyone |imagine )/i,
+  /^\d+/,                // starts with number
+  /^[A-Z\s]{4,}/,       // ALL CAPS hook
+  /^["'""].*["'""]/, // opens with quote
+  /\?/,                  // question in first line
+  /^🔥|^⚡|^💡|^🚨|^👀|^❌|^✅/, // emoji hooks
+];
+
+// Generic/corporate filler phrases that reduce authenticity
+const GENERIC_PHRASES = [
+  /\bin today's (world|landscape|digital|fast-paced)\b/i,
+  /\bgame.?changer\b/i,
+  /\bsynergy\b/i,
+  /\bleverage\b/i,
+  /\bparadigm\b/i,
+  /\bunlock (your|the) (potential|power)\b/i,
+  /\btake it to the next level\b/i,
+  /\bdon't miss out\b/i,
+  /\blimited time\b/i,
+  /\bact now\b/i,
+  /\b(amazing|incredible|revolutionary|groundbreaking) (opportunity|solution)\b/i,
+];
+
+export function scoreContent(text: string, platform: Platform): QualityScore {
   const suggestions: string[] = [];
 
-  const readability = computeReadability(text, suggestions);
-  const hookStrength = computeHookStrength(text, platform, suggestions);
-  const ctaClarity = computeCtaClarity(text, suggestions);
-  const platformFit = computePlatformFit(text, platform, hashtags, suggestions);
-  const authenticity = computeAuthenticity(text, suggestions);
+  const readability = scoreReadability(text, suggestions);
+  const hookStrength = scoreHookStrength(text, platform, suggestions);
+  const ctaClarity = scoreCtaClarity(text, platform, suggestions);
+  const platformFit = scorePlatformFit(text, platform, suggestions);
+  const authenticity = scoreAuthenticity(text, suggestions);
 
-  const dimensions: QualityDimensions = {
+  const overall = Math.round(
+    WEIGHTS.readability * readability +
+    WEIGHTS.hookStrength * hookStrength +
+    WEIGHTS.ctaClarity * ctaClarity +
+    WEIGHTS.platformFit * platformFit +
+    WEIGHTS.authenticity * authenticity
+  );
+
+  return {
+    overall,
     readability,
     hookStrength,
     ctaClarity,
     platformFit,
     authenticity,
+    suggestions,
   };
-
-  const overallScore = Math.round(
-    DIMENSION_WEIGHTS.readability * readability +
-    DIMENSION_WEIGHTS.hookStrength * hookStrength +
-    DIMENSION_WEIGHTS.ctaClarity * ctaClarity +
-    DIMENSION_WEIGHTS.platformFit * platformFit +
-    DIMENSION_WEIGHTS.authenticity * authenticity
-  );
-
-  return { overallScore, dimensions, suggestions };
 }
 
-function computeReadability(text: string, suggestions: string[]): number {
-  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
-  const words = text.split(/\s+/).filter(w => w.length > 0);
+function scoreReadability(text: string, suggestions: string[]): number {
+  let score = 70; // base
 
-  if (words.length === 0) return 0;
-
+  const sentences = text.split(/[.!?]+/).filter((s) => s.trim().length > 0);
+  const words = text.split(/\s+/).filter((w) => w.length > 0);
   const avgWordsPerSentence = sentences.length > 0 ? words.length / sentences.length : words.length;
-  const avgWordLength = words.reduce((sum, w) => sum + w.replace(/[^a-zA-Z]/g, '').length, 0) / words.length;
 
-  // Optimal: 10-20 words per sentence for social media
-  let sentenceScore: number;
-  if (avgWordsPerSentence <= 20) {
-    sentenceScore = 100;
-  } else if (avgWordsPerSentence <= 30) {
-    sentenceScore = 80 - (avgWordsPerSentence - 20) * 2;
-  } else {
-    sentenceScore = 50;
-    suggestions.push('Shorten your sentences for better readability on social media');
-  }
-
-  // Optimal: 4-6 chars per word average
-  let wordScore: number;
-  if (avgWordLength <= 6) {
-    wordScore = 100;
-  } else if (avgWordLength <= 8) {
-    wordScore = 80;
-  } else {
-    wordScore = 60;
-    suggestions.push('Use simpler vocabulary for broader appeal');
-  }
-
-  // Check for line breaks (important for social)
-  const hasLineBreaks = text.includes('\n');
-  const lineBreakBonus = hasLineBreaks ? 10 : 0;
-
-  return clamp(Math.round((sentenceScore * 0.5 + wordScore * 0.5) + lineBreakBonus), 0, 100);
-}
-
-function computeHookStrength(text: string, platform: string, suggestions: string[]): number {
-  const firstLine = text.split('\n')[0]?.trim() || '';
-  let score = 50;
-
-  // Strong hooks tend to be short and punchy
-  if (firstLine.length > 0 && firstLine.length <= 80) score += 10;
-  if (firstLine.length > 0 && firstLine.length <= 50) score += 5;
-
-  // Question hooks
-  if (firstLine.includes('?')) score += 10;
-
-  // Number/stat hooks
-  if (/\d+%|\d+\s*(x|times|ways|tips|steps|secrets|reasons)/i.test(firstLine)) score += 15;
-
-  // Power words in hook
-  const powerWords = /stop|imagine|secret|truth|mistake|never|always|must|surprising|shocking|proven|instantly|guaranteed/i;
-  if (powerWords.test(firstLine)) score += 10;
-
-  // Emoji in hook (good for Instagram/TikTok, less so for LinkedIn)
-  // Check for common emoji ranges via surrogate pairs
-  const hasEmoji = /\uD83C[\uDF00-\uDFFF]|\uD83D[\uDC00-\uDE4F\uDE80-\uDEFF]|\u2600-\u26FF/.test(firstLine);
-  if (hasEmoji && (platform === 'instagram' || platform === 'tiktok')) score += 5;
-
-  // Penalize weak hooks
-  if (/^(hi|hello|hey|good morning|check out)/i.test(firstLine)) {
-    score -= 15;
-    suggestions.push('Start with a stronger hook — avoid generic greetings');
-  }
-
-  if (firstLine.length === 0) {
-    score = 0;
-    suggestions.push('Add a compelling opening hook');
-  }
-
-  return clamp(score, 0, 100);
-}
-
-function computeCtaClarity(text: string, suggestions: string[]): number {
-  const lastThird = text.slice(Math.floor(text.length * 0.66));
-  let score = 30;
-
-  // Check for CTA patterns
-  const ctaPatterns = /follow|subscribe|share|comment|like|save|click|link|tap|dm|reply|tag|join|sign up|download|learn more|read more|try|check out|visit|book|order|grab|get started/i;
-
-  if (ctaPatterns.test(lastThird)) {
-    score += 40;
-  } else if (ctaPatterns.test(text)) {
-    score += 20;
-  } else {
-    suggestions.push('Add a clear call-to-action at the end of your post');
-  }
-
-  // Question at the end drives engagement
-  if (text.trim().endsWith('?')) score += 15;
-
-  // Urgency words
-  if (/now|today|limited|don't miss|before|hurry|last chance/i.test(lastThird)) {
-    score += 15;
-  }
-
-  return clamp(score, 0, 100);
-}
-
-function computePlatformFit(
-  text: string,
-  platform: Platform,
-  hashtags: string[],
-  suggestions: string[]
-): number {
-  const ideal = PLATFORM_IDEAL_LENGTH[platform];
-  if (!ideal) return 70;
-
-  let score = 50;
-  const len = text.length;
-
-  // Length fitness
-  if (len >= ideal.min && len <= ideal.max) {
-    score += 30;
-  } else if (len < ideal.min) {
-    score += 10;
-    suggestions.push(`Content is short for ${platform} (ideal: ${ideal.min}-${ideal.max} chars)`);
-  } else if (len <= ideal.max * 1.5) {
-    score += 20;
-  } else {
-    suggestions.push(`Content may be too long for ${platform} (ideal: ${ideal.min}-${ideal.max} chars)`);
-  }
-
-  // Hashtag count
-  const hashtagCount = hashtags.length;
-  if (platform === 'instagram' && hashtagCount >= 5 && hashtagCount <= 15) score += 10;
-  else if (platform === 'twitter' && hashtagCount >= 1 && hashtagCount <= 3) score += 10;
-  else if (platform === 'linkedin' && hashtagCount >= 3 && hashtagCount <= 5) score += 10;
-  else if (hashtagCount >= 3 && hashtagCount <= 8) score += 5;
-
-  // Platform-specific checks
-  if (platform === 'twitter' && len > 280) {
-    score -= 20;
-    suggestions.push('Tweet exceeds 280 character limit');
-  }
-
-  if (platform === 'linkedin' && !/\n/.test(text)) {
-    suggestions.push('Use short paragraphs with line breaks for LinkedIn');
-  }
-
-  return clamp(score, 0, 100);
-}
-
-function computeAuthenticity(text: string, suggestions: string[]): number {
-  let score = 70;
-
-  // Penalize placeholder/generic patterns
-  const genericPatterns = /\[insert|\[your|\[brand|lorem ipsum|placeholder|sample text/i;
-  if (genericPatterns.test(text)) {
-    score -= 40;
-    suggestions.push('Remove placeholder text — content should be ready to publish');
-  }
-
-  // Penalize overly corporate/generic phrases
-  const corporateSpeak = /leverage|synergy|paradigm shift|thought leader|value proposition|circle back|move the needle|low-hanging fruit/i;
-  if (corporateSpeak.test(text)) {
+  // Ideal sentence length for social: 8-15 words
+  if (avgWordsPerSentence <= 15) score += 15;
+  else if (avgWordsPerSentence <= 20) score += 5;
+  else {
     score -= 10;
-    suggestions.push('Replace corporate jargon with conversational language');
+    suggestions.push('Shorten sentences for better readability (aim for 8-15 words).');
   }
 
-  // Reward specificity (numbers, names, concrete details)
-  const hasNumbers = /\d+/.test(text);
-  const hasQuotes = /"[^"]{5,}"/.test(text);
-  if (hasNumbers) score += 10;
-  if (hasQuotes) score += 10;
+  // Line breaks improve scannability
+  const lineBreaks = (text.match(/\n/g) || []).length;
+  if (lineBreaks >= 2) score += 10;
+  else if (text.length > 200) {
+    suggestions.push('Add line breaks to improve scannability.');
+  }
 
-  // Reward varied punctuation (shows expressive writing)
-  const hasQuestion = text.includes('?');
-  const hasExclamation = text.includes('!');
-  const hasDash = /—|-/.test(text);
-  if (hasQuestion) score += 5;
-  if (hasExclamation) score += 3;
-  if (hasDash) score += 2;
+  // Emoji usage (moderate is good)
+  const emojiCount = (text.match(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu) || []).length;
+  if (emojiCount >= 1 && emojiCount <= 5) score += 5;
+  else if (emojiCount > 8) {
+    score -= 5;
+    suggestions.push('Too many emojis — use 2-5 for best engagement.');
+  }
 
-  return clamp(score, 0, 100);
+  return clamp(score);
 }
 
-function clamp(value: number, min: number, max: number): number {
+function scoreHookStrength(text: string, platform: Platform, suggestions: string[]): number {
+  let score = 40; // base — hooks need to earn their points
+
+  const firstLine = text.split(/\n/)[0].trim();
+  if (!firstLine) return 20;
+
+  // Pattern matching for strong hooks
+  const matchedPatterns = HOOK_PATTERNS.filter((p) => p.test(firstLine));
+  score += matchedPatterns.length * 12;
+
+  // Short first line is better (shows fully in feeds)
+  if (firstLine.length <= 80) score += 10;
+  else if (firstLine.length > 150) {
+    score -= 10;
+    suggestions.push('Hook is too long — keep first line under 80 characters for feed visibility.');
+  }
+
+  // Platform-specific hook scoring
+  if (platform === 'twitter' && firstLine.length <= 100) score += 5;
+  if (platform === 'tiktok' && /^(stop|wait|pov|this|you won'?t)/i.test(firstLine)) score += 10;
+
+  if (score < 50) {
+    suggestions.push('Strengthen your opening hook — try a question, bold claim, or number.');
+  }
+
+  return clamp(score);
+}
+
+function scoreCtaClarity(text: string, platform: Platform, suggestions: string[]): number {
+  let score = 30; // base
+
+  const matchedCtas = CTA_PATTERNS.filter((p) => p.test(text));
+  score += matchedCtas.length * 10;
+
+  // CTA should be near the end for best conversion
+  const lines = text.split(/\n/).filter((l) => l.trim().length > 0);
+  if (lines.length > 1) {
+    const lastThird = lines.slice(Math.floor(lines.length * 0.66)).join(' ');
+    const ctaInEnd = CTA_PATTERNS.some((p) => p.test(lastThird));
+    if (ctaInEnd) score += 15;
+  }
+
+  if (matchedCtas.length === 0) {
+    suggestions.push('Add a clear call-to-action (comment, share, save, link in bio).');
+  }
+
+  return clamp(score);
+}
+
+function scorePlatformFit(text: string, platform: Platform, suggestions: string[]): number {
+  let score = 60; // base
+
+  const constraints = PLATFORM_CONSTRAINTS[platform];
+  if (!constraints) return score;
+
+  // Character count fit
+  const charRatio = text.length / constraints.maxTextLength;
+  if (charRatio <= 1) {
+    // Under limit — good. Optimal zone is 40-80% of limit
+    if (charRatio >= 0.4 && charRatio <= 0.8) score += 20;
+    else if (charRatio >= 0.2) score += 10;
+    else {
+      score -= 5;
+      suggestions.push(`Content is very short for ${platform}. Consider adding more detail.`);
+    }
+  } else {
+    score -= 20;
+    suggestions.push(`Content exceeds ${platform} character limit (${text.length}/${constraints.maxTextLength}).`);
+  }
+
+  // Hashtag count fit
+  const hashtagCount = (text.match(/#\w+/g) || []).length;
+  if (hashtagCount <= constraints.maxHashtags) score += 10;
+  else {
+    score -= 10;
+    suggestions.push(`Too many hashtags for ${platform} (max ${constraints.maxHashtags}).`);
+  }
+
+  // Platform-specific patterns
+  if (platform === 'linkedin' && text.length >= 1000) score += 10; // LinkedIn rewards long-form
+  if (platform === 'twitter' && text.length <= 250) score += 10;   // Twitter rewards brevity
+  if (platform === 'tiktok' && /\[.*\]/g.test(text)) score += 5;  // Visual cues for TikTok
+
+  return clamp(score);
+}
+
+function scoreAuthenticity(text: string, suggestions: string[]): number {
+  let score = 80; // start high, deduct for generic patterns
+
+  const matchedGeneric = GENERIC_PHRASES.filter((p) => p.test(text));
+  score -= matchedGeneric.length * 8;
+
+  // Specificity bonus: numbers, names, concrete details
+  if (/\d+%|\$\d+|\d+ (people|users|customers|followers)/i.test(text)) score += 10;
+
+  // First-person narrative signals authenticity
+  if (/\b(I|my|we|our)\b/i.test(text)) score += 5;
+
+  // Excessive exclamation marks feel fake
+  const exclamations = (text.match(/!/g) || []).length;
+  if (exclamations > 3) {
+    score -= 5;
+    suggestions.push('Reduce exclamation marks — too many feel inauthentic.');
+  }
+
+  if (matchedGeneric.length > 2) {
+    suggestions.push('Replace generic marketing phrases with specific, authentic language.');
+  }
+
+  return clamp(score);
+}
+
+function clamp(value: number, min = 0, max = 100): number {
   return Math.max(min, Math.min(max, value));
 }

@@ -1,11 +1,10 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import { openai } from "@/lib/ai/openai-client";
+import { AI_TEXT_MODEL } from "@/lib/ai/model-config";
 import { getAuthUser } from "@/middleware/auth";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || "",
-});
+import { scoreContent } from "@/lib/ai/content-quality-scoring";
+import type { Platform } from "@/lib/social/types";
 
 // Platform-specific rules from Strategist TRUA-7 design doc
 const platformRules: Record<string, string> = {
@@ -94,6 +93,7 @@ const toneInstructions: Record<string, string> = {
 
 export async function POST(request: NextRequest) {
   try {
+    // Auth check
     getAuthUser(request);
 
     const body = await request.json();
@@ -143,14 +143,7 @@ RESPONSE FORMAT: Return ONLY a JSON object with this exact structure:
   "viralScore": <number 1-100>,
   "viralFactors": ["<strength1>", "<strength2>", "<strength3>"],
   "improvements": ["<suggestion1>", "<suggestion2>"],
-  "alternativeHook": "<a different opening line/hook for A/B testing>",
-  "qualityScore": {
-    "readability": <number 1-10>,
-    "hookStrength": <number 1-10>,
-    "ctaClarity": <number 1-10>,
-    "platformFit": <number 1-10>,
-    "authenticity": <number 1-10>
-  }
+  "alternativeHook": "<a different opening line/hook for A/B testing>"
 }`;
 
         const userPrompt = `Create ${contentTypeName} about: "${topic}"
@@ -164,12 +157,11 @@ After writing the content, also:
 2. Analyze viral potential (score 1-100) and list 3 strengths
 3. Suggest 2 improvements
 4. Write one alternative opening hook for A/B testing
-5. Rate content quality across 5 dimensions (1-10 each)
 
 Be specific to the topic "${topic}" — include real details, insights, or perspectives.`;
 
         const completion = await openai.chat.completions.create({
-          model: "gpt-4o-mini",
+          model: AI_TEXT_MODEL,
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
@@ -187,13 +179,6 @@ Be specific to the topic "${topic}" — include real details, insights, or persp
         let viralFactors: string[] = [];
         let improvements: string[] = [];
         let alternativeHook = "";
-        let qualityScore = {
-          readability: 5,
-          hookStrength: 5,
-          ctaClarity: 5,
-          platformFit: 5,
-          authenticity: 5,
-        };
 
         try {
           const parsed = JSON.parse(rawContent);
@@ -205,15 +190,6 @@ Be specific to the topic "${topic}" — include real details, insights, or persp
           viralFactors = parsed.viralFactors || [];
           improvements = parsed.improvements || [];
           alternativeHook = parsed.alternativeHook || "";
-          if (parsed.qualityScore) {
-            qualityScore = {
-              readability: parsed.qualityScore.readability || 7,
-              hookStrength: parsed.qualityScore.hookStrength || 7,
-              ctaClarity: parsed.qualityScore.ctaClarity || 7,
-              platformFit: parsed.qualityScore.platformFit || 7,
-              authenticity: parsed.qualityScore.authenticity || 7,
-            };
-          }
         } catch (parseError) {
           console.warn(`[TrueTwist AI] Failed to parse structured response for ${platform}, using raw content with neutral defaults`, parseError);
           content = rawContent;
@@ -223,6 +199,9 @@ Be specific to the topic "${topic}" — include real details, insights, or persp
             .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
             .slice(0, 5);
         }
+
+        // Run local quality scoring (zero API cost)
+        const qualityScore = scoreContent(content, platform as Platform);
 
         return {
           id: Math.random().toString(36).slice(2),
@@ -242,6 +221,13 @@ Be specific to the topic "${topic}" — include real details, insights, or persp
     return NextResponse.json({ posts: results });
   } catch (error: any) {
     console.error("Generate API error:", error);
+
+    if (error?.statusCode === 401 || error?.message?.includes('unauthorized')) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
 
     if (error?.status === 401 || error?.code === "invalid_api_key") {
       return NextResponse.json(

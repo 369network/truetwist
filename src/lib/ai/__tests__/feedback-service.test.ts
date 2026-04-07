@@ -1,30 +1,33 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  recordFeedback,
-  getUserFeedbackStats,
-  getGenerationScore,
-} from '../feedback-service';
 
+// Mock Prisma before importing the service
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     contentFeedback: {
       create: vi.fn(),
-      groupBy: vi.fn(),
       findMany: vi.fn(),
     },
   },
 }));
 
+import { recordFeedback, getGenerationScore, getUserFeedbackProfile } from '../feedback-service';
 import { prisma } from '@/lib/prisma';
 
-describe('feedback-service', () => {
+const mockPrisma = prisma as unknown as {
+  contentFeedback: {
+    create: ReturnType<typeof vi.fn>;
+    findMany: ReturnType<typeof vi.fn>;
+  };
+};
+
+describe('Feedback Service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   describe('recordFeedback', () => {
-    it('should create a feedback record with positive signal weight for "used"', async () => {
-      vi.mocked(prisma.contentFeedback.create).mockResolvedValue({} as any);
+    it('creates a feedback record', async () => {
+      mockPrisma.contentFeedback.create.mockResolvedValue({ id: 'fb-1' });
 
       await recordFeedback({
         userId: 'user-1',
@@ -32,162 +35,140 @@ describe('feedback-service', () => {
         action: 'used',
       });
 
-      expect(prisma.contentFeedback.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
+      expect(mockPrisma.contentFeedback.create).toHaveBeenCalledWith({
+        data: {
           userId: 'user-1',
           generationId: 'gen-1',
           action: 'used',
-          signalWeight: 1.0,
-        }),
+          metadata: {},
+        },
       });
     });
 
-    it('should assign negative signal weight for "discarded"', async () => {
-      vi.mocked(prisma.contentFeedback.create).mockResolvedValue({} as any);
-
-      await recordFeedback({
-        userId: 'user-1',
-        generationId: 'gen-1',
-        action: 'discarded',
-      });
-
-      expect(prisma.contentFeedback.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
-          signalWeight: -0.5,
-        }),
-      });
-    });
-
-    it('should assign partial weight for "edited"', async () => {
-      vi.mocked(prisma.contentFeedback.create).mockResolvedValue({} as any);
+    it('passes metadata when provided', async () => {
+      mockPrisma.contentFeedback.create.mockResolvedValue({ id: 'fb-2' });
 
       await recordFeedback({
         userId: 'user-1',
         generationId: 'gen-1',
         action: 'edited',
-        editDistance: 0.3,
+        metadata: { editDistance: 15 },
       });
 
-      expect(prisma.contentFeedback.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
+      expect(mockPrisma.contentFeedback.create).toHaveBeenCalledWith({
+        data: {
+          userId: 'user-1',
+          generationId: 'gen-1',
           action: 'edited',
-          signalWeight: 0.5,
-          editDistance: 0.3,
-        }),
+          metadata: { editDistance: 15 },
+        },
       });
-    });
-
-    it('should assign highest weight for "shared"', async () => {
-      vi.mocked(prisma.contentFeedback.create).mockResolvedValue({} as any);
-
-      await recordFeedback({
-        userId: 'user-1',
-        generationId: 'gen-1',
-        action: 'shared',
-      });
-
-      expect(prisma.contentFeedback.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
-          signalWeight: 1.5,
-        }),
-      });
-    });
-
-    it('should pass platform and metadata through', async () => {
-      vi.mocked(prisma.contentFeedback.create).mockResolvedValue({} as any);
-
-      await recordFeedback({
-        userId: 'user-1',
-        generationId: 'gen-1',
-        action: 'used',
-        platform: 'instagram',
-        metadata: { variant: 'A' },
-      });
-
-      expect(prisma.contentFeedback.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
-          platform: 'instagram',
-          metadata: { variant: 'A' },
-        }),
-      });
-    });
-  });
-
-  describe('getUserFeedbackStats', () => {
-    it('should return zeroed stats when no feedback exists', async () => {
-      vi.mocked(prisma.contentFeedback.groupBy).mockResolvedValue([] as any);
-
-      const stats = await getUserFeedbackStats('user-1');
-
-      expect(stats.totalGenerations).toBe(0);
-      expect(stats.usedAsIs).toBe(0);
-      expect(stats.useRate).toBe(0);
-      expect(stats.discardRate).toBe(0);
-    });
-
-    it('should compute correct rates from grouped feedback', async () => {
-      vi.mocked(prisma.contentFeedback.groupBy).mockResolvedValue([
-        { action: 'used', _count: { action: 10 } },
-        { action: 'edited', _count: { action: 5 } },
-        { action: 'discarded', _count: { action: 5 } },
-      ] as any);
-
-      const stats = await getUserFeedbackStats('user-1');
-
-      expect(stats.totalGenerations).toBe(20);
-      expect(stats.usedAsIs).toBe(10);
-      expect(stats.edited).toBe(5);
-      expect(stats.discarded).toBe(5);
-      expect(stats.useRate).toBe(0.75); // (10 + 5) / 20
-      expect(stats.editRate).toBeCloseTo(0.333, 2); // 5 / 15
-      expect(stats.discardRate).toBe(0.25); // 5 / 20
     });
   });
 
   describe('getGenerationScore', () => {
-    const now = new Date();
+    it('returns zero score for no feedback', async () => {
+      mockPrisma.contentFeedback.findMany.mockResolvedValue([]);
 
-    it('should return 0 when no feedbacks exist', async () => {
-      vi.mocked(prisma.contentFeedback.findMany).mockResolvedValue([]);
-
-      const score = await getGenerationScore('gen-1');
-      expect(score).toBe(0);
+      const result = await getGenerationScore('gen-1');
+      expect(result.score).toBe(0);
+      expect(result.totalFeedback).toBe(0);
     });
 
-    it('should compute recency-weighted average of signal weights', async () => {
-      // All feedback at same time → acts like simple average
-      vi.mocked(prisma.contentFeedback.findMany).mockResolvedValue([
-        { signalWeight: 1.0, createdAt: now },
-        { signalWeight: 0.5, createdAt: now },
-        { signalWeight: -0.5, createdAt: now },
-      ] as any);
+    it('returns positive score for used feedback', async () => {
+      mockPrisma.contentFeedback.findMany.mockResolvedValue([
+        { action: 'used', createdAt: new Date() },
+      ]);
 
-      const score = await getGenerationScore('gen-1');
-      expect(score).toBeCloseTo(0.333, 2);
+      const result = await getGenerationScore('gen-1');
+      expect(result.score).toBeGreaterThan(0);
+      expect(result.totalFeedback).toBe(1);
     });
 
-    it('should weight recent feedback more heavily', async () => {
-      const recent = new Date();
-      const old = new Date(recent.getTime() - 30 * 24 * 60 * 60 * 1000); // 30 days ago
+    it('returns negative score for discarded feedback', async () => {
+      mockPrisma.contentFeedback.findMany.mockResolvedValue([
+        { action: 'discarded', createdAt: new Date() },
+      ]);
 
-      vi.mocked(prisma.contentFeedback.findMany).mockResolvedValue([
-        { signalWeight: 1.0, createdAt: recent },  // positive, recent
-        { signalWeight: -1.0, createdAt: old },     // negative, old
-      ] as any);
-
-      const score = await getGenerationScore('gen-1');
-      // Recent positive should dominate over old negative
-      expect(score).toBeGreaterThan(0);
+      const result = await getGenerationScore('gen-1');
+      expect(result.score).toBeLessThan(0);
     });
 
-    it('should return positive score for all positive same-time feedback', async () => {
-      vi.mocked(prisma.contentFeedback.findMany).mockResolvedValue([
-        { signalWeight: 1.0, createdAt: now },
-        { signalWeight: 1.5, createdAt: now },
-      ] as any);
+    it('weighs recent feedback more than old feedback', async () => {
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-      const score = await getGenerationScore('gen-1');
-      expect(score).toBeCloseTo(1.25);
+      // Scenario: old positive, recent negative
+      mockPrisma.contentFeedback.findMany.mockResolvedValue([
+        { action: 'used', createdAt: thirtyDaysAgo },
+        { action: 'discarded', createdAt: now },
+      ]);
+
+      const result = await getGenerationScore('gen-1');
+      // Recent negative should dominate
+      expect(result.score).toBeLessThan(0.5);
+      expect(result.recentBias).toBeGreaterThan(0);
+    });
+
+    it('clamps score between -1 and 1', async () => {
+      mockPrisma.contentFeedback.findMany.mockResolvedValue([
+        { action: 'used', createdAt: new Date() },
+        { action: 'shared', createdAt: new Date() },
+        { action: 'favorited', createdAt: new Date() },
+      ]);
+
+      const result = await getGenerationScore('gen-1');
+      expect(result.score).toBeLessThanOrEqual(1);
+      expect(result.score).toBeGreaterThanOrEqual(-1);
+    });
+
+    it('handles mixed positive/negative feedback', async () => {
+      mockPrisma.contentFeedback.findMany.mockResolvedValue([
+        { action: 'used', createdAt: new Date() },
+        { action: 'discarded', createdAt: new Date() },
+      ]);
+
+      const result = await getGenerationScore('gen-1');
+      // Should be between pure positive and pure negative
+      expect(result.score).toBeGreaterThan(-1);
+      expect(result.score).toBeLessThan(1);
+    });
+  });
+
+  describe('getUserFeedbackProfile', () => {
+    it('returns empty profile for no feedback', async () => {
+      mockPrisma.contentFeedback.findMany.mockResolvedValue([]);
+
+      const result = await getUserFeedbackProfile('user-1');
+      expect(result.totalGenerations).toBe(0);
+      expect(result.avgScore).toBe(0);
+      expect(result.actionBreakdown).toEqual({});
+    });
+
+    it('computes action breakdown correctly', async () => {
+      mockPrisma.contentFeedback.findMany.mockResolvedValue([
+        { action: 'used', createdAt: new Date() },
+        { action: 'used', createdAt: new Date() },
+        { action: 'edited', createdAt: new Date() },
+        { action: 'discarded', createdAt: new Date() },
+      ]);
+
+      const result = await getUserFeedbackProfile('user-1');
+      expect(result.totalGenerations).toBe(4);
+      expect(result.actionBreakdown.used).toBe(2);
+      expect(result.actionBreakdown.edited).toBe(1);
+      expect(result.actionBreakdown.discarded).toBe(1);
+    });
+
+    it('computes average score correctly', async () => {
+      mockPrisma.contentFeedback.findMany.mockResolvedValue([
+        { action: 'used', createdAt: new Date() },      // weight: 1.0
+        { action: 'discarded', createdAt: new Date() },  // weight: -0.5
+      ]);
+
+      const result = await getUserFeedbackProfile('user-1');
+      // avg = (1.0 + -0.5) / 2 = 0.25
+      expect(result.avgScore).toBeCloseTo(0.25, 2);
     });
   });
 });

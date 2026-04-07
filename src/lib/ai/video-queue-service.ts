@@ -9,12 +9,36 @@ import {
   RunwayApiError,
 } from './runway-client';
 import { generateVideo as generateVideoFoundation } from './video-generation-service';
-import type { BrandContext, VideoAspectRatio } from './types';
+import {
+  getProvider,
+  getDefaultProvider,
+  mapTemplate,
+  VideoProviderError,
+} from '@/lib/video-providers';
+import type { VideoProviderName } from '@/lib/video-providers';
+import type { BrandContext, VideoAspectRatio, VideoTemplate } from './types';
 import type { Platform } from '@/lib/social/types';
 
 // ============================================
 // Video Generation Queue Service
 // ============================================
+
+/**
+ * Resolve which provider string to store on the job record.
+ * Priority: explicit preference → Synthesia → HeyGen → Runway → fallback.
+ */
+function resolveProvider(preferred?: VideoProviderName): string {
+  if (preferred) {
+    const provider = getProvider(preferred);
+    if (provider.isConfigured()) return preferred;
+  }
+
+  const defaultProvider = getDefaultProvider();
+  if (defaultProvider) return defaultProvider.name;
+
+  // Legacy path: Runway or fallback
+  return isConfigured() ? 'runway' : 'fallback';
+}
 
 export type VideoJobStatus = 'queued' | 'generating' | 'processing' | 'ready' | 'failed';
 
@@ -31,6 +55,10 @@ export interface QueueVideoRequest {
   batchGroup?: string;
   parentJobId?: string;
   metadata?: Record<string, unknown>;
+  /** Explicitly request a provider. Falls back to auto-selection if omitted. */
+  preferredProvider?: VideoProviderName;
+  avatarId?: string;
+  voiceId?: string;
 }
 
 export interface VideoJobSummary {
@@ -53,6 +81,9 @@ export interface VideoJobSummary {
 export async function queueVideoGeneration(req: QueueVideoRequest): Promise<VideoJobSummary> {
   const costEstimate = estimateCostCents(req.durationSeconds);
 
+  // Resolve which provider to use
+  const resolvedProvider = resolveProvider(req.preferredProvider);
+
   const job = await prisma.videoGenerationJob.create({
     data: {
       userId: req.userId,
@@ -64,10 +95,14 @@ export async function queueVideoGeneration(req: QueueVideoRequest): Promise<Vide
       durationSeconds: req.durationSeconds,
       scriptJson: req.scriptJson ? JSON.parse(JSON.stringify(req.scriptJson)) : undefined,
       costCents: costEstimate,
-      provider: isConfigured() ? 'runway' : 'fallback',
+      provider: resolvedProvider,
       parentJobId: req.parentJobId ?? null,
       batchGroup: req.batchGroup ?? null,
-      metadata: req.metadata ? JSON.parse(JSON.stringify(req.metadata)) : {},
+      metadata: {
+        ...(req.metadata ? JSON.parse(JSON.stringify(req.metadata)) : {}),
+        ...(req.avatarId ? { avatarId: req.avatarId } : {}),
+        ...(req.voiceId ? { voiceId: req.voiceId } : {}),
+      },
     },
   });
 
@@ -104,7 +139,54 @@ export async function processVideoJob(videoJobId: string, brand: BrandContext): 
     let videoUrl: string;
     let thumbnailUrl: string | undefined;
 
-    if (isConfigured()) {
+    if (job.provider === 'synthesia' || job.provider === 'heygen') {
+      // Use provider abstraction for Synthesia/HeyGen
+      const provider = getProvider(job.provider as VideoProviderName);
+      const meta = (job.metadata ?? {}) as Record<string, unknown>;
+      const mapped = mapTemplate(
+        job.provider as VideoProviderName,
+        job.template as VideoTemplate | undefined,
+        job.prompt
+      );
+
+      const result = await provider.generate({
+        prompt: mapped.enrichedScript,
+        scriptText: mapped.enrichedScript,
+        aspectRatio: job.aspectRatio as VideoAspectRatio,
+        durationSeconds: job.durationSeconds,
+        templateId: mapped.providerId || undefined,
+        avatarId: mapped.avatarId || (meta.avatarId as string | undefined),
+        voiceId: mapped.voiceId || (meta.voiceId as string | undefined),
+        backgroundUrl: meta.backgroundUrl as string | undefined,
+      });
+
+      await prisma.videoGenerationJob.update({
+        where: { id: videoJobId },
+        data: { providerJobId: result.providerJobId },
+      });
+
+      if (result.status === 'failed') {
+        throw new Error(`${job.provider} generation failed: ${result.errorMessage ?? 'unknown'}`);
+      }
+
+      // For webhook-based providers, the job stays in "generating" until
+      // the webhook callback updates it. We set the URL if already available.
+      videoUrl = result.videoUrl ?? '';
+      thumbnailUrl = result.thumbnailUrl;
+
+      if (result.status === 'pending' || result.status === 'processing') {
+        // Job is async — will be completed via webhook. Mark as generating and return.
+        await prisma.videoGenerationJob.update({
+          where: { id: videoJobId },
+          data: {
+            status: 'generating',
+            sourceVideoUrl: videoUrl || null,
+            thumbnailUrl: thumbnailUrl ?? null,
+          },
+        });
+        return;
+      }
+    } else if (isConfigured()) {
       // Use Runway Gen-3
       const { taskId } = await submitGeneration({
         prompt: job.prompt,
@@ -171,7 +253,9 @@ export async function processVideoJob(videoJobId: string, brand: BrandContext): 
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    const isRetryable = error instanceof RunwayApiError && error.isRetryable;
+    const isRetryable =
+      (error instanceof RunwayApiError && error.isRetryable) ||
+      (error instanceof VideoProviderError && error.isRetryable);
 
     const currentJob = await prisma.videoGenerationJob.findUnique({
       where: { id: videoJobId },

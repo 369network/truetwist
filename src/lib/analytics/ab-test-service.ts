@@ -20,6 +20,14 @@ interface CreateAbTestInput {
   }>;
 }
 
+interface BayesianResult {
+  probabilityBWins: number;     // P(B > A), 0-1
+  expectedLiftPercent: number;  // expected % improvement of B over A
+  credibleInterval: [number, number]; // 90% credible interval on lift
+  sufficient: boolean;          // true if >95% or <5%
+  reason: string;
+}
+
 interface SignificanceResult {
   significant: boolean;
   confidence: number;
@@ -168,6 +176,70 @@ export class AbTestService {
     });
   }
 
+  /**
+   * Bayesian significance test using Beta-Binomial model.
+   * Converges faster than z-test with small sample sizes.
+   * Returns P(variant B > variant A) via Monte Carlo simulation.
+   */
+  async checkBayesianSignificance(testId: string, simulations = 10000): Promise<BayesianResult> {
+    const test = await prisma.abTest.findUniqueOrThrow({
+      where: { id: testId },
+      include: { variants: true },
+    });
+
+    if (test.variants.length < 2) {
+      return {
+        probabilityBWins: 0.5,
+        expectedLiftPercent: 0,
+        credibleInterval: [0, 0],
+        sufficient: false,
+        reason: 'Need at least 2 variants',
+      };
+    }
+
+    const [a, b] = test.variants;
+    const metricA = this.getMetricValue(a, test.targetMetric);
+    const metricB = this.getMetricValue(b, test.targetMetric);
+
+    // Beta prior: uninformative (alpha=1, beta=1)
+    const alphaA = 1 + metricA;
+    const betaA = 1 + (a.impressions - metricA);
+    const alphaB = 1 + metricB;
+    const betaB = 1 + (b.impressions - metricB);
+
+    // Monte Carlo: sample from Beta distributions, count how often B > A
+    let bWins = 0;
+    const lifts: number[] = [];
+
+    for (let i = 0; i < simulations; i++) {
+      const sampleA = sampleBeta(alphaA, betaA);
+      const sampleB = sampleBeta(alphaB, betaB);
+      if (sampleB > sampleA) bWins++;
+      if (sampleA > 0) lifts.push((sampleB - sampleA) / sampleA);
+    }
+
+    const probabilityBWins = bWins / simulations;
+    lifts.sort((a, b) => a - b);
+    const ci5 = lifts[Math.floor(lifts.length * 0.05)] ?? 0;
+    const ci95 = lifts[Math.floor(lifts.length * 0.95)] ?? 0;
+    const expectedLift = lifts.reduce((s, v) => s + v, 0) / lifts.length;
+
+    const sufficient = probabilityBWins > 0.95 || probabilityBWins < 0.05;
+
+    return {
+      probabilityBWins: Math.round(probabilityBWins * 10000) / 10000,
+      expectedLiftPercent: Math.round(expectedLift * 10000) / 100,
+      credibleInterval: [
+        Math.round(ci5 * 10000) / 100,
+        Math.round(ci95 * 10000) / 100,
+      ],
+      sufficient,
+      reason: sufficient
+        ? `${probabilityBWins > 0.5 ? b.label : a.label} wins with ${Math.round(Math.max(probabilityBWins, 1 - probabilityBWins) * 100)}% probability`
+        : `Insufficient evidence (P(B wins) = ${Math.round(probabilityBWins * 100)}%, need >95%)`,
+    };
+  }
+
   private getMetricValue(
     variant: { impressions: number; reach: number; engagements: number; clicks: number; engagementRate: number },
     metric: string
@@ -180,4 +252,50 @@ export class AbTestService {
         return variant.engagements;
     }
   }
+}
+
+/**
+ * Sample from a Beta distribution using the Jöhnk algorithm.
+ * This is a simple, dependency-free implementation.
+ */
+function sampleBeta(alpha: number, beta: number): number {
+  if (alpha <= 0 || beta <= 0) return 0.5;
+
+  // Use Gamma sampling: Beta(a,b) = G(a) / (G(a) + G(b))
+  const x = sampleGamma(alpha);
+  const y = sampleGamma(beta);
+  return x / (x + y);
+}
+
+function sampleGamma(shape: number): number {
+  if (shape < 1) {
+    // Ahrens-Dieter for shape < 1
+    return sampleGamma(shape + 1) * Math.pow(Math.random(), 1 / shape);
+  }
+
+  // Marsaglia and Tsang's method for shape >= 1
+  const d = shape - 1 / 3;
+  const c = 1 / Math.sqrt(9 * d);
+
+  while (true) {
+    let x: number;
+    let v: number;
+    do {
+      x = normalRandom();
+      v = 1 + c * x;
+    } while (v <= 0);
+
+    v = v * v * v;
+    const u = Math.random();
+
+    if (u < 1 - 0.0331 * (x * x) * (x * x)) return d * v;
+    if (Math.log(u) < 0.5 * x * x + d * (1 - v + Math.log(v))) return d * v;
+  }
+}
+
+function normalRandom(): number {
+  // Box-Muller transform
+  const u1 = Math.random();
+  const u2 = Math.random();
+  return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
 }

@@ -565,6 +565,29 @@ model AiGeneration {
   @@index([userId])
   @@index([generationType])
   @@map("ai_generations")
+
+  feedbacks ContentFeedback[]
+}
+
+// ============================================
+// CONTENT FEEDBACK (AI generation quality signals)
+// ============================================
+
+model ContentFeedback {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  generationId String   @map("generation_id")
+  action       String   // used, edited, discarded, favorited, regenerated, shared
+  metadata     Json     @default("{}")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  generation AiGeneration @relation(fields: [generationId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([generationId])
+  @@index([action])
+  @@map("content_feedback")
 }
 
 // ============================================
@@ -613,7 +636,8 @@ model VideoGenerationJob {
   thumbnailUrl    String?   @map("thumbnail_url")
   srtUrl          String?   @map("srt_url") // subtitle file
   runwayTaskId    String?   @map("runway_task_id")
-  provider        String    @default("runway") // runway, fallback
+  providerJobId   String?   @map("provider_job_id") // generic provider task/video ID (Synthesia, HeyGen, etc.)
+  provider        String    @default("runway") // runway, synthesia, heygen, fallback
   costCents       Int       @default(0) @map("cost_cents")
   creditsCost     Int       @default(1) @map("credits_cost")
   errorMessage    String?   @map("error_message")
@@ -638,6 +662,7 @@ model VideoGenerationJob {
   @@index([status])
   @@index([batchGroup])
   @@index([runwayTaskId])
+  @@index([provider, providerJobId])
   @@map("video_generation_jobs")
 }
 

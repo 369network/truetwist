@@ -1,6 +1,8 @@
 import { openai } from './openai-client';
-import { getTextModelConfig, estimateTokenCost } from './model-config';
 import { PLATFORM_CONSTRAINTS, type Platform } from '@/lib/social/types';
+import { AI_TEXT_MODEL, estimateModelCost } from './model-config';
+import { VERTICAL_PROMPT_MODULES } from './vertical-prompts';
+import { evaluateVerticalFit } from './vertical-scoring-service';
 import type {
   BrandContext,
   TextGenerationRequest,
@@ -32,6 +34,18 @@ function buildSystemPrompt(brand: BrandContext): string {
   }
   if (brand.industry) {
     prompt += `\nIndustry: ${brand.industry}`;
+
+    // Inject vertical prompt module if industry matches
+    const verticalModule = VERTICAL_PROMPT_MODULES[brand.industry];
+    if (verticalModule) {
+      prompt += `\n\n## Industry-Specific Instructions\n${verticalModule.systemInstructions}`;
+      prompt += `\n\n## Compliance Requirements\n${verticalModule.complianceGuardrails}`;
+      prompt += `\n\nKey industry terminology to use naturally: ${verticalModule.terminology.join(', ')}`;
+      prompt += `\n\n## Example Posts (for style reference)`;
+      for (const example of verticalModule.fewShotExamples) {
+        prompt += `\n\n### ${example.label}:\n${example.text}`;
+      }
+    }
   }
   if (brand.description) {
     prompt += `\nBusiness Description: ${brand.description}`;
@@ -97,20 +111,18 @@ Generate one variant per platform per variation. Total variants: ${variantCount 
   return prompt;
 }
 
-// Cost estimation delegated to model-config.ts
 
 export async function generateText(
   request: TextGenerationRequest,
   brand: BrandContext
 ): Promise<TextGenerationResult> {
   const startTime = Date.now();
-  const modelConfig = getTextModelConfig();
 
   const systemPrompt = buildSystemPrompt(brand);
   const userPrompt = buildUserPrompt(request, brand);
 
   const response = await openai.chat.completions.create({
-    model: modelConfig.model,
+    model: AI_TEXT_MODEL,
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt },
@@ -144,12 +156,24 @@ export async function generateText(
     characterCount: v.text.length,
   }));
 
+  // Evaluate vertical fit if industry is set and matches a vertical module
+  let verticalScore = undefined;
+  if (brand.industry && VERTICAL_PROMPT_MODULES[brand.industry]) {
+    const combinedText = variants.map((v) => v.text).join('\n\n');
+    verticalScore = await evaluateVerticalFit(
+      combinedText,
+      brand.industry,
+      request.template ?? 'engagement'
+    );
+  }
+
   return {
     variants,
-    model: modelConfig.model,
+    verticalScore,
+    model: AI_TEXT_MODEL,
     tokensInput,
     tokensOutput,
-    costCents: estimateTokenCost(tokensInput, tokensOutput, modelConfig),
+    costCents: estimateModelCost(AI_TEXT_MODEL, tokensInput, tokensOutput),
     durationMs,
   };
 }
@@ -161,10 +185,8 @@ export async function generateHashtags(
 ): Promise<string[]> {
   const constraints = PLATFORM_CONSTRAINTS[platform];
 
-  const modelConfig = getTextModelConfig();
-
   const response = await openai.chat.completions.create({
-    model: modelConfig.model,
+    model: AI_TEXT_MODEL,
     messages: [
       {
         role: 'system',

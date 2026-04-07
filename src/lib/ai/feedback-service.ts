@@ -1,194 +1,119 @@
+/**
+ * Content Feedback Service
+ *
+ * Records user actions on AI-generated content (used, edited, discarded, etc.)
+ * and computes recency-weighted generation scores to improve recommendations.
+ */
+
 import { prisma } from '@/lib/prisma';
 
-/**
- * User feedback signals on AI-generated content.
- * These signals feed back into the recommendation engine
- * to improve future content generation quality.
- */
 export type FeedbackAction =
-  | 'used'         // user published the generated content as-is
-  | 'edited'       // user edited before publishing
-  | 'discarded'    // user dismissed/deleted the generated content
-  | 'favorited'    // user saved as favorite/template
-  | 'regenerated'  // user requested regeneration (implicit negative signal)
-  | 'shared';      // user shared generated content externally
+  | 'used'         // published as-is
+  | 'edited'       // published with edits
+  | 'discarded'    // generated but not used
+  | 'favorited'    // saved for later
+  | 'regenerated'  // asked for new variants
+  | 'shared';      // shared externally
 
-export interface ContentFeedbackInput {
+// Signal weights: higher = stronger positive signal
+const SIGNAL_WEIGHTS: Record<FeedbackAction, number> = {
+  used: 1.0,
+  edited: 0.6,
+  favorited: 0.8,
+  shared: 0.9,
+  regenerated: -0.3,
+  discarded: -0.5,
+};
+
+// Exponential decay half-life in days
+const DECAY_HALF_LIFE_DAYS = 14;
+
+export interface FeedbackInput {
   userId: string;
-  generationId: string;     // links to AiGeneration.id
+  generationId: string;
   action: FeedbackAction;
-  platform?: string;
-  editDistance?: number;     // 0-1 ratio of how much was changed (for 'edited')
-  postId?: string;          // if content was published, link to the post
   metadata?: Record<string, unknown>;
 }
 
-export interface FeedbackStats {
-  totalGenerations: number;
-  usedAsIs: number;
-  edited: number;
-  discarded: number;
-  favorited: number;
-  regenerated: number;
-  useRate: number;       // (used + edited) / total
-  editRate: number;      // edited / (used + edited)
-  discardRate: number;   // discarded / total
+export interface GenerationScore {
+  score: number;        // -1 to 1 weighted score
+  totalFeedback: number;
+  recentBias: number;   // how much recency affected the score
 }
 
-// Signal weights for the recommendation feedback loop
-const SIGNAL_WEIGHTS: Record<FeedbackAction, number> = {
-  used: 1.0,
-  edited: 0.5,
-  favorited: 1.2,
-  shared: 1.5,
-  discarded: -0.5,
-  regenerated: -0.3,
-};
-
-/**
- * Records a user's action on AI-generated content.
- * This data is used to improve future generation quality
- * by learning which prompts, tones, and templates produce
- * content that users actually publish.
- */
-export async function recordFeedback(input: ContentFeedbackInput): Promise<void> {
-  const weight = SIGNAL_WEIGHTS[input.action] ?? 0;
-
+export async function recordFeedback(input: FeedbackInput): Promise<void> {
   await prisma.contentFeedback.create({
     data: {
       userId: input.userId,
       generationId: input.generationId,
       action: input.action,
-      platform: input.platform,
-      editDistance: input.editDistance,
-      postId: input.postId,
-      signalWeight: weight,
       metadata: input.metadata ?? {},
     },
   });
 }
 
 /**
- * Computes feedback statistics for a user over a given period.
- * Used to calibrate the recommendation engine.
+ * Computes a recency-weighted score for a specific generation.
+ * Uses exponential decay so newer feedback weighs more than stale signals.
  */
-export async function getUserFeedbackStats(
-  userId: string,
-  daysBack: number = 30
-): Promise<FeedbackStats> {
-  const since = new Date();
-  since.setDate(since.getDate() - daysBack);
-
-  const feedbacks = await prisma.contentFeedback.groupBy({
-    by: ['action'],
-    where: { userId, createdAt: { gte: since } },
-    _count: { action: true },
-  });
-
-  const counts: Record<string, number> = {};
-  let total = 0;
-  for (const f of feedbacks) {
-    counts[f.action] = f._count.action;
-    total += f._count.action;
-  }
-
-  const used = counts['used'] ?? 0;
-  const edited = counts['edited'] ?? 0;
-  const discarded = counts['discarded'] ?? 0;
-  const favorited = counts['favorited'] ?? 0;
-  const regenerated = counts['regenerated'] ?? 0;
-
-  return {
-    totalGenerations: total,
-    usedAsIs: used,
-    edited,
-    discarded,
-    favorited,
-    regenerated,
-    useRate: total > 0 ? (used + edited) / total : 0,
-    editRate: (used + edited) > 0 ? edited / (used + edited) : 0,
-    discardRate: total > 0 ? discarded / total : 0,
-  };
-}
-
-/**
- * Computes a preference profile from feedback data.
- * Returns the platforms that produce the highest-quality results
- * and the average edit distance (how much users modify generated content).
- */
-export async function getUserPreferences(
-  userId: string,
-  daysBack: number = 90
-): Promise<{
-  bestPlatforms: string[];
-  avgEditDistance: number;
-}> {
-  const since = new Date();
-  since.setDate(since.getDate() - daysBack);
-
-  const feedbacks = await prisma.contentFeedback.findMany({
-    where: {
-      userId,
-      createdAt: { gte: since },
-      action: { in: ['used', 'favorited', 'shared'] },
-    },
-    select: { platform: true, editDistance: true },
-    orderBy: { createdAt: 'desc' },
-    take: 200,
-  });
-
-  const platformCounts: Record<string, number> = {};
-  let totalEditDistance = 0;
-  let editCount = 0;
-
-  for (const fb of feedbacks) {
-    if (fb.platform) {
-      platformCounts[fb.platform] = (platformCounts[fb.platform] ?? 0) + 1;
-    }
-    if (fb.editDistance != null) {
-      totalEditDistance += fb.editDistance;
-      editCount++;
-    }
-  }
-
-  const bestPlatforms = Object.entries(platformCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
-    .map(([p]) => p);
-
-  return {
-    bestPlatforms,
-    avgEditDistance: editCount > 0 ? totalEditDistance / editCount : 0,
-  };
-}
-
-/**
- * Computes a weighted feedback score for a specific generation.
- * Higher scores indicate content the user found more useful.
- * Applies exponential recency bias — newer feedback weighs more.
- */
-export async function getGenerationScore(generationId: string): Promise<number> {
+export async function getGenerationScore(generationId: string): Promise<GenerationScore> {
   const feedbacks = await prisma.contentFeedback.findMany({
     where: { generationId },
-    select: { signalWeight: true, createdAt: true },
     orderBy: { createdAt: 'desc' },
   });
 
-  if (feedbacks.length === 0) return 0;
+  if (feedbacks.length === 0) {
+    return { score: 0, totalFeedback: 0, recentBias: 0 };
+  }
 
   const now = Date.now();
-  const HALF_LIFE_DAYS = 14; // feedback signal halves every 14 days
-  const lambda = Math.LN2 / (HALF_LIFE_DAYS * 24 * 60 * 60 * 1000);
-
   let weightedSum = 0;
   let totalWeight = 0;
 
-  for (const f of feedbacks) {
-    const ageMs = now - new Date(f.createdAt).getTime();
-    const recencyWeight = Math.exp(-lambda * ageMs);
-    weightedSum += f.signalWeight * recencyWeight;
-    totalWeight += recencyWeight;
+  for (const fb of feedbacks) {
+    const ageDays = (now - fb.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+    const decayFactor = Math.exp(-Math.LN2 * ageDays / DECAY_HALF_LIFE_DAYS);
+    const signal = SIGNAL_WEIGHTS[fb.action as FeedbackAction] ?? 0;
+
+    weightedSum += signal * decayFactor;
+    totalWeight += decayFactor;
   }
 
-  return totalWeight > 0 ? weightedSum / totalWeight : 0;
+  const score = totalWeight > 0 ? weightedSum / totalWeight : 0;
+  const rawAvg = feedbacks.reduce((sum, fb) => sum + (SIGNAL_WEIGHTS[fb.action as FeedbackAction] ?? 0), 0) / feedbacks.length;
+  const recentBias = Math.abs(score - rawAvg);
+
+  return {
+    score: Math.max(-1, Math.min(1, score)),
+    totalFeedback: feedbacks.length,
+    recentBias: Math.round(recentBias * 1000) / 1000,
+  };
+}
+
+/**
+ * Gets aggregate feedback stats for a user to inform content preferences.
+ */
+export async function getUserFeedbackProfile(userId: string): Promise<{
+  totalGenerations: number;
+  actionBreakdown: Record<string, number>;
+  avgScore: number;
+}> {
+  const feedbacks = await prisma.contentFeedback.findMany({
+    where: { userId },
+    select: { action: true, createdAt: true },
+  });
+
+  const actionBreakdown: Record<string, number> = {};
+  let scoreSum = 0;
+
+  for (const fb of feedbacks) {
+    actionBreakdown[fb.action] = (actionBreakdown[fb.action] || 0) + 1;
+    scoreSum += SIGNAL_WEIGHTS[fb.action as FeedbackAction] ?? 0;
+  }
+
+  return {
+    totalGenerations: feedbacks.length,
+    actionBreakdown,
+    avgScore: feedbacks.length > 0 ? scoreSum / feedbacks.length : 0,
+  };
 }

@@ -10,17 +10,8 @@ export {
   getMonthlySpend,
 } from './credit-service';
 export { moderateContent } from './content-moderation';
-export { getTextModelConfig, estimateTokenCost } from './model-config';
-export type { ModelConfig } from './model-config';
-export { scoreContent } from './content-quality-scoring';
-export type { QualityDimensions, ContentQualityResult } from './content-quality-scoring';
-export {
-  recordFeedback,
-  getUserFeedbackStats,
-  getUserPreferences,
-  getGenerationScore,
-} from './feedback-service';
-export type { FeedbackAction, ContentFeedbackInput, FeedbackStats } from './feedback-service';
+export { optimizeAdBudget } from './ad-optimization-service';
+export { generateAdCreative } from './ad-creative-service';
 
 // Video Pipeline (Phase 3)
 export {

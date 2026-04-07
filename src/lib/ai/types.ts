@@ -81,8 +81,15 @@ export interface TextVariant {
   characterCount: number;
 }
 
+export interface VerticalScore {
+  score: number;          // 0-100 overall vertical fit
+  strengths: string[];    // what the content does well for this vertical
+  suggestions: string[];  // how to improve vertical fit
+}
+
 export interface TextGenerationResult {
   variants: TextVariant[];
+  verticalScore?: VerticalScore;
   model: string;
   tokensInput: number;
   tokensOutput: number;
@@ -101,6 +108,7 @@ export interface ImageGenerationRequest {
   platform: Platform;
   template?: ImageTemplate;
   style?: ImageStylePreset;
+  verticalTemplate?: string; // industry vertical for image style (e.g., 'real-estate', 'ecommerce', 'local-services')
   size?: '1024x1024' | '1792x1024' | '1024x1792';
   count?: number; // default 1, max 4
 }
@@ -206,4 +214,125 @@ export interface GenerationHistoryEntry {
   outputMediaUrl?: string;
   costCents: number;
   createdAt: Date;
+}
+
+// ============================================
+// Ad Platform Types
+// ============================================
+
+export type AdPlatform = 'meta' | 'google' | 'tiktok';
+
+export type AdObjective =
+  | 'conversions'
+  | 'awareness'
+  | 'engagement'
+  | 'traffic'
+  | 'app_installs';
+
+// ============================================
+// Ad Budget Allocation
+// ============================================
+
+export interface AdPerformanceMetric {
+  platform: AdPlatform;
+  campaignId?: string;
+  campaignName?: string;
+  spend: number;
+  impressions: number;
+  clicks: number;
+  conversions: number;
+  revenue: number;
+  ctr: number;
+  cpc: number;
+  roas: number;
+  periodStart: Date;
+  periodEnd: Date;
+}
+
+export interface AdBudgetAllocationRequest {
+  userId: string;
+  businessId: string;
+  totalBudget: number;
+  platforms: AdPlatform[];
+  historicalMetrics: AdPerformanceMetric[];
+  objective: AdObjective;
+  constraints?: {
+    minPerPlatformPct?: number;
+    maxPerPlatformPct?: number;
+  };
+}
+
+export interface PlatformAllocation {
+  platform: AdPlatform;
+  campaignId?: string;
+  recommendedBudgetPct: number;
+  recommendedBudgetAmount: number;
+  confidence: number;
+  reasoning: string;
+}
+
+export interface AdBudgetAllocationResult {
+  allocations: PlatformAllocation[];
+  totalProjectedRoas: number;
+  insights: string[];
+  model: string;
+  tokensInput: number;
+  tokensOutput: number;
+  costCents: number;
+  durationMs: number;
+}
+
+// ============================================
+// Ad Creative Generation
+// ============================================
+
+export interface AdCreativeRequest {
+  userId: string;
+  businessId: string;
+  platform: AdPlatform;
+  objective: AdObjective;
+  productOrService: string;
+  targetAudience?: string;
+  campaignTheme?: string;
+  cta?: string;
+  variantCount?: number;
+}
+
+export interface MetaAdCreative {
+  primaryText: string;
+  headline: string;
+  description: string;
+  cta: string;
+}
+
+export interface GoogleRsaCreative {
+  headlines: string[];
+  descriptions: string[];
+}
+
+export interface TikTokAdCreative {
+  overlayText: string;
+  caption: string;
+  cta: string;
+}
+
+export interface AdCreativeVariant {
+  platform: AdPlatform;
+  creative: MetaAdCreative | GoogleRsaCreative | TikTokAdCreative;
+  scores: {
+    novelty: number;
+    clarity: number;
+    ctaStrength: number;
+    overall: number;
+  };
+  recommendation: string;
+}
+
+export interface AdCreativeResult {
+  variants: AdCreativeVariant[];
+  model: string;
+  tokensInput: number;
+  tokensOutput: number;
+  costCents: number;
+  durationMs: number;
 }
