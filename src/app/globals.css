@@ -44,6 +44,48 @@
   }
 }
 
+/* Global interactive element transitions */
+@layer base {
+  button,
+  a,
+  input,
+  textarea,
+  select,
+  [role="button"] {
+    @apply transition-all duration-200;
+  }
+}
+
+/* Animate-in keyframes for modals */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-in {
+  animation-duration: 200ms;
+  animation-fill-mode: both;
+}
+.fade-in {
+  animation-name: fadeIn;
+}
+.slide-in-from-bottom-4 {
+  animation-name: slideUp;
+}
+
+/* Scrollbar hide utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
