@@ -1,162 +1,123 @@
 export const dynamic = "force-dynamic";
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { getAuthUser } from "@/middleware/auth";
-import { errorResponse, Errors } from "@/lib/errors";
-import { decryptTokenFromDb } from "@/lib/ads/encryption";
+import { NextRequest, NextResponse } from 'next/server';
+import { getAuthUser } from '@/middleware/auth';
+import { errorResponse, Errors } from '@/lib/errors';
+import { prisma } from '@/lib/prisma';
+import { AdAccountManager } from '@/lib/ads/ad-account-manager';
+import type { AdPlatform } from '@/lib/ads/types';
 
-// POST /api/v1/ads/accounts/[id]/sync - Trigger manual sync of ad account metrics
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+type RouteParams = { params: Promise<{ id: string }> };
+
+export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const user = getAuthUser(request);
     const { id } = await params;
 
-    // Check if adAccount model is available
-    if (!("adAccount" in prisma)) {
-      throw Errors.badRequest("Ad accounts feature not fully configured");
-    }
-
-    // Get ad account with encrypted token
-    const adAccount = await (prisma as any).adAccount.findFirst({
-      where: {
-        id,
-        userId: user.sub,
-        status: "active",
-      },
-      select: {
-        id: true,
-        platform: true,
-        platformAccountId: true,
-        encryptedToken: true,
-        tokenIv: true,
-        accountName: true,
-        metadata: true,
-      },
+    const account = await prisma.adAccount.findFirst({
+      where: { id, userId: user.sub, status: 'active' },
+      include: { campaigns: { where: { status: 'active' } } },
     });
 
-    if (!adAccount) {
-      throw Errors.notFound("Active ad account not found");
+    if (!account) throw Errors.notFound('Ad account');
+    if (!account.encryptedAccessToken) {
+      throw Errors.badRequest('Ad account not connected — complete OAuth first');
     }
 
-    // Decrypt token
-    let accessToken;
-    try {
-      accessToken = decryptTokenFromDb(
-        adAccount.encryptedToken,
-        adAccount.tokenIv,
+    const platform = account.platform as AdPlatform;
+    const { accessToken, refreshed, updatedCredentials } =
+      await AdAccountManager.getAccessToken({
+        platform,
+        platformAccountId: account.platformAccountId,
+        accessTokenEncrypted: account.encryptedAccessToken,
+        refreshTokenEncrypted: account.encryptedRefreshToken,
+        expiresAt: account.tokenExpiresAt,
+      });
+
+    if (refreshed && updatedCredentials) {
+      await prisma.adAccount.update({
+        where: { id },
+        data: {
+          encryptedAccessToken: updatedCredentials.accessTokenEncrypted,
+          encryptedRefreshToken: updatedCredentials.refreshTokenEncrypted,
+          tokenExpiresAt: updatedCredentials.expiresAt,
+        },
+      });
+    }
+
+    const adapter = AdAccountManager.getAdapter(platform, account.platformAccountId);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+    const dateRange = { start: yesterday, end: today };
+
+    let syncedCount = 0;
+
+    for (const campaign of account.campaigns) {
+      const metrics = await adapter.fetchCampaignMetrics(
+        accessToken,
+        campaign.platformCampaignId,
+        dateRange,
       );
-    } catch (error) {
-      console.error("Failed to decrypt token:", error);
-      throw Errors.badRequest("Failed to decrypt access token");
+
+      for (const m of metrics) {
+        const metricDate = new Date(m.date);
+        metricDate.setHours(0, 0, 0, 0);
+
+        await prisma.adMetricSnapshot.upsert({
+          where: {
+            adAccountId_campaignId_date: {
+              adAccountId: id,
+              campaignId: campaign.id,
+              date: metricDate,
+            },
+          },
+          update: {
+            impressions: m.impressions,
+            clicks: m.clicks,
+            spendCents: Math.round(m.spend * 100),
+            conversions: m.conversions,
+            roas: m.returnOnAdSpend,
+            ctr: m.clickThroughRate,
+            cpcCents: Math.round(m.costPerClick * 100),
+            platformData: m.platformSpecific ?? {},
+          },
+          create: {
+            adAccountId: id,
+            campaignId: campaign.id,
+            date: metricDate,
+            impressions: m.impressions,
+            clicks: m.clicks,
+            spendCents: Math.round(m.spend * 100),
+            conversions: m.conversions,
+            roas: m.returnOnAdSpend,
+            ctr: m.clickThroughRate,
+            cpcCents: Math.round(m.costPerClick * 100),
+            platformData: m.platformSpecific ?? {},
+          },
+        });
+        syncedCount++;
+      }
     }
 
-    // Update lastSyncedAt immediately
-    await (prisma as any).adAccount.update({
+    await prisma.adAccount.update({
       where: { id },
       data: { lastSyncedAt: new Date() },
     });
 
-    // Based on platform, sync metrics
-    let syncResult;
-    switch (adAccount.platform) {
-      case "meta_ads":
-        syncResult = await syncMetaAdsMetrics(
-          adAccount.platformAccountId,
-          accessToken,
-          adAccount.id,
-        );
-        break;
-      case "google_ads":
-        syncResult = await syncGoogleAdsMetrics(
-          adAccount.platformAccountId,
-          accessToken,
-          adAccount.id,
-        );
-        break;
-      case "tiktok_ads":
-        syncResult = await syncTikTokAdsMetrics(
-          adAccount.platformAccountId,
-          accessToken,
-          adAccount.id,
-        );
-        break;
-      case "linkedin_ads":
-        syncResult = await syncLinkedInAdsMetrics(
-          adAccount.platformAccountId,
-          accessToken,
-          adAccount.id,
-        );
-        break;
-      default:
-        throw Errors.badRequest(`Unsupported platform: ${adAccount.platform}`);
-    }
-
-    return NextResponse.json({
+    await prisma.adAuditLog.create({
       data: {
-        accountId: adAccount.id,
-        accountName: adAccount.accountName,
-        platform: adAccount.platform,
-        syncTriggered: true,
-        message: "Sync initiated",
-        details: syncResult,
+        userId: user.sub,
+        adAccountId: id,
+        action: 'metrics_synced',
+        entityType: 'ad_account',
+        entityId: id,
+        details: { campaignsSynced: account.campaigns.length, metricsUpserted: syncedCount },
       },
     });
+
+    return NextResponse.json({ data: { synced: true, metricsUpserted: syncedCount, lastSyncedAt: new Date() } });
   } catch (error) {
     return errorResponse(error);
   }
-}
-
-// Mock sync functions - in production, these would make actual API calls
-async function syncMetaAdsMetrics(
-  accountId: string,
-  accessToken: string,
-  dbAccountId: string,
-): Promise<{ status: string; message: string }> {
-  console.log(`Syncing Meta Ads account ${accountId}`);
-
-  // In production: Make Graph API calls to fetch campaigns and metrics
-  // For now, return mock response
-  return {
-    status: "queued",
-    message: "Meta Ads sync queued. Metrics will be updated shortly.",
-  };
-}
-
-async function syncGoogleAdsMetrics(
-  accountId: string,
-  accessToken: string,
-  dbAccountId: string,
-): Promise<{ status: string; message: string }> {
-  console.log(`Syncing Google Ads account ${accountId}`);
-  return {
-    status: "queued",
-    message: "Google Ads sync queued. Metrics will be updated shortly.",
-  };
-}
-
-async function syncTikTokAdsMetrics(
-  accountId: string,
-  accessToken: string,
-  dbAccountId: string,
-): Promise<{ status: string; message: string }> {
-  console.log(`Syncing TikTok Ads account ${accountId}`);
-  return {
-    status: "queued",
-    message: "TikTok Ads sync queued. Metrics will be updated shortly.",
-  };
-}
-
-async function syncLinkedInAdsMetrics(
-  accountId: string,
-  accessToken: string,
-  dbAccountId: string,
-): Promise<{ status: string; message: string }> {
-  console.log(`Syncing LinkedIn Ads account ${accountId}`);
-  return {
-    status: "queued",
-    message: "LinkedIn Ads sync queued. Metrics will be updated shortly.",
-  };
 }
