@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import Link from "next/link";
 import {
   Camera,
@@ -309,9 +309,8 @@ export default function CalendarPage() {
           })}
 
           {HOURS.map((hour) => (
-            <>
+            <Fragment key={`h-${hour}`}>
               <div
-                key={`h-${hour}`}
                 className="p-2 text-xs text-right pr-3 h-16 border-r border-b border-gray-100 dark:border-dark-border/50 bg-gray-50/50 dark:bg-dark-surface-2/50 text-gray-400 dark:text-dark-muted font-medium"
               >
                 {String(hour).padStart(2, "0")}:00
@@ -354,7 +353,7 @@ export default function CalendarPage() {
                   </div>
                 );
               })}
-            </>
+            </Fragment>
           ))}
         </div>
       </div>
