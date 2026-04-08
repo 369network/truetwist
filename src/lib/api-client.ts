@@ -137,6 +137,41 @@ export const analyticsApi = {
     if (businessId) qs.set('businessId', businessId);
     return request<{ data: AnalyticsSummary }>(`/analytics?${qs.toString()}`);
   },
+
+  getOverview: (range: string, businessId?: string) => {
+    const qs = new URLSearchParams({ range });
+    if (businessId) qs.set('businessId', businessId);
+    return request<{ data: AnalyticsOverview }>(`/analytics/overview?${qs.toString()}`);
+  },
+
+  getPlatforms: (range: string, businessId?: string) => {
+    const qs = new URLSearchParams({ range });
+    if (businessId) qs.set('businessId', businessId);
+    return request<{ data: { platforms: Record<string, PlatformMetrics> } }>(`/analytics/platforms?${qs.toString()}`);
+  },
+
+  getTopPosts: (params: { range: string; sortBy?: string; limit?: number; platform?: string; businessId?: string }) => {
+    const qs = new URLSearchParams({ range: params.range });
+    if (params.sortBy) qs.set('sortBy', params.sortBy);
+    if (params.limit) qs.set('limit', String(params.limit));
+    if (params.platform) qs.set('platform', params.platform);
+    if (params.businessId) qs.set('businessId', params.businessId);
+    return request<{ data: AnalyticsPost[]; total: number }>(`/analytics/posts?${qs.toString()}`);
+  },
+
+  getGrowth: (range: string, platform?: string, businessId?: string) => {
+    const qs = new URLSearchParams({ range });
+    if (platform) qs.set('platform', platform);
+    if (businessId) qs.set('businessId', businessId);
+    return request<{ data: { series: GrowthDataPoint[]; source: string } }>(`/analytics/growth?${qs.toString()}`);
+  },
+
+  exportData: (params: { range: string; format?: 'csv' | 'json'; platforms?: string[]; businessId?: string }) => {
+    const qs = new URLSearchParams({ range: params.range, format: params.format || 'csv' });
+    if (params.platforms?.length) qs.set('platforms', params.platforms.join(','));
+    if (params.businessId) qs.set('businessId', params.businessId);
+    return `${API_BASE}/analytics/export?${qs.toString()}`;
+  },
 };
 
 // Social Accounts
@@ -269,6 +304,68 @@ export interface AnalyticsSummary {
     avgEngagementRate: string;
   }>;
   dateRange: { start: string; end: string; days: number };
+}
+
+export interface AnalyticsOverview {
+  totalImpressions: number;
+  totalReach: number;
+  totalEngagements: number;
+  totalFollowers: number;
+  totalClicks: number;
+  engagementRate: number;
+  postCount: number;
+  changes: {
+    impressions: number;
+    engagements: number;
+    engagementRate: number;
+  };
+  dateRange: { start: string; end: string; days: number };
+}
+
+export interface PlatformMetrics {
+  impressions: number;
+  reach: number;
+  engagements: number;
+  likes: number;
+  comments: number;
+  shares: number;
+  saves: number;
+  clicks: number;
+  posts: number;
+  followers: number;
+  engagementRate: number;
+}
+
+export interface AnalyticsPost {
+  postId: string;
+  scheduleId: string;
+  content: string;
+  contentType: string;
+  platform: string;
+  account: string;
+  aiGenerated: boolean;
+  viralScore: number | null;
+  postedAt: string;
+  platformPostUrl: string | null;
+  impressions: number;
+  reach: number;
+  likes: number;
+  comments: number;
+  shares: number;
+  saves: number;
+  clicks: number;
+  engagementRate: number;
+}
+
+export interface GrowthDataPoint {
+  period: string;
+  impressions: number;
+  reach: number;
+  engagements: number;
+  followerCount?: number;
+  followerGrowth?: number;
+  postCount: number;
+  engagementRate: number;
 }
 
 // Viral Trends
