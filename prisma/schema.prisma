@@ -51,6 +51,8 @@ model User {
   dataDeletionRequests DataDeletionRequest[]
   contentFeedbacks     ContentFeedback[]
   videoAbTests         VideoAbTest[]
+  adAccounts           AdAccount[]
+  adCampaignSets       AdCampaignSet[]
 
   @@map("users")
 }
@@ -235,6 +237,8 @@ model Business {
   posts              Post[]
   shopifyConnections ShopifyConnection[]
   mlsConnections     MlsConnection[]
+  adAccounts         AdAccount[]
+  adCampaignSets     AdCampaignSet[]
 
   @@index([userId])
   @@index([teamId])
@@ -1399,6 +1403,125 @@ model VideoAbTestVariant {
   @@index([testId])
   @@index([videoJobId])
   @@map("video_ab_test_variants")
+}
+
+// ============================================
+// AD ACCOUNT MANAGEMENT
+// ============================================
+
+model AdAccount {
+  id                String    @id @default(uuid())
+  userId            String    @map("user_id")
+  businessId        String    @map("business_id")
+  platform          String    // meta_ads, google_ads, tiktok_ads, linkedin_ads
+  platformAccountId String    @map("platform_account_id")
+  accountName       String?   @map("account_name")
+  accountCurrency   String?   @map("account_currency") // USD, EUR, etc.
+  timezone          String?   @default("UTC")
+  encryptedToken    String    @map("encrypted_token") // AES-256-GCM encrypted
+  tokenIv           String    @map("token_iv") // Initialization vector for AES-GCM
+  refreshToken      String?   @map("refresh_token") // encrypted
+  tokenExpiresAt    DateTime? @map("token_expires_at")
+  scopes            Json      @default("[]") // OAuth scopes granted
+  status            String    @default("active") // active, disconnected, revoked, error
+  lastSyncedAt      DateTime? @map("last_synced_at")
+  syncError         String?   @map("sync_error")
+  metadata          Json      @default("{}") // platform-specific metadata
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  business  Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  campaigns AdCampaign[]
+  snapshots AdMetricSnapshot[]
+
+  @@unique([userId, businessId, platform, platformAccountId])
+  @@index([userId])
+  @@index([businessId])
+  @@index([platform])
+  @@index([status])
+  @@map("ad_accounts")
+}
+
+model AdCampaign {
+  id                String    @id @default(uuid())
+  adAccountId       String    @map("ad_account_id")
+  platformCampaignId String   @unique @map("platform_campaign_id")
+  name              String
+  status            String    // active, paused, completed, deleted
+  objective         String?   // awareness, traffic, conversions, etc.
+  dailyBudgetCents  Int?      @map("daily_budget_cents")
+  lifetimeBudgetCents Int?    @map("lifetime_budget_cents")
+  startDate         DateTime? @map("start_date")
+  endDate           DateTime? @map("end_date")
+  targeting         Json      @default("{}") // audience targeting criteria
+  creativeIds       Json      @default("[]") @map("creative_ids") // platform creative IDs
+  metadata          Json      @default("{}") // platform-specific metadata
+  lastSyncedAt      DateTime? @map("last_synced_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  adAccount   AdAccount          @relation(fields: [adAccountId], references: [id], onDelete: Cascade)
+  campaignSet AdCampaignSet?     @relation(fields: [campaignSetId], references: [id])
+  campaignSetId String?          @map("campaign_set_id")
+  snapshots    AdMetricSnapshot[]
+
+  @@index([adAccountId])
+  @@index([platformCampaignId])
+  @@index([status])
+  @@index([campaignSetId])
+  @@map("ad_campaigns")
+}
+
+model AdCampaignSet {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  businessId      String   @map("business_id")
+  name            String
+  description     String?
+  status          String   @default("draft") // draft, active, paused, completed
+  objective       String?  // cross-platform campaign grouping
+  metadata        Json     @default("{}")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  business  Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  campaigns AdCampaign[]
+
+  @@index([userId])
+  @@index([businessId])
+  @@index([status])
+  @@map("ad_campaign_sets")
+}
+
+model AdMetricSnapshot {
+  id                String   @id @default(uuid())
+  adAccountId       String   @map("ad_account_id")
+  adCampaignId      String?  @map("ad_campaign_id")
+  date              DateTime // date of metrics (start of day in account timezone)
+  impressions       Int      @default(0)
+  clicks            Int      @default(0)
+  spendCents        Int      @default(0) @map("spend_cents")
+  conversions       Int      @default(0)
+  conversionValueCents Int   @default(0) @map("conversion_value_cents")
+  ctr               Float    @default(0) // click-through rate
+  cpcCents          Float    @default(0) @map("cpc_cents") // cost per click
+  roas              Float    @default(0) // return on ad spend (conversion_value / spend)
+  reach             Int      @default(0)
+  frequency         Float    @default(0) // average impressions per user
+  videoViews        Int      @default(0) @map("video_views")
+  videoViewRate     Float    @default(0) @map("video_view_rate")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  adAccount  AdAccount  @relation(fields: [adAccountId], references: [id], onDelete: Cascade)
+  adCampaign AdCampaign? @relation(fields: [adCampaignId], references: [id], onDelete: Cascade)
+
+  @@unique([adAccountId, adCampaignId, date])
+  @@index([adAccountId])
+  @@index([adCampaignId])
+  @@index([date])
+  @@map("ad_metric_snapshots")
 }
 
 // ============================================

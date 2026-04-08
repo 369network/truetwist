@@ -95,6 +95,12 @@ export const AuditActions = {
   BUSINESS_DELETED: "business.delete",
   DATA_EXPORTED: "data.export",
 
+  // Ads
+  AD_ACCOUNT_CONNECTED: "ad_account.connected",
+  AD_ACCOUNT_DISCONNECTED: "ad_account.disconnected",
+  AD_CAMPAIGN_CREATED: "ad_campaign.created",
+  AD_CAMPAIGN_UPDATED: "ad_campaign.updated",
+
   // Admin
   ADMIN_ROLE_CHANGE: "admin.role_change",
   SETTINGS_CHANGED: "settings.change",
