@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { openai } from "@/lib/ai/openai-client";
-import { AI_TEXT_MODEL } from "@/lib/ai/model-config";
+import { AI_TEXT_MODEL, estimateModelCost } from "@/lib/ai/model-config";
 import { getAuthUser } from "@/middleware/auth";
 import { scoreContent } from "@/lib/ai/content-quality-scoring";
 import type { Platform } from "@/lib/social/types";
@@ -81,6 +81,19 @@ Include design suggestions.`,
 Include on-screen text suggestions, b-roll ideas, and delivery notes.`,
 };
 
+// Content category context injected into prompts
+const categoryInstructions: Record<string, string> = {
+  educational: "Frame this as educational/tips content: share actionable insights, \"5 things you didn't know\" format, or step-by-step knowledge.",
+  behind_scenes: "Frame as a behind-the-scenes look: show process, team culture, or the journey behind the topic.",
+  customer_spotlight: "Frame as a customer spotlight or testimonial: highlight success stories, real results, or social proof.",
+  product_showcase: "Frame as a product showcase: feature highlights, benefits, and use cases with enthusiasm.",
+  industry_news: "Frame as industry news commentary: provide hot takes, trend analysis, or expert perspective on what's happening.",
+  engagement: "Frame as engagement content: ask thought-provoking questions, create polls/debates, or encourage audience participation.",
+  promotional: "Frame as promotional content: announce offers, launches, or deals with urgency and excitement.",
+  storytelling: "Frame as storytelling: weave a personal narrative with a lesson or takeaway that resonates emotionally.",
+  meme_humor: "Frame as meme/humor content: use relatable industry humor, trending formats, or witty observations.",
+};
+
 // Tone instructions
 const toneInstructions: Record<string, string> = {
   Professional: "Use a polished, authoritative tone. Include data points or industry insights where relevant. Sound like a thought leader.",
@@ -97,7 +110,7 @@ export async function POST(request: NextRequest) {
     getAuthUser(request);
 
     const body = await request.json();
-    const { topic, tone, platforms, contentType } = body;
+    const { topic, tone, platforms, contentType, contentCategory } = body;
 
     if (!topic || !platforms || platforms.length === 0) {
       return NextResponse.json(
@@ -112,6 +125,9 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    let totalInputTokens = 0;
+    let totalOutputTokens = 0;
 
     // OPTIMIZED: Generate content, hashtags, viral analysis, and A/B hook
     // in a single unified API call per platform (was 3 sequential calls).
@@ -133,6 +149,8 @@ CRITICAL RULES:
 - Do NOT include hashtags in the main content body.
 
 ${platformRules[platform] || ""}
+
+${contentCategory && categoryInstructions[contentCategory] ? `CONTENT CATEGORY: ${categoryInstructions[contentCategory]}` : ""}
 
 TONE: ${toneInstructions[tone] || toneInstructions.Casual}
 
@@ -172,6 +190,8 @@ Be specific to the topic "${topic}" — include real details, insights, or persp
         });
 
         const rawContent = completion.choices[0]?.message?.content || "{}";
+        totalInputTokens += completion.usage?.prompt_tokens || 0;
+        totalOutputTokens += completion.usage?.completion_tokens || 0;
 
         let content = "";
         let hashtags: string[] = [];
@@ -218,7 +238,17 @@ Be specific to the topic "${topic}" — include real details, insights, or persp
       })
     );
 
-    return NextResponse.json({ posts: results });
+    const costCents = estimateModelCost(AI_TEXT_MODEL, totalInputTokens, totalOutputTokens);
+
+    return NextResponse.json({
+      posts: results,
+      usage: {
+        model: AI_TEXT_MODEL,
+        inputTokens: totalInputTokens,
+        outputTokens: totalOutputTokens,
+        costCents,
+      },
+    });
   } catch (error: any) {
     console.error("Generate API error:", error);
 

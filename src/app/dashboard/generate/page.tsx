@@ -2,6 +2,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
+import { useBusinessStore } from "@/stores/business-store";
 
 const tones = ["Professional", "Casual", "Fun & Playful", "Inspirational", "Edgy & Bold", "Educational"];
 const platformList = ["instagram", "twitter", "facebook", "linkedin", "tiktok"];
@@ -50,9 +51,12 @@ export default function GeneratePage() {
   const [mediaInput, setMediaInput] = useState("");
   const [mediaPreview, setMediaPreview] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<string>("preview");
+  const [generatingImage, setGeneratingImage] = useState(false);
+  const [usageInfo, setUsageInfo] = useState<{ model: string; inputTokens: number; outputTokens: number; costCents: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const supabase = createClient();
+  const { activeBusiness } = useBusinessStore();
 
   const togglePlatform = (p: string) => {
     setPlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
@@ -89,21 +93,31 @@ export default function GeneratePage() {
 
   const [aiError, setAiError] = useState<string | null>(null);
 
+  const getAuthHeaders = async (): Promise<Record<string, string>> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    return {
+      "Content-Type": "application/json",
+      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+    };
+  };
+
   const handleGenerate = async () => {
     if (!topic.trim()) return;
     setGenerating(true);
     setAiError(null);
+    setUsageInfo(null);
 
     try {
-      // Call real AI API
+      const headers = await getAuthHeaders();
       const res = await fetch("/api/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           topic: topic.trim(),
           tone,
           platforms,
           contentType,
+          contentCategory,
         }),
       });
 
@@ -118,6 +132,7 @@ export default function GeneratePage() {
         mediaUrls: [...mediaUrls],
       }));
       setGenerated(posts);
+      if (data.usage) setUsageInfo(data.usage);
     } catch (err: any) {
       console.error("AI generation error:", err);
       setAiError(err.message || "AI generation failed");
@@ -136,21 +151,78 @@ export default function GeneratePage() {
     }
   };
 
+  const handleGenerateImage = async () => {
+    if (!topic.trim() || !activeBusiness) return;
+    setGeneratingImage(true);
+    setAiError(null);
+
+    try {
+      const headers = await getAuthHeaders();
+      const targetPlatform = platforms[0] || "instagram";
+      const res = await fetch("/api/v1/ai/generate/image", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          businessId: activeBusiness.id,
+          prompt: topic.trim(),
+          platform: targetPlatform,
+          template: "social-post",
+          count: 1,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || data.message || "Image generation failed");
+      }
+
+      const imageUrls = (data.data?.images || []).map((img: any) => img.url);
+      if (imageUrls.length > 0) {
+        setMediaUrls(prev => [...prev, ...imageUrls]);
+        setMediaPreview(prev => [...prev, ...imageUrls]);
+      }
+    } catch (err: any) {
+      console.error("Image generation error:", err);
+      setAiError(err.message || "Image generation failed. Ensure OPENAI_API_KEY is configured.");
+    } finally {
+      setGeneratingImage(false);
+    }
+  };
+
   const savePost = async (post: any) => {
+    if (!activeBusiness) {
+      alert("Please select a business first.");
+      return;
+    }
     setSaving(post.id);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    await supabase.from("posts").insert({
-      user_id: user.id,
-      content: post.content,
-      hashtags: post.hashtags,
-      platforms: [post.platform],
-      status: "draft",
-      ai_prompt: topic,
-      media_urls: post.mediaUrls.length > 0 ? post.mediaUrls : null,
-    });
-    setSaving(null);
-    alert("Post saved as draft!");
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch("/api/v1/posts", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          businessId: activeBusiness.id,
+          contentText: post.content + "\n\n" + (post.hashtags || []).map((h: string) => "#" + h).join(" "),
+          contentType: contentType === "carousel" ? "carousel" : contentType === "video" ? "video" : post.mediaUrls?.length > 0 ? "image" : "text",
+          aiGenerated: true,
+          viralScore: post.viralScore || undefined,
+          mediaUrls: post.mediaUrls?.length > 0 ? post.mediaUrls.filter((u: string) => u.startsWith("http")) : undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || err.message || "Failed to save post");
+      }
+
+      alert("Post saved as draft!");
+    } catch (err: any) {
+      console.error("Save error:", err);
+      alert("Failed to save: " + (err.message || "Unknown error"));
+    } finally {
+      setSaving(null);
+    }
   };
 
   const copyToClipboard = (text: string) => {
@@ -325,6 +397,14 @@ export default function GeneratePage() {
             <button onClick={addMediaUrl} className="px-4 py-2 rounded-lg text-xs font-medium shrink-0" style={{ background: "rgba(99,102,241,0.2)", color: "#a5b4fc", border: "1px solid rgba(99,102,241,0.4)" }}>+ Add URL</button>
             <input ref={fileInputRef} type="file" accept="image/*,video/*" multiple onChange={handleFileUpload} className="hidden" />
             <button onClick={() => fileInputRef.current?.click()} className="px-4 py-2 rounded-lg text-xs font-medium shrink-0" style={{ background: "rgba(16,185,129,0.15)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)" }}>📁 Upload</button>
+            <button onClick={handleGenerateImage} disabled={generatingImage || !topic.trim()} className="px-4 py-2 rounded-lg text-xs font-medium shrink-0 disabled:opacity-50" style={{ background: "rgba(168,85,247,0.15)", color: "#a855f7", border: "1px solid rgba(168,85,247,0.3)" }}>
+              {generatingImage ? (
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 border-2 border-purple-300/30 border-t-purple-400 rounded-full animate-spin"></span>
+                  Generating...
+                </span>
+              ) : "🎨 AI Image"}
+            </button>
           </div>
           {mediaPreview.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">
@@ -362,6 +442,18 @@ export default function GeneratePage() {
           <div>
             <p className="text-sm font-medium" style={{ color: "#f59e0b" }}>AI API unavailable — using smart fallback</p>
             <p className="text-xs mt-1" style={{ color: "var(--tt-text-muted)" }}>{aiError}. Content was generated using built-in templates. Add your OpenAI API key in Vercel settings for real AI-powered generation.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Usage / Cost Feedback */}
+      {usageInfo && (
+        <div className="p-3 rounded-xl mb-4 flex items-center gap-3" style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.15)" }}>
+          <span className="text-sm">⚡</span>
+          <div className="flex flex-wrap items-center gap-3 text-xs" style={{ color: "var(--tt-text-muted)" }}>
+            <span>Model: <span style={{ color: "#a5b4fc" }}>{usageInfo.model}</span></span>
+            <span>Tokens: <span style={{ color: "#a5b4fc" }}>{(usageInfo.inputTokens + usageInfo.outputTokens).toLocaleString()}</span></span>
+            <span>Cost: <span style={{ color: usageInfo.costCents === 0 ? "#10b981" : "#f59e0b" }}>{usageInfo.costCents < 1 ? "<1¢" : `${usageInfo.costCents}¢`}</span></span>
           </div>
         </div>
       )}

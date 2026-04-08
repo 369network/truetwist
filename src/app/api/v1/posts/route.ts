@@ -9,6 +9,9 @@ const createPostSchema = z.object({
   businessId: z.string().uuid(),
   contentText: z.string().max(10000).optional(),
   contentType: z.enum(['text', 'image', 'video', 'carousel']).default('text'),
+  aiGenerated: z.boolean().default(false),
+  viralScore: z.number().min(0).max(100).optional(),
+  mediaUrls: z.array(z.string().url()).optional(),
 });
 
 // GET /api/v1/posts - List user's posts
@@ -76,7 +79,7 @@ export async function POST(request: NextRequest) {
       throw Errors.validation(result.error.flatten().fieldErrors);
     }
 
-    const { businessId, contentText, contentType } = result.data;
+    const { businessId, contentText, contentType, aiGenerated, viralScore, mediaUrls } = result.data;
 
     // Verify ownership of business
     const business = await prisma.business.findFirst({
@@ -93,6 +96,19 @@ export async function POST(request: NextRequest) {
         businessId,
         contentText,
         contentType,
+        aiGenerated,
+        viralScore: viralScore ?? null,
+        ...(mediaUrls && mediaUrls.length > 0
+          ? {
+              media: {
+                create: mediaUrls.map((url, i) => ({
+                  mediaType: /\.(mp4|webm|mov)(\?|$)/i.test(url) ? 'video' : 'image',
+                  mediaUrl: url,
+                  sortOrder: i,
+                })),
+              },
+            }
+          : {}),
       },
       include: {
         business: { select: { id: true, name: true } },
