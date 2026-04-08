@@ -489,4 +489,121 @@ export interface SignificanceResult {
   reason: string;
 }
 
+// Ad Performance Dashboard
+export const adsDashboardApi = {
+  getOverview: (range?: string) => {
+    const qs = new URLSearchParams();
+    if (range) qs.set("range", range);
+    return request<{ data: AdDashboardOverview }>(`/ads/dashboard/overview?${qs.toString()}`);
+  },
+
+  getCampaigns: (params?: { range?: string; platform?: string; status?: string; sort?: string; order?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.range) qs.set("range", params.range);
+    if (params?.platform) qs.set("platform", params.platform);
+    if (params?.status) qs.set("status", params.status);
+    if (params?.sort) qs.set("sort", params.sort);
+    if (params?.order) qs.set("order", params.order);
+    return request<{ data: AdCampaignRow[] }>(`/ads/dashboard/campaigns?${qs.toString()}`);
+  },
+
+  getCampaignMetrics: (campaignId: string, range?: string) => {
+    const qs = new URLSearchParams();
+    if (range) qs.set("range", range);
+    return request<{ data: AdCampaignDetail }>(`/ads/dashboard/${campaignId}/metrics?${qs.toString()}`);
+  },
+
+  getInsights: () =>
+    request<{ data: AdInsightsResponse }>("/ads/dashboard/insights"),
+};
+
+export interface AdDashboardOverview {
+  summary: {
+    totalSpend: number;
+    totalRevenue: number;
+    totalImpressions: number;
+    totalClicks: number;
+    totalConversions: number;
+    overallRoas: number;
+    avgCpc: number;
+    avgCtr: number;
+    activeCampaigns: number;
+  };
+  campaigns: AdCampaignRow[];
+  platformBreakdown: Record<string, { spend: number; revenue: number; impressions: number; clicks: number; conversions: number }>;
+  dailyTrend: Array<{ date: string; spend: number; revenue: number; roas: number; impressions: number; clicks: number }>;
+  anomalies: Array<{ type: string; severity: "warning" | "critical"; message: string }>;
+  dateRange: { start: string; end: string; days: number };
+}
+
+export interface AdCampaignRow {
+  id: string;
+  name: string;
+  platform: string;
+  status: string;
+  objective: string;
+  dailyBudgetCents: number;
+  accountName: string;
+  spend: number;
+  revenue: number;
+  impressions: number;
+  clicks: number;
+  conversions: number;
+  roas: number;
+  cpc: number;
+  ctr: number;
+  conversionRate: number;
+  dailyMetrics: Array<{ date: string; spend: number; revenue: number; impressions: number; clicks: number; conversions: number; roas: number }>;
+}
+
+export interface AdCampaignDetail {
+  campaign: {
+    id: string;
+    name: string;
+    platform: string;
+    status: string;
+    objective: string;
+    dailyBudgetCents: number;
+    accountName: string;
+  };
+  summary: {
+    spend: number;
+    revenue: number;
+    impressions: number;
+    clicks: number;
+    conversions: number;
+    roas: number;
+    cpc: number;
+    ctr: number;
+    conversionRate: number;
+  };
+  dailyMetrics: Array<{
+    date: string;
+    spend: number;
+    revenue: number;
+    impressions: number;
+    clicks: number;
+    conversions: number;
+    roas: number;
+    cpc: number;
+    ctr: number;
+  }>;
+  dateRange: { start: string; end: string; days: number };
+}
+
+export interface AdInsightsResponse {
+  insights: Array<{
+    type: string;
+    priority: "high" | "medium" | "low";
+    title: string;
+    description: string;
+    impact: string;
+    action: string;
+    campaignId?: string;
+    campaignName?: string;
+  }>;
+  platformPerformance: Record<string, { spend: number; revenue: number; roas: number }>;
+  generatedAt: string;
+}
+
 export { ApiClientError };
