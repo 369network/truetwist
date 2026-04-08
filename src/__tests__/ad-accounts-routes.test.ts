@@ -17,13 +17,14 @@ import { generateAccessToken } from "@/lib/auth";
 const prismaMock = createPrismaMock();
 vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
 
-// Mock encryption library
-vi.mock("@/lib/ads/encryption", () => ({
-  encryptTokenForDb: vi.fn().mockReturnValue({
-    encryptedToken: "mock-encrypted-token",
-    iv: "mock-iv",
-  }),
-  decryptTokenFromDb: vi.fn().mockReturnValue("mock-decrypted-token"),
+// Mock AdAccountManager since it handles encryption
+vi.mock("@/lib/ads/ad-account-manager", () => ({
+  AdAccountManager: {
+    exchangeAndEncrypt: vi.fn(),
+    getAccountInfo: vi.fn(),
+    getAccessToken: vi.fn(),
+    getAdapter: vi.fn(),
+  },
 }));
 
 const { GET: listAdAccounts, POST: createAdAccount } =

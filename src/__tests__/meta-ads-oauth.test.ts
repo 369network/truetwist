@@ -17,11 +17,11 @@ const prismaMock = createPrismaMock();
 vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
 
 // Mock encryption library
-vi.mock("@/lib/ads/encryption", () => ({
-  encryptTokenForDb: vi.fn().mockReturnValue({
-    encryptedToken: "mock-encrypted-token",
-    iv: "mock-iv",
-  }),
+vi.mock("@/lib/ads/ad-account-manager", () => ({
+  AdAccountManager: {
+    exchangeAndEncrypt: vi.fn(),
+    getAccountInfo: vi.fn(),
+  },
 }));
 
 // Mock environment variables
