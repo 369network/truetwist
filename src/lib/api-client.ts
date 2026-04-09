@@ -606,4 +606,49 @@ export interface AdInsightsResponse {
   generatedAt: string;
 }
 
+// Video Ad Generation (Creatify)
+export const videoAdApi = {
+  create: (data: {
+    businessId: string;
+    url: string;
+    platform: string;
+    aspectRatio?: '9:16' | '16:9' | '1:1';
+    style?: string;
+    voiceover?: boolean;
+    durationSeconds?: number;
+    templateId?: string;
+    headline?: string;
+    description?: string;
+    callToAction?: string;
+  }) =>
+    request<{
+      data: { jobId: string; status: string; platform: string; aspectRatio: string };
+    }>('/ai/generate/video-ad', { method: 'POST', body: JSON.stringify(data) }),
+
+  getStatus: (jobId: string) =>
+    request<{
+      data: {
+        jobId: string;
+        status: string;
+        videoUrl: string | null;
+        thumbnailUrl: string | null;
+        durationSeconds: number | null;
+        error: string | null;
+        createdAt: string;
+      };
+    }>(`/ai/generate/video-ad/${jobId}`),
+
+  listTemplates: () =>
+    request<{
+      data: Array<{
+        id: string;
+        name: string;
+        description: string;
+        previewUrl: string;
+        category: string;
+      }>;
+      pagination: { total: number };
+    }>('/ai/templates/video'),
+};
+
 export { ApiClientError };

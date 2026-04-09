@@ -12,6 +12,7 @@ import {
   aiSuggestionsApi,
   videoAbTestApi,
   adsDashboardApi,
+  videoAdApi,
 } from "@/lib/api-client";
 
 // ── AI Generation ──
@@ -392,5 +393,35 @@ export function useAdInsights() {
     queryKey: ["adDashboard", "insights"],
     queryFn: () => adsDashboardApi.getInsights(),
     staleTime: 5 * 60 * 1000, // 5 min stale time for AI insights
+  });
+}
+
+// ── Video Ad Generation (Creatify) ──
+
+export function useCreateVideoAd() {
+  return useMutation({
+    mutationFn: (data: Parameters<typeof videoAdApi.create>[0]) =>
+      videoAdApi.create(data),
+  });
+}
+
+export function useVideoAdStatus(jobId: string | null) {
+  return useQuery({
+    queryKey: ["videoAd", jobId],
+    queryFn: () => videoAdApi.getStatus(jobId!),
+    enabled: !!jobId,
+    refetchInterval: (query) => {
+      const status = query.state.data?.data?.status;
+      if (status === "completed" || status === "failed") return false;
+      return 5000; // Poll every 5s while pending/processing
+    },
+  });
+}
+
+export function useVideoAdTemplates() {
+  return useQuery({
+    queryKey: ["videoAdTemplates"],
+    queryFn: () => videoAdApi.listTemplates(),
+    staleTime: 10 * 60 * 1000, // Templates don't change often
   });
 }
