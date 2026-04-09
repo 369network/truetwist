@@ -131,7 +131,7 @@ export class GoogleAdsAdapter extends AdPlatformAdapter {
       LIMIT 1
     `;
 
-    const res = await fetch(
+    const res = await this.adFetch(this.customerId,
       `${GOOGLE_ADS_API}/customers/${this.customerId}/googleAds:searchStream`,
       {
         method: "POST",
@@ -198,7 +198,7 @@ export class GoogleAdsAdapter extends AdPlatformAdapter {
     ];
 
     // Create campaign budget first
-    const budgetRes = await fetch(
+    const budgetRes = await this.adFetch(this.customerId,
       `${GOOGLE_ADS_API}/customers/${this.customerId}/campaignBudgets:mutate`,
       {
         method: "POST",
@@ -231,7 +231,7 @@ export class GoogleAdsAdapter extends AdPlatformAdapter {
     // Now create campaign with budget reference
     operations[0].create.campaignBudget = budgetResourceName;
 
-    const res = await fetch(
+    const res = await this.adFetch(this.customerId,
       `${GOOGLE_ADS_API}/customers/${this.customerId}/campaigns:mutate`,
       {
         method: "POST",
@@ -280,7 +280,7 @@ export class GoogleAdsAdapter extends AdPlatformAdapter {
       updateMask.push("end_date");
     }
 
-    const res = await fetch(
+    const res = await this.adFetch(this.customerId,
       `${GOOGLE_ADS_API}/customers/${this.customerId}/campaigns:mutate`,
       {
         method: "POST",
@@ -305,7 +305,7 @@ export class GoogleAdsAdapter extends AdPlatformAdapter {
     accessToken: string,
     campaignId: string
   ): Promise<CampaignResult> {
-    const res = await fetch(
+    const res = await this.adFetch(this.customerId,
       `${GOOGLE_ADS_API}/customers/${this.customerId}/campaigns:mutate`,
       {
         method: "POST",
@@ -338,7 +338,7 @@ export class GoogleAdsAdapter extends AdPlatformAdapter {
     accessToken: string,
     campaignId: string
   ): Promise<CampaignResult> {
-    const res = await fetch(
+    const res = await this.adFetch(this.customerId,
       `${GOOGLE_ADS_API}/customers/${this.customerId}/campaigns:mutate`,
       {
         method: "POST",
@@ -386,7 +386,7 @@ export class GoogleAdsAdapter extends AdPlatformAdapter {
       adGroup.cpcBidMicros = String(adSet.bidAmountCents * 10000);
     }
 
-    const res = await fetch(
+    const res = await this.adFetch(this.customerId,
       `${GOOGLE_ADS_API}/customers/${this.customerId}/adGroups:mutate`,
       {
         method: "POST",
@@ -459,7 +459,7 @@ export class GoogleAdsAdapter extends AdPlatformAdapter {
       ];
     }
 
-    const res = await fetch(
+    const res = await this.adFetch(this.customerId,
       `${GOOGLE_ADS_API}/customers/${this.customerId}/adGroupAds:mutate`,
       {
         method: "POST",
@@ -537,7 +537,7 @@ export class GoogleAdsAdapter extends AdPlatformAdapter {
       ORDER BY segments.date ASC
     `;
 
-    const res = await fetch(
+    const res = await this.adFetch(this.customerId,
       `${GOOGLE_ADS_API}/customers/${this.customerId}/googleAds:searchStream`,
       {
         method: "POST",

@@ -30,3 +30,6 @@ export type {
   AdAccountInfo,
 } from "./types";
 export { AD_PLATFORMS, AD_PLATFORM_RATE_LIMITS } from "./types";
+export { adFetchWithRetry } from "./ad-retry";
+export { checkAdRateLimit, getAdRateLimitUsage, AdRateLimitError } from "./ad-rate-limiter";
+export { logAdAudit, logAdApiError, logAdRateLimitHit } from "./ad-audit";

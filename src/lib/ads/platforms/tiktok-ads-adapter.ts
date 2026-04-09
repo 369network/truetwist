@@ -140,7 +140,7 @@ export class TikTokAdsAdapter extends AdPlatformAdapter {
       advertiser_ids: JSON.stringify([this.advertiserId]),
     });
 
-    const res = await fetch(
+    const res = await this.adFetch(this.advertiserId,
       `${TIKTOK_ADS_API}/advertiser/info/?${params}`,
       { headers: this.getHeaders(accessToken) }
     );
@@ -200,7 +200,7 @@ export class TikTokAdsAdapter extends AdPlatformAdapter {
       operation_status: "DISABLE",
     };
 
-    const res = await fetch(`${TIKTOK_ADS_API}/campaign/create/`, {
+    const res = await this.adFetch(this.advertiserId, `${TIKTOK_ADS_API}/campaign/create/`, {
       method: "POST",
       headers: this.getHeaders(accessToken),
       body: JSON.stringify(body),
@@ -240,7 +240,7 @@ export class TikTokAdsAdapter extends AdPlatformAdapter {
     if (updates.lifetimeBudgetCents)
       body.budget = updates.lifetimeBudgetCents / 100;
 
-    const res = await fetch(`${TIKTOK_ADS_API}/campaign/update/`, {
+    const res = await this.adFetch(this.advertiserId, `${TIKTOK_ADS_API}/campaign/update/`, {
       method: "POST",
       headers: this.getHeaders(accessToken),
       body: JSON.stringify(body),
@@ -265,7 +265,7 @@ export class TikTokAdsAdapter extends AdPlatformAdapter {
     accessToken: string,
     campaignId: string
   ): Promise<CampaignResult> {
-    const res = await fetch(
+    const res = await this.adFetch(this.advertiserId,
       `${TIKTOK_ADS_API}/campaign/status/update/`,
       {
         method: "POST",
@@ -297,7 +297,7 @@ export class TikTokAdsAdapter extends AdPlatformAdapter {
     accessToken: string,
     campaignId: string
   ): Promise<CampaignResult> {
-    const res = await fetch(
+    const res = await this.adFetch(this.advertiserId,
       `${TIKTOK_ADS_API}/campaign/status/update/`,
       {
         method: "POST",
@@ -388,7 +388,7 @@ export class TikTokAdsAdapter extends AdPlatformAdapter {
       body.schedule_type = "SCHEDULE_FROM_NOW";
     }
 
-    const res = await fetch(`${TIKTOK_ADS_API}/adgroup/create/`, {
+    const res = await this.adFetch(this.advertiserId, `${TIKTOK_ADS_API}/adgroup/create/`, {
       method: "POST",
       headers: this.getHeaders(accessToken),
       body: JSON.stringify(body),
@@ -462,7 +462,7 @@ export class TikTokAdsAdapter extends AdPlatformAdapter {
       ],
     };
 
-    const res = await fetch(`${TIKTOK_ADS_API}/ad/create/`, {
+    const res = await this.adFetch(this.advertiserId, `${TIKTOK_ADS_API}/ad/create/`, {
       method: "POST",
       headers: this.getHeaders(accessToken),
       body: JSON.stringify(body),
@@ -549,7 +549,7 @@ export class TikTokAdsAdapter extends AdPlatformAdapter {
       page_size: 365,
     };
 
-    const res = await fetch(
+    const res = await this.adFetch(this.advertiserId,
       `${TIKTOK_ADS_API}/report/integrated/get/`,
       {
         method: "POST",

@@ -137,7 +137,8 @@ export class MetaAdsAdapter extends AdPlatformAdapter {
   // ---- Account ----
 
   async getAdAccountInfo(accessToken: string): Promise<AdAccountInfo> {
-    const res = await fetch(
+    const res = await this.adFetch(
+      this.adAccountId,
       `${META_GRAPH_API}/act_${this.adAccountId}?fields=name,currency,timezone_name,account_status&access_token=${accessToken}`
     );
     if (!res.ok) {
@@ -192,7 +193,8 @@ export class MetaAdsAdapter extends AdPlatformAdapter {
       body.lifetime_budget = String(campaign.lifetimeBudgetCents);
     }
 
-    const res = await fetch(
+    const res = await this.adFetch(
+      this.adAccountId,
       `${META_GRAPH_API}/act_${this.adAccountId}/campaigns`,
       {
         method: "POST",
@@ -222,7 +224,7 @@ export class MetaAdsAdapter extends AdPlatformAdapter {
     if (updates.lifetimeBudgetCents)
       body.lifetime_budget = String(updates.lifetimeBudgetCents);
 
-    const res = await fetch(`${META_GRAPH_API}/${campaignId}`, {
+    const res = await this.adFetch(this.adAccountId, `${META_GRAPH_API}/${campaignId}`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams(body),
@@ -242,7 +244,7 @@ export class MetaAdsAdapter extends AdPlatformAdapter {
     accessToken: string,
     campaignId: string
   ): Promise<CampaignResult> {
-    const res = await fetch(`${META_GRAPH_API}/${campaignId}`, {
+    const res = await this.adFetch(this.adAccountId, `${META_GRAPH_API}/${campaignId}`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
@@ -265,7 +267,7 @@ export class MetaAdsAdapter extends AdPlatformAdapter {
     accessToken: string,
     campaignId: string
   ): Promise<CampaignResult> {
-    const res = await fetch(`${META_GRAPH_API}/${campaignId}`, {
+    const res = await this.adFetch(this.adAccountId, `${META_GRAPH_API}/${campaignId}`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
@@ -448,7 +450,8 @@ export class MetaAdsAdapter extends AdPlatformAdapter {
       };
     }
 
-    const creativeRes = await fetch(
+    const creativeRes = await this.adFetch(
+      this.adAccountId,
       `${META_GRAPH_API}/act_${this.adAccountId}/adcreatives`,
       {
         method: "POST",
@@ -475,7 +478,8 @@ export class MetaAdsAdapter extends AdPlatformAdapter {
     const creativeData = await creativeRes.json();
 
     // Now create the ad using the creative
-    const adRes = await fetch(
+    const adRes = await this.adFetch(
+      this.adAccountId,
       `${META_GRAPH_API}/act_${this.adAccountId}/ads`,
       {
         method: "POST",
@@ -541,7 +545,8 @@ export class MetaAdsAdapter extends AdPlatformAdapter {
       access_token: accessToken,
     });
 
-    const res = await fetch(
+    const res = await this.adFetch(
+      this.adAccountId,
       `${META_GRAPH_API}/${entityId}/insights?${params}`
     );
     if (!res.ok) {

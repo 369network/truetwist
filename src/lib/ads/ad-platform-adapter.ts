@@ -14,14 +14,32 @@ import type {
   DateRange,
   AdAccountInfo,
 } from "./types";
+import { adFetchWithRetry } from "./ad-retry";
+import { checkAdRateLimit } from "./ad-rate-limiter";
 
 /**
  * Abstract base class for all ad platform adapters.
  * Mirrors the social PlatformAdapter pattern but specialized for ad APIs.
+ *
+ * Provides `adFetch()` — a fetch wrapper that enforces per-platform rate
+ * limits and retries on 429/5xx with exponential backoff.
  */
 export abstract class AdPlatformAdapter {
   abstract readonly platform: AdPlatform;
   abstract readonly rateLimitConfig: AdRateLimitConfig;
+
+  /**
+   * Rate-limited fetch with automatic retry on 429/5xx.
+   * Call this instead of bare `fetch()` for all external ad API requests.
+   */
+  protected async adFetch(
+    accountId: string,
+    input: RequestInfo | URL,
+    init?: RequestInit
+  ): Promise<Response> {
+    await checkAdRateLimit(this.platform, accountId);
+    return adFetchWithRetry(input, init);
+  }
 
   // ---- OAuth ----
 
