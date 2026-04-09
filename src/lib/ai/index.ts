@@ -1,6 +1,10 @@
 export * from './types';
 export { generateText, generateHashtags } from './text-generation-service';
 export { generateImage } from './image-generation-service';
+export {
+  isConfigured as isGrokConfigured,
+  estimateGrokImageCost,
+} from './grok-client';
 export { generateVideo, generateVideoScript } from './video-generation-service';
 export {
   getUserCredits,

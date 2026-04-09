@@ -1,4 +1,10 @@
 import { openai } from "./openai-client";
+import {
+  getGrokClient,
+  isConfigured as isGrokConfigured,
+  estimateGrokImageCost,
+  GrokApiError,
+} from "./grok-client";
 import { PLATFORM_CONSTRAINTS, type Platform } from "@/lib/social/types";
 import { VERTICAL_IMAGE_STYLES } from "./vertical-prompts";
 import type {
@@ -114,15 +120,46 @@ function estimateImageCost(
   return costPerImage * count;
 }
 
-export async function generateImage(
-  request: ImageGenerationRequest,
-  brand: BrandContext,
+async function generateImageWithGrok(
+  prompt: string,
+  count: number,
+  size: string,
 ): Promise<ImageGenerationResult> {
   const startTime = Date.now();
-  const count = Math.min(request.count ?? 1, 4);
-  const size = selectDallESize(request);
-  const prompt = buildImagePrompt(request, brand);
+  const grok = getGrokClient();
+  const images: GeneratedImage[] = [];
 
+  for (let i = 0; i < count; i++) {
+    const response = await grok.images.generate({
+      model: "grok-2-image",
+      prompt,
+      n: 1,
+    });
+
+    const data = response.data?.[0];
+    if (data?.url) {
+      images.push({
+        url: data.url,
+        revisedPrompt: (data as any).revised_prompt ?? prompt,
+        size,
+      });
+    }
+  }
+
+  return {
+    images,
+    model: "grok-2-image",
+    costCents: estimateGrokImageCost(images.length),
+    durationMs: Date.now() - startTime,
+  };
+}
+
+async function generateImageWithDallE(
+  prompt: string,
+  count: number,
+  size: "1024x1024" | "1792x1024" | "1024x1792",
+): Promise<ImageGenerationResult> {
+  const startTime = Date.now();
   const images: GeneratedImage[] = [];
 
   // DALL-E 3 only supports n=1, so we loop for multiple images
@@ -152,6 +189,22 @@ export async function generateImage(
     costCents: estimateImageCost(size, images.length),
     durationMs: Date.now() - startTime,
   };
+}
+
+export async function generateImage(
+  request: ImageGenerationRequest,
+  brand: BrandContext,
+): Promise<ImageGenerationResult> {
+  const count = Math.min(request.count ?? 1, 4);
+  const size = selectDallESize(request);
+  const prompt = buildImagePrompt(request, brand);
+
+  // Use Grok Aurora when XAI_API_KEY is configured, fall back to DALL-E 3
+  if (isGrokConfigured()) {
+    return generateImageWithGrok(prompt, count, size);
+  }
+
+  return generateImageWithDallE(prompt, count, size);
 }
 
 export async function generateImageVariations(

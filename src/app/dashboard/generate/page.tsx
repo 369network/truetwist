@@ -184,7 +184,7 @@ export default function GeneratePage() {
       }
     } catch (err: any) {
       console.error("Image generation error:", err);
-      setAiError(err.message || "Image generation failed. Ensure OPENAI_API_KEY is configured.");
+      setAiError(err.message || "Image generation failed. Ensure XAI_API_KEY or OPENAI_API_KEY is configured.");
     } finally {
       setGeneratingImage(false);
     }
